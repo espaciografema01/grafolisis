@@ -4409,10 +4409,6 @@ function _renderFeedConPubs(feedData){
   list.innerHTML = '<div class="pull-indicator" id="pull-indicator">↓ Tirá para actualizar</div>' + contentHTML;
 }
 
-function _renderFeedLegacy(){
-  var list = document.getElementById('feed-list');
-  if(!list) return;
-  var pubs = feedMock.slice();
 function renderSkeletonFeed(){
   var list = document.getElementById('feed-list');
   if(!list) return;
