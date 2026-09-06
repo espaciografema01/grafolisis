@@ -4246,12 +4246,44 @@ var comentariosMock = {
   'p4':[], 'p5':[], 'p6':[]
 };
 
-var notificacionesMock = [
-  {tipo:'like', usuario:'María C.', usuarioId:'u_maria', texto:'le dio like a tu publicación', refTitulo:'Esquema L', refId:'p1', fecha:Date.now()-1000*60*15, leida:false},
-  {tipo:'comment', usuario:'Diego R.', usuarioId:'u_diego', texto:'comentó tu publicación', refTitulo:'Discurso del Amo', refId:'p3', fecha:Date.now()-1000*60*60*2, leida:false},
-  {tipo:'like', usuario:'Ana M.', usuarioId:'u_ana', texto:'le dio like a tu publicación', refTitulo:'Esquema L', refId:'p1', fecha:Date.now()-1000*60*60*4, leida:true},
-  {tipo:'mention', usuario:'Federico A.', usuarioId:'u_fede', texto:'te mencionó en un comentario', refTitulo:'Topología del toro', refId:'p4', fecha:Date.now()-1000*60*60*24, leida:true}
-];
+var notificacionesMock = [];
+
+// Crea una notificación real en Firestore para el dueño de la publicación
+// (no se notifica a uno mismo por sus propias acciones).
+function crearNotificacion(paraId, tipo, refId, refTitulo){
+  if(!session.user || !paraId || paraId===session.user.id) return;
+  _db.collection('notificaciones').add({
+    paraId: paraId,
+    tipo: tipo, // 'like' | 'comment'
+    usuario: session.user.name,
+    usuarioId: session.user.id,
+    texto: tipo==='like' ? 'le dio like a tu publicación' : 'comentó tu publicación',
+    refId: refId,
+    refTitulo: refTitulo || '',
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    leida: false
+  }).catch(function(e){ console.warn('Error creando notificación:', e); });
+}
+
+// Carga las notificaciones reales del usuario actual desde Firestore.
+function cargarNotificaciones(){
+  if(!session.user){ notificacionesMock = []; renderNotificaciones(); return; }
+  _db.collection('notificaciones').where('paraId','==',session.user.id).limit(80).get().then(function(snap){
+    var notifs = [];
+    snap.forEach(function(d){
+      var n = d.data();
+      n.id = d.id;
+      n.fecha = n.fecha && n.fecha.toDate ? n.fecha.toDate().getTime() : Date.now();
+      notifs.push(n);
+    });
+    notifs.sort(function(a,b){ return b.fecha-a.fecha; });
+    notificacionesMock = notifs;
+    renderNotificaciones();
+  }).catch(function(e){
+    console.warn('Error cargando notificaciones:', e);
+    renderNotificaciones();
+  });
+}
 
 // ───── PERFILES PÚBLICOS DE OTROS USUARIOS ─────
 var usuariosPublicos = {
@@ -4280,7 +4312,7 @@ window.cambiarTab = function(tab){
     renderSkeletonFeed();
     setTimeout(function(){ renderFeed(); }, 400);
   }
-  if(tab==='notif') renderNotificaciones();
+  if(tab==='notif') cargarNotificaciones();
   if(tab==='perfil') renderPerfil();
   if(tab==='crear' && window.cy && typeof window.cy.resize==='function'){
     setTimeout(function(){ try{ window.cy.resize(); }catch(e){} }, 50);
@@ -4487,7 +4519,11 @@ window.toggleLike = function(pubId, btn){
   var wasLiked = !!session.liked[pubId];
   var delta = wasLiked ? -1 : 1;
   if(wasLiked){ delete session.liked[pubId]; p.likes = Math.max(0,(p.likes||0)-1); }
-  else { session.liked[pubId] = true; p.likes = (p.likes||0)+1; }
+  else {
+    session.liked[pubId] = true;
+    p.likes = (p.likes||0)+1;
+    crearNotificacion(p.autorId, 'like', pubId, p.titulo);
+  }
   // Actualizar UI local inmediatamente
   renderFeed();
   if(detalleActual && detalleActual.id===pubId) refrescarLikeDetalle();
@@ -4643,6 +4679,7 @@ window.enviarComentario = function(){
   });
   detalleActual.comentarios = (detalleActual.comentarios||0) + 1;
   renderComentarios();
+  crearNotificacion(detalleActual.autorId, 'comment', detalleActual.id, detalleActual.titulo);
   // Persistir en Firestore
   _db.collection('publicaciones').doc(detalleActual.id)
     .collection('comentarios').add(nuevoComentario)
@@ -4737,10 +4774,14 @@ function renderNotificaciones(){
 
 window.abrirPubDesdeNotif = function(pubId){
   if(!pubId) return;
-  // Marcar como leídas todas las notificaciones referentes a esta pub
+  // Marcar como leídas todas las notificaciones referentes a esta pub (local + Firestore)
   notificacionesMock.forEach(function(n){
-    if(n.refId === pubId) n.leida = true;
+    if(n.refId === pubId && !n.leida){
+      n.leida = true;
+      if(n.id) _db.collection('notificaciones').doc(n.id).update({leida:true}).catch(function(){});
+    }
   });
+  actualizarBadgeNotif();
   cambiarTab('explorar');
   setTimeout(function(){ abrirDetalle(pubId); }, 200);
 };
@@ -4920,8 +4961,16 @@ function actualizarBadgeNotif(){
 }
 
 window.marcarTodoLeido = function(){
-  notificacionesMock.forEach(function(n){ n.leida = true; });
+  var batch = _db.batch();
+  var huboAlguna = false;
+  notificacionesMock.forEach(function(n){
+    if(!n.leida){
+      n.leida = true;
+      if(n.id){ batch.update(_db.collection('notificaciones').doc(n.id), {leida:true}); huboAlguna = true; }
+    }
+  });
   renderNotificaciones();
+  if(huboAlguna) batch.commit().catch(function(e){ console.warn('Error marcando notificaciones como leídas:', e); });
 };
 
 // ───── PERFIL ─────
@@ -5073,10 +5122,13 @@ window.editarMiPub = function(pubId){
 
 window.borrarMiPub = function(pubId){
   if(!confirm('¿Borrar esta publicación? No se puede deshacer.')) return;
-  session.publicaciones = session.publicaciones.filter(function(p){ return p.id!==pubId; });
-  // También sacarla del feed mock si estaba
-  feedMock = feedMock.filter(function(p){ return p.id!==pubId; });
-  renderPerfil();
+  _db.collection('publicaciones').doc(pubId).delete().then(function(){
+    session.publicaciones = session.publicaciones.filter(function(p){ return p.id!==pubId; });
+    feedMock = feedMock.filter(function(p){ return p.id!==pubId; });
+    renderPerfil();
+    renderFeed();
+    toast && toast('Publicación borrada ✓');
+  }).catch(function(e){ alert('Error al borrar: '+e.message); });
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -5088,6 +5140,24 @@ var loginCallback = null;
 session.siguiendo = {};
 
 // Escuchar cambios de sesión en tiempo real
+// Carga (o recarga) las publicaciones del usuario actual desde Firestore.
+// Alimenta el contador "Publicados", "Likes recibidos" y la sección "Mis publicaciones".
+function cargarMisPublicaciones(){
+  if(!session.user){ session.publicaciones = []; return; }
+  _db.collection('publicaciones').where('autorId','==',session.user.id).get().then(function(snap){
+    var pubs = [];
+    snap.forEach(function(d){
+      var p = d.data();
+      p.id = d.id;
+      p.fecha = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : Date.now();
+      pubs.push(p);
+    });
+    pubs.sort(function(a,b){ return b.fecha - a.fecha; });
+    session.publicaciones = pubs;
+    renderPerfil();
+  }).catch(function(e){ console.warn('Error cargando mis publicaciones:', e); });
+}
+
 _auth.onAuthStateChanged(function(firebaseUser){
   if(firebaseUser){
     session.user = {
@@ -5110,9 +5180,16 @@ _auth.onAuthStateChanged(function(firebaseUser){
       snap.forEach(function(d){ session.liked[d.data().pubId] = true; });
       renderFeed();
     }).catch(function(){});
+    // Cargar mis publicaciones (contador Publicados / Likes recibidos / Mis publicaciones)
+    cargarMisPublicaciones();
+    // Cargar notificaciones (para el badge y la pestaña Avisos)
+    cargarNotificaciones();
   } else {
     session.user = null;
     session.liked = {};
+    session.publicaciones = [];
+    notificacionesMock = [];
+    actualizarBadgeNotif();
     renderPerfil();
     renderFeed();
   }
@@ -5250,6 +5327,7 @@ window.confirmarPublicar = function(){
     }).then(function(){
       cerrarPublicarModal();
       renderFeed();
+      cargarMisPublicaciones();
       toast && toast('Publicación actualizada ✓');
     }).catch(function(e){ alert('Error: '+e.message); });
   } else {
@@ -5269,6 +5347,7 @@ window.confirmarPublicar = function(){
     }).then(function(ref){
       cerrarPublicarModal();
       renderFeed();
+      cargarMisPublicaciones();
       toast && toast('Publicado en el feed ✓');
     }).catch(function(e){ alert('Error al publicar: '+e.message); });
   }
@@ -5287,7 +5366,15 @@ function capturarVistaPreviaActual(){
     if(window.cy && typeof window.cy.png==='function'){
       try{
         cyImg = window.cy.png({output:'base64uri', full:true, bg:'#f5f0e8', maxWidth:600, maxHeight:380});
-      }catch(e){}
+      }catch(e){
+        console.warn('capturarVistaPreviaActual: cy.png() con full:true falló, reintentando sin full:', e);
+        try{
+          // Plan B: usar el viewport actual en vez de intentar encuadrar todo el grafo
+          cyImg = window.cy.png({output:'base64uri', bg:'#f5f0e8', maxWidth:600, maxHeight:380});
+        }catch(e2){
+          console.error('capturarVistaPreviaActual: cy.png() falló también sin full. El grafo no se pudo capturar como imagen:', e2);
+        }
+      }
     }
     // 2) Capturar el SVG de vectores (líneas/curvas/flechas)
     var vecSVG = document.getElementById('vec-svg');
@@ -5300,11 +5387,12 @@ function capturarVistaPreviaActual(){
     }
     if(!cyImg && !vecHTML) return '';
     var svg = '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet">';
+    svg += '<rect x="0" y="0" width="'+w+'" height="'+h+'" fill="#f5f0e8"/>';
     if(cyImg) svg += '<image href="'+cyImg+'" x="0" y="0" width="'+w+'" height="'+h+'" preserveAspectRatio="xMidYMid meet"/>';
     if(vecHTML) svg += vecHTML;
     svg += '</svg>';
     return svg;
-  }catch(e){ return ''; }
+  }catch(e){ console.error('capturarVistaPreviaActual: fallo general', e); return ''; }
 }
 function capturarGrafoActual(){
   // Placeholder. Cuando hagamos serialización completa, retornamos el JSON.

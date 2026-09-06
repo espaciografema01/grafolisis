@@ -131,6 +131,50 @@ body.vector-mode #cy{cursor:crosshair}
 .desk-card-actions button{background:none;border:none;cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:11px;color:#888;padding:2px 4px;border-radius:4px}
 .desk-card-actions button:hover{background:#f5f0e8;color:#1a1a1a}
 .desk-card-actions button.liked{color:#c9a84c}
+/* Feed panel tabs */
+#feed-tabs{display:flex;border-bottom:1px solid #d8cfb8;background:#efe8d6}
+#feed-tabs button{flex:1;background:none;border:none;padding:9px;font-family:"JetBrains Mono",monospace;font-size:11px;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+#feed-tabs button.active{color:#1a1a1a;border-bottom-color:#c9a84c;font-weight:700}
+.feed-tab-content{display:none;flex:1;overflow-y:auto}
+.feed-tab-content.active{display:flex;flex-direction:column}
+/* Perfil */
+#perfil-desk{padding:16px}
+.perfil-desk-name{font-family:"IM Fell English",serif;font-size:18px;color:#1a1a1a}
+.perfil-desk-email{font-size:11px;color:#888;margin-bottom:10px}
+.perfil-desk-stats{display:flex;gap:16px;margin:10px 0 14px}
+.perfil-desk-stat{text-align:center}
+.perfil-desk-stat b{display:block;font-size:18px;color:#c9a84c}
+.perfil-desk-stat span{font-size:10px;color:#888;text-transform:uppercase}
+.perfil-desk-bio{width:100%;background:#fff;border:1px solid #e0d6bf;border-radius:6px;padding:8px 10px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#333;resize:vertical;min-height:50px;box-sizing:border-box}
+.perfil-desk-save{background:#c9a84c;color:#1a1a1a;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-family:"JetBrains Mono",monospace;cursor:pointer;margin-top:6px}
+.perfil-desk-h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#888;margin:18px 0 8px;border-top:1px solid #e0d6bf;padding-top:14px}
+.mis-pub-row{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e0d6bf;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.mis-pub-row .titulo{flex:1;font-size:12px;color:#1a1a1a;font-family:"IM Fell English",serif}
+.mis-pub-row button{background:none;border:none;cursor:pointer;color:#888;font-size:13px}
+.mis-pub-row button:hover{color:#1a1a1a}
+/* Detalle de publicación */
+#feed-detail-desk{display:none;flex:1;overflow-y:auto;padding:12px;flex-direction:column}
+#feed-detail-desk.open{display:flex}
+.detalle-back{background:none;border:none;color:#888;font-family:"JetBrains Mono",monospace;font-size:11px;cursor:pointer;margin-bottom:8px;align-self:flex-start}
+.detalle-img{width:100%;border:1px solid #e0d6bf;border-radius:8px;background:#fff;margin-bottom:10px}
+.detalle-titulo{font-family:"IM Fell English",serif;font-size:17px;color:#1a1a1a}
+.detalle-autor{font-size:11px;color:#888;margin-bottom:8px}
+.detalle-desc{font-size:12px;color:#333;margin-bottom:14px;line-height:1.5}
+.detalle-coment-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:8px;border-top:1px solid #e0d6bf;padding-top:12px}
+.coment-row{margin-bottom:10px}
+.coment-autor{font-size:11px;font-weight:700;color:#1a1a1a}
+.coment-texto{font-size:12px;color:#333}
+.coment-input-row{display:flex;gap:6px;margin-top:10px}
+.coment-input-row input{flex:1;background:#fff;border:1px solid #e0d6bf;border-radius:6px;padding:7px 9px;font-family:"JetBrains Mono",monospace;font-size:12px}
+.coment-input-row button{background:#c9a84c;color:#1a1a1a;border:none;border-radius:6px;padding:0 12px;cursor:pointer;font-size:12px}
+/* Avisos */
+.notif-desk-item{display:flex;gap:8px;padding:9px 6px;border-bottom:1px solid #ece2c9;cursor:pointer;font-size:12px}
+.notif-desk-item:hover{background:#f9f5ee}
+.notif-desk-item.unread{background:#fbf6e8}
+.notif-desk-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.notif-desk-body{flex:1}
+.notif-desk-time{color:#aaa;font-size:10px;margin-top:2px}
+.notif-desk-markall{background:none;border:none;color:#c9a84c;font-size:11px;cursor:pointer;padding:8px 6px;display:block;width:100%;text-align:right}
 /* Publish modal desktop */
 #pub-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center}
 #pub-modal.open{display:flex}
@@ -1379,12 +1423,30 @@ snapshot();
 <!-- ═══════════ FEED PANEL ═══════════ -->
 <div id="feed-panel">
   <div id="feed-panel-header">
-    <h3>📡 Feed</h3>
+    <h3>📡 Comunidad</h3>
     <button onclick="cargarFeedDesktop()" style="background:none;border:none;color:#888;cursor:pointer;font-size:13px" title="Actualizar">↺</button>
     <button onclick="toggleFeedPanel()" style="background:none;border:none;color:#888;cursor:pointer;font-size:16px" title="Cerrar">✕</button>
   </div>
-  <div id="feed-list-desk">
-    <div style="padding:20px;text-align:center;color:#aaa;font-size:12px">Abrí el feed para ver publicaciones de la comunidad.</div>
+  <div id="feed-tabs">
+    <button id="ftab-explorar" class="active" onclick="cambiarFeedTabDesk('explorar')">Explorar</button>
+    <button id="ftab-avisos" onclick="cambiarFeedTabDesk('avisos')">Avisos <span id="notif-badge-desk" style="display:none;background:#c9572c;color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;margin-left:2px"></span></button>
+    <button id="ftab-perfil" onclick="cambiarFeedTabDesk('perfil')">Perfil</button>
+  </div>
+  <div id="feed-tab-explorar" class="feed-tab-content active">
+    <div id="feed-list-desk">
+      <div style="padding:20px;text-align:center;color:#aaa;font-size:12px">Abrí el feed para ver publicaciones de la comunidad.</div>
+    </div>
+    <div id="feed-detail-desk"></div>
+  </div>
+  <div id="feed-tab-avisos" class="feed-tab-content">
+    <div id="avisos-desk" style="padding:10px">
+      <div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Ingresá para ver tus avisos.</div>
+    </div>
+  </div>
+  <div id="feed-tab-perfil" class="feed-tab-content">
+    <div id="perfil-desk">
+      <div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Ingresá para ver tu perfil.</div>
+    </div>
   </div>
 </div>
 
@@ -1405,11 +1467,21 @@ _auth.onAuthStateChanged(function(user){
     btn.textContent = user.displayName || user.email.split('@')[0];
     btn.title = 'Cerrar sesión';
     btn.onclick = function(){ if(confirm('¿Cerrar sesión?')) _auth.signOut(); };
+    // Cargar likes propios para que ♥/♡ se muestre bien en el feed
+    _db.collection('likes').where('userId','==',user.uid).get().then(function(snap){
+      snap.forEach(function(d){ _deskLikes[d.data().pubId] = true; });
+      if(_deskFeedOpen && !document.getElementById('feed-detail-desk').classList.contains('open')) cargarFeedDesktop();
+    }).catch(function(){});
+    cargarAvisosDesk();
   } else {
     btn.textContent = 'Ingresar';
     btn.title = '';
     btn.onclick = abrirAuthModal;
+    _deskLikes = {};
+    _avisosDesk = [];
+    actualizarBadgeNotifDesk();
   }
+  renderPerfilDesk();
 });
 
 // ── Auth modal ──
@@ -1495,7 +1567,7 @@ function cargarFeedDesktop(){
     snap.forEach(function(d){
       var p = d.data();
       var liked = !!_deskLikes[d.id];
-      html += '<div class="desk-card" onclick="abrirPubDesktop(\''+d.id+'\')">'+
+      html += '<div class="desk-card" onclick="abrirDetalleDesk(\''+d.id+'\')">'+
         (p.miniaturaSVG ? '<div style="padding:8px 10px;background:#f9f5ee;border-bottom:1px solid #ece2c9;max-height:80px;overflow:hidden">'+p.miniaturaSVG+'</div>' : '')+
         '<div class="desk-card-meta">'+
           '<div class="desk-card-title">'+escapeHTMLDesk(p.titulo||'Sin título')+'</div>'+
@@ -1514,9 +1586,253 @@ function cargarFeedDesktop(){
   });
 }
 
-function abrirPubDesktop(pubId){
-  // Abrir en nueva pestaña o mostrar alert — en esta versión desktop simplemente descargamos
-  if(confirm('¿Descargar el grafo "'+pubId+'" como JSON?')) descargarPubDesk(pubId);
+// ── Pestañas del panel ──
+function cambiarFeedTabDesk(tab){
+  document.getElementById('ftab-explorar').classList.toggle('active', tab==='explorar');
+  document.getElementById('ftab-avisos').classList.toggle('active', tab==='avisos');
+  document.getElementById('ftab-perfil').classList.toggle('active', tab==='perfil');
+  document.getElementById('feed-tab-explorar').classList.toggle('active', tab==='explorar');
+  document.getElementById('feed-tab-avisos').classList.toggle('active', tab==='avisos');
+  document.getElementById('feed-tab-perfil').classList.toggle('active', tab==='perfil');
+  if(tab==='perfil') renderPerfilDesk();
+  if(tab==='avisos') cargarAvisosDesk();
+}
+
+// ── Avisos (notificaciones reales) ──
+var _avisosDesk = [];
+function crearNotificacionDesk(paraId, tipo, refId, refTitulo){
+  if(!_deskUser || !paraId || paraId===_deskUser.uid) return;
+  _db.collection('notificaciones').add({
+    paraId: paraId,
+    tipo: tipo, // 'like' | 'comment'
+    usuario: _deskUser.displayName || _deskUser.email.split('@')[0],
+    usuarioId: _deskUser.uid,
+    texto: tipo==='like' ? 'le dio like a tu publicación' : 'comentó tu publicación',
+    refId: refId,
+    refTitulo: refTitulo || '',
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    leida: false
+  }).catch(function(e){ console.warn('Error creando notificación:', e); });
+}
+function cargarAvisosDesk(){
+  var el = document.getElementById('avisos-desk');
+  if(!_deskUser){ el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Ingresá para ver tus avisos.</div>'; return; }
+  el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Cargando…</div>';
+  _db.collection('notificaciones').where('paraId','==',_deskUser.uid).limit(80).get().then(function(snap){
+    var notifs = [];
+    snap.forEach(function(d){
+      var n = d.data();
+      n.id = d.id;
+      n.fecha = n.fecha && n.fecha.toDate ? n.fecha.toDate().getTime() : Date.now();
+      notifs.push(n);
+    });
+    notifs.sort(function(a,b){ return b.fecha-a.fecha; });
+    _avisosDesk = notifs;
+    renderAvisosDesk();
+  }).catch(function(e){
+    el.innerHTML = '<div style="color:#e06060;font-size:12px;padding:12px">Error al cargar avisos.</div>';
+    console.error(e);
+  });
+}
+function renderAvisosDesk(){
+  var el = document.getElementById('avisos-desk');
+  actualizarBadgeNotifDesk();
+  if(!_avisosDesk.length){
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">No tenés avisos todavía.</div>';
+    return;
+  }
+  var iconos = {like:'♥', comment:'✎'};
+  var colores = {like:{bg:'#ffe0d8',fg:'#c9572c'}, comment:{bg:'#d8e3f0',fg:'#2c5a8a'}};
+  var html = '<button class="notif-desk-markall" onclick="marcarTodoLeidoDesk()">Marcar todo leído</button>';
+  html += _avisosDesk.map(function(n){
+    var c = colores[n.tipo] || colores.like;
+    return '<div class="notif-desk-item'+(n.leida?'':' unread')+'" onclick="abrirAvisoDesk(\''+n.refId+'\')">'+
+      '<div class="notif-desk-icon" style="background:'+c.bg+';color:'+c.fg+'">'+(iconos[n.tipo]||'•')+'</div>'+
+      '<div class="notif-desk-body"><b>'+escapeHTMLDesk(n.usuario)+'</b> '+escapeHTMLDesk(n.texto)+(n.refTitulo?' «'+escapeHTMLDesk(n.refTitulo)+'»':'')+
+      '<div class="notif-desk-time">'+tiempoRelDesk(n.fecha)+'</div></div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML = html;
+}
+function actualizarBadgeNotifDesk(){
+  var n = _avisosDesk.filter(function(x){ return !x.leida; }).length;
+  var badge = document.getElementById('notif-badge-desk');
+  if(n>0){ badge.style.display='inline'; badge.textContent = n>9?'9+':n; }
+  else badge.style.display='none';
+}
+function abrirAvisoDesk(pubId){
+  if(!pubId) return;
+  _avisosDesk.forEach(function(n){
+    if(n.refId===pubId && !n.leida){
+      n.leida = true;
+      if(n.id) _db.collection('notificaciones').doc(n.id).update({leida:true}).catch(function(){});
+    }
+  });
+  renderAvisosDesk();
+  cambiarFeedTabDesk('explorar');
+  abrirDetalleDesk(pubId);
+}
+function marcarTodoLeidoDesk(){
+  var batch = _db.batch();
+  var hubo = false;
+  _avisosDesk.forEach(function(n){
+    if(!n.leida){ n.leida = true; if(n.id){ batch.update(_db.collection('notificaciones').doc(n.id), {leida:true}); hubo = true; } }
+  });
+  renderAvisosDesk();
+  if(hubo) batch.commit().catch(function(e){ console.warn('Error marcando avisos:', e); });
+}
+
+// ── Detalle de publicación (con comentarios reales) ──
+var _detalleActualId = null;
+var _detalleActualDataDesk = null;
+function abrirDetalleDesk(pubId){
+  _detalleActualId = pubId;
+  _detalleActualDataDesk = null;
+  document.getElementById('feed-list-desk').style.display = 'none';
+  var det = document.getElementById('feed-detail-desk');
+  det.classList.add('open');
+  det.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font-size:12px">Cargando…</div>';
+  _db.collection('publicaciones').doc(pubId).get().then(function(d){
+    if(!d.exists){ det.innerHTML = '<div style="padding:20px;color:#e06060;font-size:12px">Esta publicación ya no existe.</div>'; return; }
+    var p = d.data();
+    _detalleActualDataDesk = p;
+    var liked = !!_deskLikes[pubId];
+    var html = '<button class="detalle-back" onclick="cerrarDetalleDesk()">← Volver</button>';
+    if(p.miniaturaSVG) html += '<div class="detalle-img">'+p.miniaturaSVG+'</div>';
+    html += '<div class="detalle-titulo">'+escapeHTMLDesk(p.titulo||'Sin título')+'</div>';
+    html += '<div class="detalle-autor">por '+escapeHTMLDesk(p.autor||'Anónimo')+' · '+tiempoRelDesk(p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : Date.now())+'</div>';
+    if(p.descripcion) html += '<div class="detalle-desc">'+escapeHTMLDesk(p.descripcion)+'</div>';
+    html += '<div class="desk-card-actions">'+
+      '<button class="'+(liked?'liked':'')+'" onclick="toggleLikeDesk(\''+pubId+'\',this)">'+(liked?'♥':'♡')+' '+(p.likes||0)+'</button>'+
+      '<button onclick="descargarPubDesk(\''+pubId+'\','+JSON.stringify(p.titulo||'grafo')+')">↓ Descargar</button>'+
+    '</div>';
+    html += '<div class="detalle-coment-h">Comentarios</div>';
+    html += '<div id="coment-list-desk"><div style="color:#aaa;font-size:11px">Cargando comentarios…</div></div>';
+    html += '<div class="coment-input-row"><input id="coment-input-desk" type="text" placeholder="Escribí un comentario…" onkeydown="if(event.key===\'Enter\') enviarComentarioDesk(\''+pubId+'\')"><button onclick="enviarComentarioDesk(\''+pubId+'\')">Enviar</button></div>';
+    det.innerHTML = html;
+    cargarComentariosDesk(pubId);
+  }).catch(function(e){
+    det.innerHTML = '<button class="detalle-back" onclick="cerrarDetalleDesk()">← Volver</button><div style="color:#e06060;font-size:12px;padding:10px">Error al cargar: '+e.message+'</div>';
+  });
+}
+function cerrarDetalleDesk(){
+  _detalleActualId = null;
+  document.getElementById('feed-detail-desk').classList.remove('open');
+  document.getElementById('feed-detail-desk').innerHTML = '';
+  document.getElementById('feed-list-desk').style.display = '';
+}
+function cargarComentariosDesk(pubId){
+  _db.collection('publicaciones').doc(pubId).collection('comentarios').orderBy('fecha','asc').get().then(function(snap){
+    var el = document.getElementById('coment-list-desk');
+    if(!el) return; // el usuario ya cerró el detalle
+    if(snap.empty){ el.innerHTML = '<div style="color:#aaa;font-size:11px">Sin comentarios todavía. ¡Sé el primero!</div>'; return; }
+    var html = '';
+    snap.forEach(function(d){
+      var c = d.data();
+      html += '<div class="coment-row"><span class="coment-autor">'+escapeHTMLDesk(c.autor||'Anónimo')+':</span> <span class="coment-texto">'+escapeHTMLDesk(c.texto||'')+'</span></div>';
+    });
+    el.innerHTML = html;
+  }).catch(function(e){
+    var el = document.getElementById('coment-list-desk');
+    if(el) el.innerHTML = '<div style="color:#e06060;font-size:11px">Error al cargar comentarios.</div>';
+    console.error(e);
+  });
+}
+function enviarComentarioDesk(pubId){
+  if(!_deskUser){ abrirAuthModal(); return; }
+  var inp = document.getElementById('coment-input-desk');
+  var texto = inp.value.trim();
+  if(!texto) return;
+  inp.value = '';
+  inp.disabled = true;
+  _db.collection('publicaciones').doc(pubId).collection('comentarios').add({
+    texto: texto,
+    autor: _deskUser.displayName || _deskUser.email.split('@')[0],
+    autorId: _deskUser.uid,
+    fecha: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    return _db.collection('publicaciones').doc(pubId).update({ comentarios: firebase.firestore.FieldValue.increment(1) });
+  }).then(function(){
+    inp.disabled = false;
+    cargarComentariosDesk(pubId);
+    if(_detalleActualDataDesk) crearNotificacionDesk(_detalleActualDataDesk.autorId, 'comment', pubId, _detalleActualDataDesk.titulo);
+  }).catch(function(e){
+    inp.disabled = false;
+    alert('Error al comentar: '+e.message);
+  });
+}
+
+// ── Perfil (real, conectado a Firestore) ──
+function renderPerfilDesk(){
+  var el = document.getElementById('perfil-desk');
+  if(!_deskUser){
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Ingresá para ver tu perfil.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">Cargando…</div>';
+  var uid = _deskUser.uid;
+  Promise.all([
+    _db.collection('usuarios').doc(uid).get().catch(function(){ return null; }),
+    _db.collection('publicaciones').where('autorId','==',uid).get().catch(function(){ return null; })
+  ]).then(function(res){
+    var perfilDoc = res[0];
+    var pubsSnap = res[1];
+    var bio = (perfilDoc && perfilDoc.exists) ? (perfilDoc.data().bio||'') : '';
+    var pubs = [];
+    if(pubsSnap) pubsSnap.forEach(function(d){ var p=d.data(); p.id=d.id; p.fecha = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : Date.now(); pubs.push(p); });
+    pubs.sort(function(a,b){ return b.fecha-a.fecha; });
+    var likesTotal = pubs.reduce(function(s,p){ return s + (p.likes||0); }, 0);
+    var html = '<div class="perfil-desk-name">'+escapeHTMLDesk(_deskUser.displayName || _deskUser.email.split('@')[0])+'</div>';
+    html += '<div class="perfil-desk-email">'+escapeHTMLDesk(_deskUser.email)+'</div>';
+    html += '<div class="perfil-desk-stats">'+
+      '<div class="perfil-desk-stat"><b>'+pubs.length+'</b><span>Publicados</span></div>'+
+      '<div class="perfil-desk-stat"><b>'+likesTotal+'</b><span>Likes recibidos</span></div>'+
+    '</div>';
+    html += '<textarea id="perfil-bio-desk" class="perfil-desk-bio" placeholder="Contá algo sobre vos…">'+escapeHTMLDesk(bio)+'</textarea>';
+    html += '<button class="perfil-desk-save" onclick="guardarBioDesk()">Guardar bio</button>';
+    html += '<div class="perfil-desk-h4">Mis publicaciones ('+pubs.length+')</div>';
+    if(!pubs.length){
+      html += '<div style="color:#aaa;font-size:11px">Todavía no publicaste nada.</div>';
+    } else {
+      pubs.forEach(function(p){
+        html += '<div class="mis-pub-row">'+
+          '<span class="titulo" onclick="abrirDetalleDesk(\''+p.id+'\');cambiarFeedTabDesk(\'explorar\')" style="cursor:pointer">'+escapeHTMLDesk(p.titulo||'Sin título')+'</span>'+
+          '<button onclick="editarMiPubDesk(\''+p.id+'\','+JSON.stringify(p.titulo||'')+','+JSON.stringify(p.descripcion||'')+')" title="Editar">✎</button>'+
+          '<button onclick="borrarMiPubDesk(\''+p.id+'\')" title="Borrar">🗑</button>'+
+        '</div>';
+      });
+    }
+    el.innerHTML = html;
+  });
+}
+function guardarBioDesk(){
+  if(!_deskUser) return;
+  var bio = document.getElementById('perfil-bio-desk').value.trim();
+  _db.collection('usuarios').doc(_deskUser.uid).set({ bio: bio }, { merge: true }).then(function(){
+    showInd('Bio guardada ✓');
+  }).catch(function(e){ alert('Error: '+e.message); });
+}
+function editarMiPubDesk(pubId, tituloActual, descActual){
+  var nuevoTitulo = prompt('Título:', tituloActual);
+  if(nuevoTitulo===null) return;
+  var nuevaDesc = prompt('Descripción:', descActual);
+  if(nuevaDesc===null) return;
+  _db.collection('publicaciones').doc(pubId).update({
+    titulo: nuevoTitulo.trim() || tituloActual,
+    descripcion: nuevaDesc.trim()
+  }).then(function(){
+    showInd('Publicación actualizada ✓');
+    renderPerfilDesk();
+    if(_deskFeedOpen) cargarFeedDesktop();
+  }).catch(function(e){ alert('Error: '+e.message); });
+}
+function borrarMiPubDesk(pubId){
+  if(!confirm('¿Borrar esta publicación? No se puede deshacer.')) return;
+  _db.collection('publicaciones').doc(pubId).delete().then(function(){
+    showInd('Publicación borrada ✓');
+    renderPerfilDesk();
+    if(_deskFeedOpen) cargarFeedDesktop();
+  }).catch(function(e){ alert('Error: '+e.message); });
 }
 
 function toggleLikeDesk(pubId, btn){
@@ -1526,6 +1842,11 @@ function toggleLikeDesk(pubId, btn){
   _deskLikes[pubId] = !liked;
   btn.classList.toggle('liked', !liked);
   btn.innerHTML = (liked ? '♡ ' : '♥ ');
+  if(!liked){
+    _db.collection('publicaciones').doc(pubId).get().then(function(d){
+      if(d.exists) crearNotificacionDesk(d.data().autorId, 'like', pubId, d.data().titulo);
+    });
+  }
   _db.collection('publicaciones').doc(pubId).update({ likes: firebase.firestore.FieldValue.increment(delta) })
     .catch(function(){ /* revertir */ _deskLikes[pubId]=liked; });
   // Guardar like del usuario
@@ -1564,11 +1885,19 @@ function confirmarPublicarDesktop(){
   var miniatura = '';
   try{
     if(window.cy && typeof window.cy.png === 'function'){
-      miniatura = window.cy.png({output:'base64uri', full:true, bg:'#f5f0e8', maxWidth:600, maxHeight:380});
-      // Envolver en SVG/img para el feed
-      miniatura = '<img src="'+miniatura+'" style="width:100%;height:100%;object-fit:contain">';
+      try{
+        miniatura = window.cy.png({output:'base64uri', full:true, bg:'#f5f0e8', maxWidth:600, maxHeight:380});
+      }catch(e){
+        console.warn('confirmarPublicarDesktop: cy.png() con full:true falló, reintentando sin full:', e);
+        try{
+          miniatura = window.cy.png({output:'base64uri', bg:'#f5f0e8', maxWidth:600, maxHeight:380});
+        }catch(e2){
+          console.error('confirmarPublicarDesktop: cy.png() falló también sin full:', e2);
+        }
+      }
+      if(miniatura) miniatura = '<img src="'+miniatura+'" style="width:100%;height:100%;object-fit:contain;background:#f5f0e8">';
     }
-  }catch(e){}
+  }catch(e){ console.error('confirmarPublicarDesktop: fallo general al capturar miniatura', e); }
   // Serializar grafo completo
   var grafoData = {
     nodes: cy.nodes().map(function(n){ return {id:n.id(),label:n.data('label'),x:n.position('x'),y:n.position('y'),classes:n.className(),angle:n.data('angle')||0,barraW:n.data('barraW')||null,barraThick:n.data('barraThick')||3,width:parseFloat(n.style('width')),height:parseFloat(n.style('height'))}; }),
