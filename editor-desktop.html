@@ -255,15 +255,15 @@ const _db   = firebase.firestore();
 
   <!-- Dropdown plantillas -->
   <div class="dropdown" id="dd-plantillas">
-    <button class="dropdown-btn" onclick="toggleDD('dd-plantillas')">
+    <button class="dropdown-btn" onclick="toggleDD('dd-plantillas');cargarPlantillasUsuarioDesk()">
       Plantillas <span class="arrow">▾</span>
     </button>
-    <div class="dropdown-menu" id="menu-plantillas">
-      <button onclick="plantillaAmo();closeDD()">Discurso del Amo</button>
-      <button onclick="plantillaUniversitario();closeDD()">Discurso Universitario</button>
-      <button onclick="plantillaHisterica();closeDD()">Discurso Histérica</button>
-      <button onclick="plantillaAnalista();closeDD()">Discurso del Analista</button>
-      <button onclick="plantillaGrafoDeseo();closeDD()">Grafo del Deseo</button>
+    <div class="dropdown-menu" id="menu-plantillas" style="min-width:220px;max-height:320px;overflow-y:auto">
+      <div id="plant-lista-desk" style="padding:6px">
+        <div style="color:#888;font-size:11px;text-align:center;padding:10px">Ingresá para ver tus plantillas.</div>
+      </div>
+      <input type="file" id="plant-file-input-desk" accept="application/json,.json" style="display:none" onchange="manejarArchivoPlantillaDesk(event)">
+      <button onclick="document.getElementById('plant-file-input-desk').click()">📥 Subir archivo .json</button>
     </div>
   </div>
 
@@ -1479,6 +1479,7 @@ _auth.onAuthStateChanged(function(user){
     btn.onclick = abrirAuthModal;
     _deskLikes = {};
     _avisosDesk = [];
+    misPlantillasDesk = [];
     actualizarBadgeNotifDesk();
   }
   renderPerfilDesk();
@@ -1705,6 +1706,7 @@ function abrirDetalleDesk(pubId){
     html += '<div class="desk-card-actions">'+
       '<button class="'+(liked?'liked':'')+'" onclick="toggleLikeDesk(\''+pubId+'\',this)">'+(liked?'♥':'♡')+' '+(p.likes||0)+'</button>'+
       '<button onclick="descargarPubDesk(\''+pubId+'\','+JSON.stringify(p.titulo||'grafo')+')">↓ Descargar</button>'+
+      '<button onclick="guardarPubComoPlantillaDesk(\''+pubId+'\','+JSON.stringify(p.titulo||'')+','+JSON.stringify(p.grafo||null)+','+JSON.stringify(p.plataforma||null)+')">📐 Plantilla</button>'+
     '</div>';
     html += '<div class="detalle-coment-h">Comentarios</div>';
     html += '<div id="coment-list-desk"><div style="color:#aaa;font-size:11px">Cargando comentarios…</div></div>';
@@ -1797,6 +1799,7 @@ function renderPerfilDesk(){
       pubs.forEach(function(p){
         html += '<div class="mis-pub-row">'+
           '<span class="titulo" onclick="abrirDetalleDesk(\''+p.id+'\');cambiarFeedTabDesk(\'explorar\')" style="cursor:pointer">'+escapeHTMLDesk(p.titulo||'Sin título')+'</span>'+
+          '<button onclick="guardarPubComoPlantillaDesk(\''+p.id+'\','+JSON.stringify(p.titulo||'')+','+JSON.stringify(p.grafo||null)+','+JSON.stringify(p.plataforma||null)+')" title="Guardar como plantilla">📐</button>'+
           '<button onclick="editarMiPubDesk(\''+p.id+'\','+JSON.stringify(p.titulo||'')+','+JSON.stringify(p.descripcion||'')+')" title="Editar">✎</button>'+
           '<button onclick="borrarMiPubDesk(\''+p.id+'\')" title="Borrar">🗑</button>'+
         '</div>';
@@ -1812,6 +1815,228 @@ function guardarBioDesk(){
     showInd('Bio guardada ✓');
   }).catch(function(e){ alert('Error: '+e.message); });
 }
+
+// ═══════════ MIS PLANTILLAS (desktop) ═══════════
+var misPlantillasDesk = [];
+function detectarPlataformaGrafoDesk(grafo){
+  if(!grafo) return null;
+  if(grafo.cy) return 'mobile';
+  if(grafo.nodes) return 'desktop';
+  return null;
+}
+function cargarPlantillasUsuarioDesk(){
+  var lista = document.getElementById('plant-lista-desk');
+  if(!_deskUser){ if(lista) lista.innerHTML = '<div style="color:#888;font-size:11px;text-align:center;padding:10px">Ingresá para ver tus plantillas.</div>'; return; }
+  if(lista) lista.innerHTML = '<div style="color:#888;font-size:11px;text-align:center;padding:10px">Cargando…</div>';
+  _db.collection('usuarios').doc(_deskUser.uid).collection('plantillas').get().then(function(snap){
+    var arr = [];
+    snap.forEach(function(d){ var p=d.data(); p.id=d.id; p.fecha = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : Date.now(); arr.push(p); });
+    arr.sort(function(a,b){ return b.fecha-a.fecha; });
+    misPlantillasDesk = arr;
+    renderPlantillasListaDesk();
+  }).catch(function(e){
+    console.warn('Error cargando plantillas:', e);
+    if(lista) lista.innerHTML = '<div style="color:#e06060;font-size:11px;text-align:center;padding:10px">Error al cargar.</div>';
+  });
+}
+function renderPlantillasListaDesk(){
+  var lista = document.getElementById('plant-lista-desk');
+  if(!lista) return;
+  if(!misPlantillasDesk.length){
+    lista.innerHTML = '<div style="color:#888;font-size:11px;text-align:center;padding:10px">Sin plantillas todavía. Agregá una desde el feed o subiendo un .json.</div>';
+    return;
+  }
+  lista.innerHTML = misPlantillasDesk.map(function(p,i){
+    var icono = p.plataforma==='mobile' ? '📱' : '🖥️';
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 4px;border-bottom:1px solid #eee2c9">'+
+      '<span style="flex:1;font-size:12px;color:#1a1a1a;font-family:\'IM Fell English\',serif">'+icono+' '+escapeHTMLDesk(p.nombre||'Sin nombre')+'</span>'+
+      '<button onclick="usarPlantillaGuardadaDesk('+i+');closeDD()" style="background:#c9a84c;color:#1a1a1a;border:none;border-radius:5px;padding:4px 8px;font-size:10px;cursor:pointer">Usar</button>'+
+      '<button onclick="borrarPlantillaGuardadaDesk(\''+p.id+'\')" style="background:none;border:none;color:#888;font-size:12px;cursor:pointer">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+function guardarPlantillaDesk(nombre, estado, plataforma, origen, origenTitulo){
+  if(!_deskUser){ abrirAuthModal(); return; }
+  if(!estado){ alert('No se pudo leer el grafo para guardar como plantilla.'); return; }
+  _db.collection('usuarios').doc(_deskUser.uid).collection('plantillas').add({
+    nombre: nombre || 'Sin nombre',
+    plataforma: plataforma,
+    origen: origen,
+    origenTitulo: origenTitulo || null,
+    estado: estado,
+    fecha: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    showInd('Plantilla guardada ✓');
+    cargarPlantillasUsuarioDesk();
+  }).catch(function(e){ alert('Error al guardar plantilla: '+e.message); });
+}
+// Guardar una publicación del feed (por id) como plantilla propia
+window.guardarPubComoPlantillaDesk = function(pubId, titulo, grafo, plataforma){
+  if(!_deskUser){ abrirAuthModal(); return; }
+  if(!grafo){ alert('Esta publicación no tiene un grafo guardado para usar como plantilla.'); return; }
+  var plataformaOrigen = plataforma || detectarPlataformaGrafoDesk(grafo);
+  if(!plataformaOrigen){ alert('No se pudo leer el formato del grafo de esta publicación.'); return; }
+  var nombre = prompt('Nombre para esta plantilla:', titulo || 'Plantilla');
+  if(nombre===null) return;
+  guardarPlantillaDesk(nombre.trim() || titulo, grafo, plataformaOrigen, 'feed', titulo);
+};
+function borrarPlantillaGuardadaDesk(id){
+  if(!confirm('¿Borrar esta plantilla?')) return;
+  _db.collection('usuarios').doc(_deskUser.uid).collection('plantillas').doc(id).delete().then(function(){
+    showInd('Plantilla borrada');
+    cargarPlantillasUsuarioDesk();
+  }).catch(function(e){ alert('Error al borrar: '+e.message); });
+}
+window.manejarArchivoPlantillaDesk = function(event){
+  var file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  if(!_deskUser){ abrirAuthModal(); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data;
+    try{ data = JSON.parse(e.target.result); }catch(err){ alert('El archivo no es un JSON válido.'); return; }
+    var grafo = data.grafo || data;
+    var plataforma = data.plataforma || detectarPlataformaGrafoDesk(grafo);
+    if(!plataforma){ alert('Este archivo no tiene un formato de grafo reconocible.'); return; }
+    var nombreSugerido = data.titulo || file.name.replace(/\.json$/i,'');
+    var nombre = prompt('Nombre para esta plantilla:', nombreSugerido);
+    if(nombre===null) return;
+    guardarPlantillaDesk(nombre.trim() || nombreSugerido, grafo, plataforma, 'archivo', null);
+  };
+  reader.readAsText(file);
+};
+window.usarPlantillaGuardadaDesk = function(idx){
+  var p = misPlantillasDesk[idx];
+  if(!p) return;
+  var ok = (p.plataforma==='desktop') ? usarPlantillaDesktop(p.estado) : usarPlantillaMobileEnDesktop(p.estado);
+  if(ok) showInd('Plantilla insertada ✓');
+  else alert('No se pudo insertar esta plantilla (puede estar vacía o dañada).');
+};
+function cyCenterDesk(){
+  var pan=cy.pan(), zoom=cy.zoom();
+  var wrap=document.getElementById('cy').getBoundingClientRect();
+  return {x:(wrap.width/2-pan.x)/zoom, y:(wrap.height/2-pan.y)/zoom};
+}
+// Inserta un estado NATIVO de desktop ({nodes,edges,textos,vectors}) sumándolo al canvas actual
+function usarPlantillaDesktop(estado){
+  try{
+    if(!estado) return false;
+    var srcNodes = estado.nodes || [];
+    var srcEdges = estado.edges || [];
+    var srcTxts = estado.textos || [];
+    var srcVecs = estado.vectors || [];
+    if(!srcNodes.length && !srcTxts.length && !srcVecs.length) return false;
+
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    srcNodes.forEach(function(n){ if(n.x<minX)minX=n.x; if(n.x>maxX)maxX=n.x; if(n.y<minY)minY=n.y; if(n.y>maxY)maxY=n.y; });
+    if(minX===Infinity){ minX=0;maxX=0;minY=0;maxY=0; }
+    var midX=(minX+maxX)/2, midY=(minY+maxY)/2;
+    var c = cyCenterDesk();
+    var ex = cy.nodes().length;
+    var jitter = ex>0 ? (20+Math.random()*30) : 0;
+    var dx = (c.x-midX)+jitter, dy = (c.y-midY)+jitter;
+
+    var sfx = '_'+Date.now();
+    var idMap = {};
+    srcNodes.forEach(function(n){
+      var esBarra = (n.classes||'').split(' ').indexOf('barra')>=0;
+      var newId = cy.getElementById(n.id).length>0 ? n.id+sfx : n.id;
+      idMap[n.id] = newId;
+      var node = cy.add({group:'nodes', data:{id:newId, label:n.label!==undefined?n.label:n.id, angle:n.angle||0, barraW:n.barraW||null, barraThick:n.barraThick||3}, position:{x:n.x+dx,y:n.y+dy}, classes: esBarra?'barra':''});
+      if(!esBarra && n.width) node.style({'width':n.width,'height':n.height||n.width,'font-size':Math.max(8,(n.width||40)*0.35)});
+      if(esBarra) aplicarRotacionBarra(node);
+    });
+    srcEdges.forEach(function(e){
+      var newSrc = idMap[e.source], newTgt = idMap[e.target];
+      if(!newSrc || !newTgt) return;
+      cy.add({group:'edges', data:{id:'e'+Date.now()+Math.floor(Math.random()*100000), source:newSrc, target:newTgt, label:e.label||''}, classes:e.classes||''});
+    });
+    srcTxts.forEach(function(t){
+      var newId = 'txt_'+(++txtCounter);
+      var obj = crearTextoEl(newId, t.x+dx, t.y+dy, t.content);
+      if(t.fontSize && t.fontSize!==16){ obj.fontSize=t.fontSize; obj.el.style.fontSize=t.fontSize+'px'; }
+      if(t.rotation){ obj.rotation=t.rotation; obj.el.style.transform='rotate('+t.rotation+'deg)'; obj.el.style.transformOrigin='left top'; }
+    });
+    srcVecs.forEach(function(v){
+      var cpx = (v.cpx!==undefined) ? v.cpx+dx : undefined;
+      var cpy = (v.cpy!==undefined) ? v.cpy+dy : undefined;
+      crearVectorEl(v.x1+dx, v.y1+dy, v.x2+dx, v.y2+dy, cpx, cpy);
+    });
+    actualizarContadorS();
+    snapshot();
+    return true;
+  }catch(e){ console.error('usarPlantillaDesktop: error insertando plantilla', e); return false; }
+}
+// Convierte y agrega el estado NATIVO de mobile ({cy,txts,vecs,bars,...}) al canvas de desktop.
+// Conversión best-effort: se pierde la curvatura multi-punto de los vectores de mobile
+// (se usa solo el primer punto de control) y no se importan imágenes ni bucles.
+function usarPlantillaMobileEnDesktop(estado){
+  try{
+    if(!estado) return false;
+    var srcNodes = (estado.cy && estado.cy.elements && estado.cy.elements.nodes) || [];
+    var srcEdges = (estado.cy && estado.cy.elements && estado.cy.elements.edges) || [];
+    var srcTxts = estado.txts || [];
+    var srcVecs = estado.vecs || [];
+    var srcBars = estado.bars || [];
+    if(!srcNodes.length && !srcTxts.length && !srcVecs.length && !srcBars.length) return false;
+
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    srcNodes.forEach(function(n){ var p=n.position||{x:0,y:0}; if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y; });
+    if(minX===Infinity){ minX=0;maxX=0;minY=0;maxY=0; }
+    var midX=(minX+maxX)/2, midY=(minY+maxY)/2;
+    var c = cyCenterDesk();
+    var zoom = cy.zoom();
+    var ex = cy.nodes().length;
+    var jitter = ex>0 ? (20+Math.random()*30) : 0;
+    var dxModel = (c.x-midX)+jitter, dyModel = (c.y-midY)+jitter;
+    // Los txts/vecs/bars de mobile están en coordenadas de PANTALLA; convertimos
+    // el offset "modelo" a un delta de pantalla equivalente usando el zoom actual.
+    var dxScreen = dxModel*zoom, dyScreen = dyModel*zoom;
+
+    var sfx = '_'+Date.now();
+    var idMap = {};
+    srcNodes.forEach(function(n){
+      var oldId = n.data.id;
+      var newId = cy.getElementById(oldId).length>0 ? oldId+sfx : oldId;
+      idMap[oldId] = newId;
+      var pos = n.position||{x:0,y:0};
+      cy.add({group:'nodes', data:{id:newId, label:n.data.label||oldId}, position:{x:pos.x+dxModel,y:pos.y+dyModel}});
+    });
+    srcEdges.forEach(function(e){
+      var d = e.data||{};
+      var newSrc = idMap[d.source], newTgt = idMap[d.target];
+      if(!newSrc || !newTgt) return;
+      cy.add({group:'edges', data:{id:'e'+Date.now()+Math.floor(Math.random()*100000), source:newSrc, target:newTgt, label:d.label||''}});
+    });
+    // Barras de mobile (separadas, en coords de pantalla) → nodos 'barra' de desktop (coords de modelo)
+    var pan = cy.pan();
+    srcBars.forEach(function(b){
+      var modelX = (b.cx - pan.x)/zoom, modelY = (b.cy - pan.y)/zoom;
+      var bn = cy.add({group:'nodes', data:{id:'b'+Date.now()+Math.random(), label:'', angle:b.angle||0, barraW:b.w||140, barraThick:b.thick||3}, position:{x:modelX,y:modelY}, classes:'barra'});
+      aplicarRotacionBarra(bn);
+    });
+    srcTxts.forEach(function(t){
+      var newId = 'txt_'+(++txtCounter);
+      crearTextoEl(newId, t.x+dxScreen, t.y+dyScreen, t.content);
+    });
+    srcVecs.forEach(function(v){
+      var cpx, cpy;
+      if(v.cps && v.cps.length){
+        // Aproximación: convertir el primer punto de control paramétrico {t,d} a coordenadas absolutas
+        var mx = v.x1+(v.x2-v.x1)*v.cps[0].t, my = v.y1+(v.y2-v.y1)*v.cps[0].t;
+        var dx0 = v.x2-v.x1, dy0 = v.y2-v.y1, len = Math.sqrt(dx0*dx0+dy0*dy0)||1;
+        cpx = mx + (-dy0/len)*v.cps[0].d;
+        cpy = my + (dx0/len)*v.cps[0].d;
+      }
+      crearVectorEl(v.x1+dxScreen, v.y1+dyScreen, v.x2+dxScreen, v.y2+dyScreen, cpx!==undefined?cpx+dxScreen:undefined, cpy!==undefined?cpy+dyScreen:undefined);
+    });
+    actualizarContadorS();
+    snapshot();
+    return true;
+  }catch(e){ console.error('usarPlantillaMobileEnDesktop: error insertando plantilla', e); return false; }
+}
+
 function editarMiPubDesk(pubId, tituloActual, descActual){
   var nuevoTitulo = prompt('Título:', tituloActual);
   if(nuevoTitulo===null) return;
@@ -1915,7 +2140,8 @@ function confirmarPublicarDesktop(){
     grafo: grafoData,
     likes: 0,
     comentarios: 0,
-    fecha: firebase.firestore.FieldValue.serverTimestamp()
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    plataforma: 'desktop'
   }).then(function(){
     cerrarPublicarDesktop();
     showInd('Publicado en el feed ✓');

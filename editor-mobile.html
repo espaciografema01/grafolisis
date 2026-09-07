@@ -781,15 +781,16 @@ const _db   = firebase.firestore();
 <!-- MODAL PLANTILLAS -->
 <div id="plant-modal" class="bsheet-overlay">
   <div class="bsheet-box">
-    <div class="bsheet-title">Plantillas</div>
-    <button class="s-btn full" onclick="plantillaAmo();cerrarPlantillas()">Discurso del Amo</button>
-    <button class="s-btn full" onclick="plantillaUniversitario();cerrarPlantillas()">Discurso Universitario</button>
-    <button class="s-btn full" onclick="plantillaHisterica();cerrarPlantillas()">Discurso Histérica</button>
-    <button class="s-btn full" onclick="plantillaAnalista();cerrarPlantillas()">Discurso del Analista</button>
-    <button class="s-btn full" onclick="plantillaGrafoDeseo();cerrarPlantillas()">Grafo del Deseo</button>
+    <div class="bsheet-title">Mis plantillas</div>
+    <div id="plant-lista" style="max-height:50vh;overflow-y:auto;margin-bottom:10px">
+      <div style="color:#888;font-size:12px;text-align:center;padding:16px">Ingresá para ver tus plantillas.</div>
+    </div>
+    <input type="file" id="plant-file-input" accept="application/json,.json" style="display:none" onchange="manejarArchivoPlantilla(event)">
+    <button class="s-btn full" onclick="document.getElementById('plant-file-input').click()">📥 Subir archivo .json</button>
     <button class="bsheet-close" onclick="cerrarPlantillas()">Cerrar</button>
   </div>
 </div>
+
 
 
 <div id="indicator"></div>
@@ -881,6 +882,7 @@ var cy = cytoscape({
   userPanningEnabled: true,
   boxSelectionEnabled: false
 });
+window.cy = cy; // exponer globalmente: lo necesitan la captura de miniatura y otros scripts
 
 // ── ESTADO ────────────────────────────────────
 var sCount=1, sourceNode=null, edgeType='normal', edgeDir='uni';
@@ -937,7 +939,7 @@ function spT(on,off){ document.getElementById(on).classList.add('active'); docum
 // ── MODALES SHEET ─────────────────────────────
 function abrirChars(){ document.getElementById('char-modal').classList.add('open'); }
 function cerrarChars(){ document.getElementById('char-modal').classList.remove('open'); }
-function abrirPlantillas(){ document.getElementById('plant-modal').classList.add('open'); }
+function abrirPlantillas(){ document.getElementById('plant-modal').classList.add('open'); cargarPlantillasUsuario(); }
 function cerrarPlantillas(){ document.getElementById('plant-modal').classList.remove('open'); }
 
 // Cerrar modales solo al tocar el fondo oscuro (no al hacer scroll dentro del box)
@@ -3872,15 +3874,22 @@ window.undo=undo; window.redo=redo; window.eliminarSeleccionado=eliminarSeleccio
 window.abrirPanel=abrirPanel; window.cerrarPanel=cerrarPanel;
 window.setEdgeType=setEdgeType; window.setDirection=setDirection;
 window.resizeSelected=resizeSelected; window.rotarBarraSVG=rotarBarraSVG; window.rotarVector=rotarVector; window.escalerVector=escalerVector; window.deselBarSVG=deselBarSVG;
-window.plantillaAmo=plantillaAmo; window.plantillaUniversitario=plantillaUniversitario;
-window.plantillaHisterica=plantillaHisterica; window.plantillaAnalista=plantillaAnalista;
-window.plantillaGrafoDeseo=plantillaGrafoDeseo;
 window.guardarJSON=guardarJSON; window.exportarTexto=exportarTexto;
 window.abrirImportar=abrirImportar; window.cerrarImportar=cerrarImportar; window.confirmarImportar=confirmarImportar;
 window.limpiar=limpiar; window.spT=spT; window.insertarCaracter=insertarCaracter;
 window.cerrarTxtModal=cerrarTxtModal; window.confirmarTxtModal=confirmarTxtModal;
 window.cerrarConfirm=cerrarConfirm; window.confirmarLimpiar=confirmarLimpiar;
 window.toggleLockCanvas=toggleLockCanvas;
+// Necesarios para el sistema de "Mis plantillas" (usado desde otro bloque <script>)
+window.cyCenter=cyCenter; window.crearVectorEl=crearVectorEl; window.crearTextoEl=crearTextoEl;
+window.crearBarraSVG=crearBarraSVG; window.actualizarContadorS=actualizarContadorS;
+window.aplicarRotacionBarra=(typeof aplicarRotacionBarra==='function')?aplicarRotacionBarra:null;
+window.crearDotVec=(typeof crearDotVec==='function')?crearDotVec:null;
+window.ocultarDotsVec=(typeof ocultarDotsVec==='function')?ocultarDotsVec:null;
+window.actualizarArrowEls=(typeof actualizarArrowEls==='function')?actualizarArrowEls:null;
+window.snapshot=snapshot;
+window.siguienteTxtId=function(){ return 'txt_'+(++txtCounter); };
+window.BARRA_W=BARRA_W;
 
 // ═══════════ IMÁGENES ═══════════
 var imagenes = []; // array de {id, el, x, y, w, h, dataURL, modo:'elemento'|'fondo', rotation}
@@ -5069,6 +5078,7 @@ function renderPerfil(){
           '<div class="meta">'+ tiempoRelativo(p.fecha) +' · '+ (p.likes||0) +' ♥ · '+ (p.comentarios||0) +' ✎</div>'+
         '</div>'+
         '<div class="my-pub-actions">'+
+          '<button onclick="guardarPubComoPlantilla(\''+p.id+'\')" title="Guardar como plantilla">📐</button>'+
           '<button onclick="editarMiPub(\''+p.id+'\')" title="Editar">✎</button>'+
           '<button class="danger" onclick="borrarMiPub(\''+p.id+'\')" title="Borrar">🗑</button>'+
         '</div>'+
@@ -5158,6 +5168,284 @@ function cargarMisPublicaciones(){
   }).catch(function(e){ console.warn('Error cargando mis publicaciones:', e); });
 }
 
+// ═══════════ MIS PLANTILLAS ═══════════
+// Biblioteca personal de plantillas del usuario, guardada en Firestore
+// bajo usuarios/{uid}/plantillas/{id}. Se pueden agregar desde una
+// publicación del feed, o subiendo un archivo .json compatible.
+var misPlantillas = [];
+
+function detectarPlataformaGrafo(grafo){
+  if(!grafo) return null;
+  if(grafo.cy) return 'mobile';
+  if(grafo.nodes) return 'desktop';
+  return null;
+}
+
+function cargarPlantillasUsuario(){
+  var lista = document.getElementById('plant-lista');
+  if(!session.user){
+    if(lista) lista.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:16px">Ingresá para ver tus plantillas.</div>';
+    return;
+  }
+  if(lista) lista.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:16px">Cargando…</div>';
+  _db.collection('usuarios').doc(session.user.id).collection('plantillas').get().then(function(snap){
+    var arr = [];
+    snap.forEach(function(d){
+      var p = d.data(); p.id = d.id;
+      p.fecha = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : Date.now();
+      arr.push(p);
+    });
+    arr.sort(function(a,b){ return b.fecha - a.fecha; });
+    misPlantillas = arr;
+    renderPlantillasLista();
+  }).catch(function(e){
+    console.warn('Error cargando plantillas:', e);
+    if(lista) lista.innerHTML = '<div style="color:#e06060;font-size:12px;text-align:center;padding:16px">Error al cargar.</div>';
+  });
+}
+
+function renderPlantillasLista(){
+  var lista = document.getElementById('plant-lista');
+  if(!lista) return;
+  if(!misPlantillas.length){
+    lista.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:16px">Todavía no tenés plantillas. Agregá una desde el feed (⋯ → Guardar como plantilla) o subiendo un archivo .json.</div>';
+    return;
+  }
+  lista.innerHTML = misPlantillas.map(function(p,i){
+    var icono = p.plataforma==='desktop' ? '🖥️' : '📱';
+    return '<div style="display:flex;align-items:center;gap:8px;background:#1e1e1e;border:1px solid #333;border-radius:9px;padding:10px 12px;margin-bottom:8px">'+
+      '<span style="flex:1;font-size:13px;color:#f0ead8;font-family:\'IM Fell English\',serif">'+icono+' '+escapeHTML(p.nombre||'Sin nombre')+'</span>'+
+      '<button onclick="usarPlantillaGuardada('+i+')" style="background:#c9a84c;color:#1a1a1a;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-family:\'JetBrains Mono\',monospace;cursor:pointer">Usar</button>'+
+      '<button onclick="borrarPlantillaGuardada(\''+p.id+'\')" style="background:none;border:none;color:#888;font-size:14px;cursor:pointer">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+
+function guardarPlantilla(nombre, estado, plataforma, origen, origenTitulo){
+  if(!session.user){ requireLogin('Necesitás iniciar sesión para guardar plantillas'); return; }
+  if(!estado){ alert('No se pudo leer el grafo para guardar como plantilla.'); return; }
+  _db.collection('usuarios').doc(session.user.id).collection('plantillas').add({
+    nombre: nombre || 'Sin nombre',
+    plataforma: plataforma,
+    origen: origen,
+    origenTitulo: origenTitulo || null,
+    estado: estado,
+    fecha: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    toast && toast('Plantilla guardada ✓');
+    cargarPlantillasUsuario();
+  }).catch(function(e){ alert('Error al guardar plantilla: '+e.message); });
+}
+
+// Agregar una publicación del feed (por su id) como plantilla propia
+window.guardarPubComoPlantilla = function(pubId){
+  if(!requireLogin('Necesitás iniciar sesión para guardar plantillas')) return;
+  var p = feedMock.find(function(x){ return x.id===pubId; }) || (detalleActual && detalleActual.id===pubId ? detalleActual : null);
+  if(!p || !p.grafo){ alert('Esta publicación no tiene un grafo guardado para usar como plantilla.'); return; }
+  var plataformaOrigen = p.plataforma || detectarPlataformaGrafo(p.grafo);
+  if(!plataformaOrigen){ alert('No se pudo leer el formato del grafo de esta publicación.'); return; }
+  var nombre = prompt('Nombre para esta plantilla:', p.titulo || 'Plantilla');
+  if(nombre===null) return;
+  guardarPlantilla(nombre.trim() || p.titulo, p.grafo, plataformaOrigen, 'feed', p.titulo);
+};
+
+function borrarPlantillaGuardada(id){
+  if(!confirm('¿Borrar esta plantilla?')) return;
+  _db.collection('usuarios').doc(session.user.id).collection('plantillas').doc(id).delete().then(function(){
+    toast && toast('Plantilla borrada');
+    cargarPlantillasUsuario();
+  }).catch(function(e){ alert('Error al borrar: '+e.message); });
+}
+
+// Subir un archivo .json (bajado del feed, o exportado desde cualquiera de los dos editores)
+window.manejarArchivoPlantilla = function(event){
+  var file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  if(!requireLogin('Necesitás iniciar sesión para guardar plantillas')) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data;
+    try{ data = JSON.parse(e.target.result); }
+    catch(err){ alert('El archivo no es un JSON válido.'); return; }
+    // Soportar tanto el formato con sobre (descargado del feed: {formato,titulo,grafo,...})
+    // como el formato crudo exportado directo desde un editor.
+    var grafo = data.grafo || data;
+    var plataforma = data.plataforma || detectarPlataformaGrafo(grafo);
+    if(!plataforma){ alert('Este archivo no tiene un formato de grafo reconocible.'); return; }
+    var nombreSugerido = data.titulo || file.name.replace(/\.json$/i,'');
+    var nombre = prompt('Nombre para esta plantilla:', nombreSugerido);
+    if(nombre===null) return;
+    guardarPlantilla(nombre.trim() || nombreSugerido, grafo, plataforma, 'archivo', null);
+  };
+  reader.readAsText(file);
+};
+
+// ── Insertar una plantilla guardada en el canvas actual ──
+window.usarPlantillaGuardada = function(idx){
+  var p = misPlantillas[idx];
+  if(!p) return;
+  var ok;
+  if(p.plataforma==='mobile') ok = usarPlantillaMobile(p.estado);
+  else ok = usarPlantillaDesktopEnMobile(p.estado);
+  if(ok){
+    cerrarPlantillas();
+    cambiarTab('crear');
+    toast && toast('Plantilla insertada ✓');
+  } else {
+    alert('No se pudo insertar esta plantilla (puede estar vacía o dañada).');
+  }
+};
+
+// Inserta un estado NATIVO de mobile ({cy,txts,vecs,bars,...}) en el canvas,
+// sumándolo a lo que ya haya (no reemplaza), con offset para no superponerse.
+function usarPlantillaMobile(estado){
+  try{
+    if(!estado) return false;
+    var srcNodes = (estado.cy && estado.cy.elements && estado.cy.elements.nodes) || [];
+    var srcEdges = (estado.cy && estado.cy.elements && estado.cy.elements.edges) || [];
+    var srcTxts = estado.txts || [];
+    var srcVecs = estado.vecs || [];
+    var srcBars = estado.bars || [];
+    if(!srcNodes.length && !srcTxts.length && !srcVecs.length && !srcBars.length) return false;
+
+    var zoom = cy.zoom();
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    srcNodes.forEach(function(n){ var p=n.position||{x:0,y:0}; if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y; });
+    if(minX===Infinity){ minX=0;maxX=0;minY=0;maxY=0; }
+    var midX=(minX+maxX)/2, midY=(minY+maxY)/2;
+
+    var c = cyCenter();
+    var ex = cy.nodes().length;
+    var jitter = ex>0 ? (20+Math.random()*30) : 0;
+    var dxModel = (c.x - midX) + jitter;
+    var dyModel = (c.y - midY) + jitter;
+    var dxScreen = dxModel*zoom, dyScreen = dyModel*zoom;
+
+    var sfx = '_'+Date.now();
+    var idMap = {};
+    srcNodes.forEach(function(n){
+      var oldId = n.data.id;
+      var newId = cy.getElementById(oldId).length>0 ? oldId+sfx : oldId;
+      idMap[oldId] = newId;
+      var pos = n.position||{x:0,y:0};
+      var dataCopy = {}; for(var k in n.data){ dataCopy[k]=n.data[k]; } dataCopy.id=newId;
+      cy.add({group:'nodes', data:dataCopy, position:{x:pos.x+dxModel,y:pos.y+dyModel}, classes:n.classes||''});
+    });
+    srcEdges.forEach(function(e){
+      var d = e.data||{};
+      var dataCopy = {}; for(var k in d){ dataCopy[k]=d[k]; }
+      dataCopy.id = 'e'+Date.now()+Math.floor(Math.random()*100000);
+      dataCopy.source = idMap[d.source]!==undefined?idMap[d.source]:d.source;
+      dataCopy.target = idMap[d.target]!==undefined?idMap[d.target]:d.target;
+      if(cy.getElementById(dataCopy.source).length && cy.getElementById(dataCopy.target).length){
+        cy.add({group:'edges', data:dataCopy, classes:e.classes||''});
+      }
+    });
+    cy.nodes('.barra').forEach(function(n){ if(typeof aplicarRotacionBarra==='function') aplicarRotacionBarra(n); });
+
+    srcTxts.forEach(function(t){
+      var newId = siguienteTxtId();
+      var obj = crearTextoEl(newId, t.x+dxScreen, t.y+dyScreen, t.content);
+      if(t.fontSize && t.fontSize!==18){ obj.fontSize=t.fontSize; obj.el.style.fontSize=t.fontSize+'px'; }
+      if(t.rotation){ obj.rotation=t.rotation; obj.el.style.transform='rotate('+t.rotation+'deg)'; obj.el.style.transformOrigin='left top'; }
+      if(t.bold){ obj.bold=true; obj.el.style.fontWeight='bold'; }
+      if(t.italic){ obj.italic=true; obj.el.style.fontStyle='italic'; }
+      if(t.underline){ obj.underline=true; obj.el.style.textDecoration='underline'; }
+      if(t.fontIdx){ obj.fontIdx=t.fontIdx; var fl=["'IM Fell English',serif","'JetBrains Mono',monospace","-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"]; obj.el.style.fontFamily=fl[t.fontIdx]||fl[0]; }
+      if(t.color){ obj.color=t.color; obj.el.style.color=t.color; }
+    });
+
+    srcVecs.forEach(function(v){
+      var obj = crearVectorEl(v.x1+dxScreen, v.y1+dyScreen, v.x2+dxScreen, v.y2+dyScreen, v.dir||'uni', v.dash||'');
+      if(v.sw) obj.el.setAttribute('stroke-width', v.sw);
+      if(v.color) obj.color = v.color;
+      if(v.arrowTs){ obj.arrowTs=v.arrowTs; obj.arrowT=v.arrowTs[0]; if(typeof actualizarArrowEls==='function') actualizarArrowEls(obj); }
+      if(v.cps && v.cps.length && typeof crearDotVec==='function'){
+        v.cps.forEach(function(cp){ crearDotVec(obj,{t:cp.t,d:cp.d}); });
+        if(typeof ocultarDotsVec==='function') ocultarDotsVec(obj);
+      }
+    });
+
+    srcBars.forEach(function(b){
+      if(typeof crearBarraSVG==='function') crearBarraSVG(b.cx+dxScreen, b.cy+dyScreen, b.angle||0, b.w||BARRA_W, b.thick||3, b.dash||'');
+    });
+
+    if(typeof actualizarContadorS==='function') actualizarContadorS();
+    snapshot();
+    return true;
+  }catch(e){
+    console.error('usarPlantillaMobile: error insertando plantilla', e);
+    return false;
+  }
+}
+
+// Convierte y agrega el estado NATIVO de desktop ({nodes,edges,textos,vectors})
+// dentro del canvas de mobile. Conversión "best-effort": no se preservan curvas
+// de vectores ni imágenes/bucles (limitación conocida entre plataformas).
+function usarPlantillaDesktopEnMobile(estado){
+  try{
+    if(!estado) return false;
+    var srcNodesAll = estado.nodes || [];
+    var srcEdges = estado.edges || [];
+    var srcTxts = estado.textos || [];
+    var srcVecs = estado.vectors || [];
+    var srcNodes = srcNodesAll.filter(function(n){ return !(n.classes||'').split(' ').includes('barra'); });
+    var srcBarNodes = srcNodesAll.filter(function(n){ return (n.classes||'').split(' ').includes('barra'); });
+    if(!srcNodes.length && !srcBarNodes.length && !srcTxts.length && !srcVecs.length) return false;
+
+    var zoom = cy.zoom(), pan = cy.pan();
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    srcNodesAll.forEach(function(n){ if(n.x<minX)minX=n.x; if(n.x>maxX)maxX=n.x; if(n.y<minY)minY=n.y; if(n.y>maxY)maxY=n.y; });
+    if(minX===Infinity){ minX=0;maxX=0;minY=0;maxY=0; }
+    var midX=(minX+maxX)/2, midY=(minY+maxY)/2;
+
+    var c = cyCenter();
+    var ex = cy.nodes().length;
+    var jitter = ex>0 ? (20+Math.random()*30) : 0;
+    var dxModel = (c.x - midX) + jitter;
+    var dyModel = (c.y - midY) + jitter;
+    var dxScreen = dxModel*zoom, dyScreen = dyModel*zoom;
+
+    var sfx = '_'+Date.now();
+    var idMap = {};
+    srcNodes.forEach(function(n){
+      var newId = cy.getElementById(n.id).length>0 ? n.id+sfx : n.id;
+      idMap[n.id] = newId;
+      var node = cy.add({group:'nodes', data:{id:newId, label:n.label!==undefined?n.label:n.id}, position:{x:n.x+dxModel,y:n.y+dyModel}});
+      if(n.width) node.style({'width':n.width,'height':n.height||n.width,'font-size':Math.max(10,(n.width||40)*0.35)});
+    });
+    srcEdges.forEach(function(e){
+      var newSrc = idMap[e.source], newTgt = idMap[e.target];
+      if(!newSrc || !newTgt) return; // uno de los extremos era una barra u otro elemento no soportado
+      cy.add({group:'edges', data:{id:'e'+Date.now()+Math.floor(Math.random()*100000), source:newSrc, target:newTgt, label:e.label||''}});
+    });
+
+    srcBarNodes.forEach(function(n){
+      var sx = (n.x+dxModel)*zoom + pan.x;
+      var sy = (n.y+dyModel)*zoom + pan.y;
+      if(typeof crearBarraSVG==='function') crearBarraSVG(sx, sy, n.angle||0, n.barraW||BARRA_W, n.barraThick||3, '');
+    });
+
+    srcTxts.forEach(function(t){
+      var newId = siguienteTxtId();
+      crearTextoEl(newId, t.x+dxScreen, t.y+dyScreen, t.content);
+    });
+
+    srcVecs.forEach(function(v){
+      // Se pierde la curvatura al cruzar de plataforma (limitación conocida)
+      crearVectorEl(v.x1+dxScreen, v.y1+dyScreen, v.x2+dxScreen, v.y2+dyScreen, 'uni', '');
+    });
+
+    if(typeof actualizarContadorS==='function') actualizarContadorS();
+    snapshot();
+    return true;
+  }catch(e){
+    console.error('usarPlantillaDesktopEnMobile: error insertando plantilla', e);
+    return false;
+  }
+}
+
 _auth.onAuthStateChanged(function(firebaseUser){
   if(firebaseUser){
     session.user = {
@@ -5184,11 +5472,14 @@ _auth.onAuthStateChanged(function(firebaseUser){
     cargarMisPublicaciones();
     // Cargar notificaciones (para el badge y la pestaña Avisos)
     cargarNotificaciones();
+    // Cargar mi biblioteca de plantillas personal
+    cargarPlantillasUsuario();
   } else {
     session.user = null;
     session.liked = {};
     session.publicaciones = [];
     notificacionesMock = [];
+    misPlantillas = [];
     actualizarBadgeNotif();
     renderPerfil();
     renderFeed();
@@ -5343,7 +5634,8 @@ window.confirmarPublicar = function(){
       likes: 0,
       comentarios: 0,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
-      grafo: grafoData
+      grafo: grafoData,
+      plataforma: 'mobile'
     }).then(function(ref){
       cerrarPublicarModal();
       renderFeed();
@@ -5395,8 +5687,12 @@ function capturarVistaPreviaActual(){
   }catch(e){ console.error('capturarVistaPreviaActual: fallo general', e); return ''; }
 }
 function capturarGrafoActual(){
-  // Placeholder. Cuando hagamos serialización completa, retornamos el JSON.
-  return {nota:'pendiente serialización completa'};
+  try{
+    return snapshotEstadoActual();
+  }catch(e){
+    console.error('capturarGrafoActual: fallo al serializar el grafo', e);
+    return null;
+  }
 }
 
 // ───── HELPERS ─────
@@ -5580,11 +5876,13 @@ window.abrirMenuPub = function(pubId){
       {txt:'✎ Editar', fn:function(){ editarMiPub(pubId); }},
       {txt:'🗑 Borrar', fn:function(){ borrarMiPub(pubId); }, danger:true},
       {txt:'⤴ Compartir link', fn:function(){ compartirPub(pubId); }},
+      {txt:'📐 Guardar como plantilla', fn:function(){ guardarPubComoPlantilla(pubId); }},
       {txt:'Cancelar', fn:null}
     ];
   } else {
     opciones = [
       {txt:'⤴ Compartir link', fn:function(){ compartirPub(pubId); }},
+      {txt:'📐 Guardar como plantilla', fn:function(){ guardarPubComoPlantilla(pubId); }},
       {txt:'⚑ Reportar', fn:function(){ abrirReportar(pubId); }, danger:true},
       {txt:'Cancelar', fn:null}
     ];
