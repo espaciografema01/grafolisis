@@ -380,6 +380,7 @@ const _db   = firebase.firestore();
           <button class="bar-btn" id="btn-undo" onclick="undo()" disabled><span>↩</span><span class="lbl">Deshacer</span></button>
           <button class="bar-btn" id="btn-lock" onclick="toggleLockCanvas()"><span>🔓</span><span class="lbl">Canvas</span></button>
           <button class="bar-btn" onclick="abrirPublicarModal()"><span>↑</span><span class="lbl">Publicar</span></button>
+          <button class="bar-btn" onclick="duplicarSeleccionado()"><span>⧉</span><span class="lbl">Duplicar</span></button>
           <button class="bar-btn danger" onclick="eliminarSeleccionado()"><span>✕</span><span class="lbl">Borrar</span></button>
           <button class="bar-btn" onclick="abrirPanel()"><span>☰</span><span class="lbl">Más</span></button>
         </div>
@@ -1394,6 +1395,81 @@ function setDirection(d){
 }
 
 // ── ELIMINAR ──────────────────────────────────
+function duplicarSeleccionado(){
+  var sel = cy.$('node:selected');
+  if(sel.length){
+    var idMap = {};
+    var newNodes = [];
+    sel.forEach(function(n){
+      var newId = n.id()+'_dup'+Date.now()+Math.floor(Math.random()*1000);
+      idMap[n.id()] = newId;
+      var data = {}; for(var k in n.data()){ data[k]=n.data()[k]; }
+      data.id = newId;
+      var pos = n.position();
+      var newN = cy.add({group:'nodes', data:data, position:{x:pos.x+30,y:pos.y+30}});
+      newN.style({'background-color':n.style('background-color')});
+      newNodes.push(newN);
+    });
+    sel.connectedEdges().forEach(function(e){
+      var s=e.source().id(), t=e.target().id();
+      if(idMap[s] && idMap[t]){
+        var ne = cy.add({group:'edges', data:{id:'e'+Date.now()+Math.floor(Math.random()*100000), source:idMap[s], target:idMap[t], label:e.data('label')||''}, classes:e.className()});
+        ne.style({'line-color':e.style('line-color'),'target-arrow-color':e.style('target-arrow-color')});
+      }
+    });
+    sel.unselect();
+    newNodes.forEach(function(n){ n.select(); });
+    if(typeof actualizarContadorS==='function') actualizarContadorS();
+    snapshot();
+    toast && toast('Duplicado ✓');
+    return;
+  }
+  if(selTxt){
+    var t = selTxt;
+    var newId = 'txt_'+(++txtCounter);
+    var obj = crearTextoEl(newId, t.x+20, t.y+20, t.content);
+    if(t.fontSize){ obj.fontSize=t.fontSize; obj.el.style.fontSize=t.fontSize+'px'; }
+    if(t.rotation){ obj.rotation=t.rotation; obj.el.style.transform='rotate('+t.rotation+'deg)'; obj.el.style.transformOrigin='left top'; }
+    if(t.bold){ obj.bold=true; obj.el.style.fontWeight='bold'; }
+    if(t.italic){ obj.italic=true; obj.el.style.fontStyle='italic'; }
+    if(t.underline){ obj.underline=true; obj.el.style.textDecoration='underline'; }
+    if(t.fontIdx){ obj.fontIdx=t.fontIdx; var fl=["'IM Fell English',serif","'JetBrains Mono',monospace","-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"]; obj.el.style.fontFamily=fl[t.fontIdx]||fl[0]; }
+    if(t.color){ obj.color=t.color; obj.el.style.color=t.color; }
+    snapshot();
+    toast && toast('Texto duplicado ✓');
+    return;
+  }
+  if(selVec){
+    var v = selVec;
+    var obj = crearVectorEl(v.x1+20, v.y1+20, v.x2+20, v.y2+20, v.dir||'uni', v.dash||'');
+    if(v.sw) obj.el.setAttribute('stroke-width', v.sw);
+    if(v.color){ obj.color = v.color; if(typeof actualizarArrowEls==='function') actualizarArrowEls(obj); }
+    if(v.cps && v.cps.length && typeof crearDotVec==='function'){
+      v.cps.forEach(function(cp){ crearDotVec(obj,{t:cp.t,d:cp.d}); });
+      if(typeof ocultarDotsVec==='function') ocultarDotsVec(obj);
+    }
+    snapshot();
+    toast && toast('Vector duplicado ✓');
+    return;
+  }
+  if(selBar){
+    crearBarraSVG(selBar.cx+20, selBar.cy+20, selBar.angle, selBar.w, selBar.thick, selBar.dash||'');
+    snapshot();
+    toast && toast('Barra duplicada ✓');
+    return;
+  }
+  if(selImg){
+    crearElementoImagen({
+      id:'img_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+      dataURL:selImg.dataURL, x:selImg.x+20, y:selImg.y+20, w:selImg.w, h:selImg.h, modo:selImg.modo, rotation:selImg.rotation||0
+    });
+    snapshot();
+    toast && toast('Imagen duplicada ✓');
+    return;
+  }
+  toast && toast('Seleccioná algo para duplicar');
+}
+
 function eliminarSeleccionado(){
   // Bucle SVG
   if(typeof selLoop !== 'undefined' && selLoop){
@@ -3870,7 +3946,7 @@ snapshot();
 window.addNode=addNode; window.addBarra=addBarra; window.addTexto=addTexto;
 window.toggleVectorMode=toggleVectorMode; window.abrirChars=abrirChars; window.cerrarChars=cerrarChars;
 window.abrirPlantillas=abrirPlantillas; window.cerrarPlantillas=cerrarPlantillas;
-window.undo=undo; window.redo=redo; window.eliminarSeleccionado=eliminarSeleccionado;
+window.undo=undo; window.redo=redo; window.eliminarSeleccionado=eliminarSeleccionado; window.duplicarSeleccionado=duplicarSeleccionado;
 window.abrirPanel=abrirPanel; window.cerrarPanel=cerrarPanel;
 window.setEdgeType=setEdgeType; window.setDirection=setDirection;
 window.resizeSelected=resizeSelected; window.rotarBarraSVG=rotarBarraSVG; window.rotarVector=rotarVector; window.escalerVector=escalerVector; window.deselBarSVG=deselBarSVG;
@@ -4275,23 +4351,30 @@ function crearNotificacion(paraId, tipo, refId, refTitulo){
 }
 
 // Carga las notificaciones reales del usuario actual desde Firestore.
-function cargarNotificaciones(){
+var _notifUnsub = null;
+function iniciarListenerNotificaciones(){
+  if(_notifUnsub){ _notifUnsub(); _notifUnsub = null; }
   if(!session.user){ notificacionesMock = []; renderNotificaciones(); return; }
-  _db.collection('notificaciones').where('paraId','==',session.user.id).limit(80).get().then(function(snap){
-    var notifs = [];
-    snap.forEach(function(d){
-      var n = d.data();
-      n.id = d.id;
-      n.fecha = n.fecha && n.fecha.toDate ? n.fecha.toDate().getTime() : Date.now();
-      notifs.push(n);
+  _notifUnsub = _db.collection('notificaciones').where('paraId','==',session.user.id).limit(80)
+    .onSnapshot(function(snap){
+      var notifs = [];
+      snap.forEach(function(d){
+        var n = d.data();
+        n.id = d.id;
+        n.fecha = n.fecha && n.fecha.toDate ? n.fecha.toDate().getTime() : Date.now();
+        notifs.push(n);
+      });
+      notifs.sort(function(a,b){ return b.fecha-a.fecha; });
+      notificacionesMock = notifs;
+      renderNotificaciones();
+    }, function(e){
+      console.warn('Error en listener de notificaciones:', e);
     });
-    notifs.sort(function(a,b){ return b.fecha-a.fecha; });
-    notificacionesMock = notifs;
-    renderNotificaciones();
-  }).catch(function(e){
-    console.warn('Error cargando notificaciones:', e);
-    renderNotificaciones();
-  });
+}
+function detenerListenerNotificaciones(){
+  if(_notifUnsub){ _notifUnsub(); _notifUnsub = null; }
+  notificacionesMock = [];
+  actualizarBadgeNotif();
 }
 
 // ───── PERFILES PÚBLICOS DE OTROS USUARIOS ─────
@@ -4321,7 +4404,7 @@ window.cambiarTab = function(tab){
     renderSkeletonFeed();
     setTimeout(function(){ renderFeed(); }, 400);
   }
-  if(tab==='notif') cargarNotificaciones();
+  if(tab==='notif') renderNotificaciones();
   if(tab==='perfil') renderPerfil();
   if(tab==='crear' && window.cy && typeof window.cy.resize==='function'){
     setTimeout(function(){ try{ window.cy.resize(); }catch(e){} }, 50);
@@ -4567,7 +4650,8 @@ window.descargarPub = function(pubId){
     autor:p.autor,
     descripcion:p.descripcion,
     fecha:p.fecha,
-    grafo:p.grafo || {nota:'Mockup — el grafo real vendrá con Firebase'}
+    plataforma: p.plataforma || detectarPlataformaGrafo(p.grafo) || null,
+    grafo:p.grafo || null
   };
   var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   var url = URL.createObjectURL(blob);
@@ -5132,7 +5216,19 @@ window.editarMiPub = function(pubId){
 
 window.borrarMiPub = function(pubId){
   if(!confirm('¿Borrar esta publicación? No se puede deshacer.')) return;
-  _db.collection('publicaciones').doc(pubId).delete().then(function(){
+  var pubRef = _db.collection('publicaciones').doc(pubId);
+  Promise.all([
+    pubRef.collection('comentarios').get(),
+    _db.collection('likes').where('pubId','==',pubId).get(),
+    _db.collection('notificaciones').where('refId','==',pubId).get()
+  ]).then(function(results){
+    var batch = _db.batch();
+    results[0].forEach(function(d){ batch.delete(d.ref); }); // comentarios
+    results[1].forEach(function(d){ batch.delete(d.ref); }); // likes
+    results[2].forEach(function(d){ batch.delete(d.ref); }); // notificaciones asociadas
+    batch.delete(pubRef);
+    return batch.commit();
+  }).then(function(){
     session.publicaciones = session.publicaciones.filter(function(p){ return p.id!==pubId; });
     feedMock = feedMock.filter(function(p){ return p.id!==pubId; });
     renderPerfil();
@@ -5470,17 +5566,16 @@ _auth.onAuthStateChanged(function(firebaseUser){
     }).catch(function(){});
     // Cargar mis publicaciones (contador Publicados / Likes recibidos / Mis publicaciones)
     cargarMisPublicaciones();
-    // Cargar notificaciones (para el badge y la pestaña Avisos)
-    cargarNotificaciones();
+    // Notificaciones en tiempo real (badge + pestaña Avisos)
+    iniciarListenerNotificaciones();
     // Cargar mi biblioteca de plantillas personal
     cargarPlantillasUsuario();
   } else {
     session.user = null;
     session.liked = {};
     session.publicaciones = [];
-    notificacionesMock = [];
+    detenerListenerNotificaciones();
     misPlantillas = [];
-    actualizarBadgeNotif();
     renderPerfil();
     renderFeed();
   }
@@ -5624,24 +5719,29 @@ window.confirmarPublicar = function(){
   } else {
     var miniatura = capturarVistaPreviaActual() || '';
     var grafoData = (typeof capturarGrafoActual === 'function') ? capturarGrafoActual() : null;
-    _db.collection('publicaciones').add({
-      titulo: titulo,
-      autor: session.user.name,
-      autorId: session.user.id,
-      descripcion: desc,
-      miniaturaSVG: miniatura,
-      tags: tagsActuales.slice(),
-      likes: 0,
-      comentarios: 0,
-      fecha: firebase.firestore.FieldValue.serverTimestamp(),
-      grafo: grafoData,
-      plataforma: 'mobile'
-    }).then(function(ref){
-      cerrarPublicarModal();
-      renderFeed();
-      cargarMisPublicaciones();
-      toast && toast('Publicado en el feed ✓');
-    }).catch(function(e){ alert('Error al publicar: '+e.message); });
+    try{
+      _db.collection('publicaciones').add({
+        titulo: titulo,
+        autor: session.user.name,
+        autorId: session.user.id,
+        descripcion: desc,
+        miniaturaSVG: miniatura,
+        tags: tagsActuales.slice(),
+        likes: 0,
+        comentarios: 0,
+        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+        grafo: grafoData,
+        plataforma: 'mobile'
+      }).then(function(ref){
+        cerrarPublicarModal();
+        renderFeed();
+        cargarMisPublicaciones();
+        toast && toast('Publicado en el feed ✓');
+      }).catch(function(e){ alert('Error al publicar: '+e.message); });
+    }catch(e){
+      console.error('confirmarPublicar: fallo al armar la publicación', e);
+      alert('Error al publicar: '+e.message);
+    }
   }
   publishEditandoId = null;
 };
@@ -5686,9 +5786,25 @@ function capturarVistaPreviaActual(){
     return svg;
   }catch(e){ console.error('capturarVistaPreviaActual: fallo general', e); return ''; }
 }
+// Firestore rechaza (con un error síncrono) cualquier valor 'undefined' anidado
+// en el objeto a guardar. cy.json() puede traer campos así internamente
+// (p. ej. data.label sin definir en algún nodo). Los limpiamos recursivamente
+// para que publicar nunca falle en silencio por esto.
+function limpiarUndefinedProfundo(obj){
+  if(obj===undefined) return null;
+  if(obj===null || typeof obj!=='object') return obj;
+  if(Array.isArray(obj)) return obj.map(limpiarUndefinedProfundo);
+  var out = {};
+  Object.keys(obj).forEach(function(k){
+    if(obj[k]===undefined) return; // omitir la clave por completo
+    out[k] = limpiarUndefinedProfundo(obj[k]);
+  });
+  return out;
+}
+
 function capturarGrafoActual(){
   try{
-    return snapshotEstadoActual();
+    return limpiarUndefinedProfundo(snapshotEstadoActual());
   }catch(e){
     console.error('capturarGrafoActual: fallo al serializar el grafo', e);
     return null;
