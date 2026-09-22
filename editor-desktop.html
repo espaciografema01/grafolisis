@@ -199,6 +199,113 @@ body.vector-mode #cy{cursor:crosshair}
 .pub-cancel-btn{background:#2a2a2a;color:#aaa;border:1px solid #444!important}
 .pub-submit-btn{background:#c9a84c;color:#1a1a1a;font-weight:700}
 
+/* ══════════════════════════════════════════════════════════
+   FLUJO CLÍNICO — 4 sub-pestañas (Texto / Recortes / Capa Inferior / Capa Superior)
+   ══════════════════════════════════════════════════════════ */
+#clin-tabbar-desk{display:flex;background:#111;border-bottom:2px solid #2a2a2a;flex-shrink:0}
+.clin-tab-desk{flex:0 0 auto;background:transparent;border:none;border-bottom:3px solid transparent;color:#777;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.3px;padding:10px 20px;display:flex;align-items:center;gap:8px;cursor:pointer;position:relative;border-radius:0}
+.clin-tab-desk:hover{background:#181818;color:#ccc}
+.clin-tab-desk .clin-num-desk{width:16px;height:16px;border-radius:50%;background:#2a2a2a;color:#888;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.clin-tab-desk.active{color:#c9a84c;border-bottom-color:#c9a84c;background:#181818}
+.clin-tab-desk.active .clin-num-desk{background:#c9a84c;color:#1a1a1a}
+.clin-tab-desk .clin-badge-desk{background:#c9a84c;color:#1a1a1a;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;padding:0 4px;display:flex;align-items:center;justify-content:center}
+#clin-panes-desk{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.clin-hide-desk{display:none!important}
+.rel-btn-desk.active{outline:2px solid #c9a84c;outline-offset:-2px}
+.clin-pane-desk{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden}
+.clin-pane-desk.active{display:flex}
+
+/* Pestaña 1 — Texto completo */
+#texto-corpus-wrap-desk{position:relative;flex:1;min-height:0;background:#f5f0e8}
+#texto-corpus-desk{position:relative;z-index:2;width:100%;height:100%;border:none;resize:none;outline:none;background:transparent;color:transparent;caret-color:#1a1a1a;font-family:'IM Fell English',serif;font-size:17px;line-height:1.6;padding:22px 26px 90px;box-sizing:border-box}
+#texto-corpus-desk::placeholder{color:#a99;font-style:italic}
+#texto-corpus-highlight-desk{position:absolute;inset:0;z-index:1;padding:22px 26px 90px;font-family:'IM Fell English',serif;font-size:17px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;pointer-events:none;color:#1a1a1a;box-sizing:border-box}
+#texto-corpus-highlight-desk mark.rc-highlight-desk{background:rgba(201,168,76,.38);color:#1a1a1a;border-radius:2px}
+#btn-stats-texto-desk{position:absolute;top:14px;right:20px;z-index:3;background:#1a1a1a;color:#c9a84c;border:1px solid #c9a84c55;border-radius:8px;padding:7px 11px;cursor:pointer;font-size:14px}
+.texto-fab-desk{position:absolute;left:20px;bottom:16px;z-index:6;display:none;align-items:center;gap:12px;background:#1a1a1a;border:1px solid #c9a84c;border-radius:10px;padding:9px 10px 9px 16px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.texto-fab-desk.show{display:flex}
+.texto-fab-desk span{color:#c9a84c;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap}
+.texto-fab-desk button{background:#c9a84c;color:#1a1a1a;border:none;border-radius:6px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer}
+
+/* Pestaña 2 — Recortes literales */
+#recortes-wrap-desk{flex:1;min-height:0;overflow-y:auto;background:#f5f0e8;padding:18px 22px}
+#recortes-toolbar-desk{display:none;max-width:720px;margin:0 auto 14px}
+#recortes-toolbar-desk.show{display:block}
+#recortes-buscador-desk{width:100%;background:#fff;border:1px solid #d8cfb8;border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;box-sizing:border-box}
+#recortes-empty-desk{color:#998;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:center;padding:60px 20px;line-height:1.8}
+#recortes-lista-desk{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.recorte-card-desk{background:#fff;border:1px solid #e0d6bf;border-radius:10px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s}
+.recorte-card-desk:hover{box-shadow:0 2px 12px rgba(0,0,0,.1);border-color:#c9a84c}
+.rc-txt-desk{font-family:'IM Fell English',serif;font-size:14px;color:#1a1a1a;line-height:1.5;margin-bottom:6px;max-height:4.5em;overflow:hidden}
+.rc-meta-desk{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#999}
+.rc-badge-desk{background:#eee2c9;color:#7a6320;border-radius:8px;padding:2px 8px;font-weight:700}
+
+/* Modal de recorte: preview editable + selección parcial */
+.rc-preview-ta-desk{width:100%;height:150px;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:12px;color:#f0ead8;font-family:'IM Fell English',serif;font-size:14px;line-height:1.5;margin-bottom:10px;resize:vertical;outline:none;box-sizing:border-box}
+.rc-sel-bar-desk{display:none;align-items:center;gap:8px;background:#111;border:1px solid #c9a84c;border-radius:8px;padding:8px 10px;margin-bottom:12px}
+.rc-sel-bar-desk.show{display:flex}
+.rc-sel-bar-desk span{color:#c9a84c;font-family:'JetBrains Mono',monospace;font-size:10px;flex:1}
+.rc-sel-bar-desk button{background:#c9a84c;color:#1a1a1a;border:none;border-radius:6px;padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* Fader de opacidad — Capa Superior */
+#fader-wrap-desk{display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1px solid #444;border-radius:6px;padding:5px 12px;margin-left:4px}
+#fader-wrap-desk .fader-lbl-desk{color:#c9a84c;font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap}
+#fader-wrap-desk input[type=range]{accent-color:#c9a84c;width:110px}
+#fader-wrap-desk .fader-pct-desk{color:#f0ead8;font-family:'JetBrains Mono',monospace;font-size:10px;min-width:30px}
+
+/* Chip de capa activa + título, sobre el canvas */
+#clin-capa-chip-desk{position:absolute;top:10px;right:14px;background:rgba(26,26,26,.85);color:#c9a84c;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 11px;border-radius:12px;letter-spacing:.3px;z-index:55;pointer-events:none}
+
+/* Vector analítico: SVG overlay propio (Capa Superior) */
+#capa-sup-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
+#capa-sup-svg.drawing{pointer-events:all;cursor:crosshair}
+.an-hit-desk{cursor:pointer}
+#an-context-desk{position:absolute;z-index:60;display:none;flex-direction:column;gap:4px;background:#1a1a1a;border:1px solid #c9a84c;border-radius:8px;padding:6px;max-width:200px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#an-context-desk.show{display:flex}
+#an-context-desk button{background:#2a2a2a;border:1px solid #444;color:#f0ead8;border-radius:5px;padding:5px 7px;font-size:10px;cursor:pointer;white-space:nowrap;text-align:left}
+#an-context-desk button.danger{border-color:#5a2020;color:#e06060}
+#an-context-desk select{background:#2a2a2a;border:1px solid #444;color:#f0ead8;border-radius:5px;font-size:10px;padding:4px}
+
+/* Grilla de estadísticas del relato */
+.stats-resumen-grid-desk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.stats-card-desk{background:#111;border:1px solid #333;border-radius:8px;padding:10px 6px;text-align:center}
+.stats-card-desk .n{color:#c9a84c;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stats-card-desk .lbl{color:#888;font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.stats-word-row-desk{display:flex;align-items:center;gap:8px;font-size:11px;color:#ccc;padding:4px 0}
+.stats-word-row-desk .w{width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f0ead8}
+.stats-word-row-desk .barwrap{flex:1;background:#222;border-radius:4px;height:8px;overflow:hidden}
+.stats-word-row-desk .bar{display:block;height:100%;background:#c9a84c}
+.stats-word-row-desk .count{width:34px;text-align:right;color:#888;flex-shrink:0}
+
+/* Catálogo de tipos de relación analítica */
+.tipo-sup-row-desk{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #2a2a2a}
+.tipo-sup-swatch-desk{width:20px;height:8px;border-radius:4px;flex-shrink:0}
+.tipo-sup-nombre-desk{flex:1;font-size:12px;color:#f0ead8}
+.tipo-sup-del-desk{background:none;border:1px solid #5a2020;color:#e06060;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer}
+
+/* Lista de snapshots de sesión */
+.snap-row-desk{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #2a2a2a}
+.snap-row-desk .snap-info{flex:1}
+.snap-row-desk .snap-nombre{color:#f0ead8;font-size:12px;font-weight:700}
+.snap-row-desk .snap-meta{color:#888;font-size:10px;margin-top:2px}
+.snap-row-desk button{background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:6px;padding:6px 10px;font-size:10px;cursor:pointer;white-space:nowrap}
+.snap-row-desk button.danger{border-color:#5a2020;color:#e06060}
+
+/* Modal genérico centrado (reutilizado por varios paneles del flujo clínico) */
+.clin-modal-desk{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;padding:20px}
+.clin-modal-desk.open{display:flex}
+.clin-modal-box-desk{background:#1a1a1a;border:2px solid #333;border-radius:12px;width:460px;max-width:100%;max-height:82vh;overflow-y:auto;padding:22px 22px}
+.clin-modal-box-desk.wide{width:600px}
+.clin-modal-box-desk h2{font-family:"IM Fell English",serif;color:#c9a84c;font-size:19px;margin-bottom:14px;text-align:center}
+.clin-modal-box-desk .sub{color:#888;font-size:11px;text-align:center;margin:-8px 0 14px;line-height:1.5}
+.clin-modal-box-desk textarea.plain{width:100%;background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:10px 12px;color:#f0ead8;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;box-sizing:border-box;resize:vertical}
+.clin-modal-row-desk{display:flex;gap:8px;margin-top:14px}
+.clin-modal-row-desk button{flex:1;padding:10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;border:none}
+.clin-modal-cancel-desk{background:#2a2a2a;color:#aaa;border:1px solid #444!important}
+.clin-modal-ok-desk{background:#c9a84c;color:#1a1a1a;font-weight:700}
+.clin-modal-close-desk{width:100%;margin-top:12px;padding:11px;background:#2a2a2a;border:1px solid #444;border-radius:8px;color:#aaa;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer}
+.aviso-literal-item-desk{background:#111;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-family:'IM Fell English',serif;font-size:13px;color:#f0ead8;line-height:1.4}
+
 </style>
 <!-- ══════════════════════════════════════════════════════
   FIREBASE — reemplazá los valores con los tuyos en:
@@ -230,18 +337,85 @@ const _db   = firebase.firestore();
   <button id="toptab-perfil" onclick="cambiarVistaDesk('perfil')">👤 Perfil</button>
 </div>
 <div id="view-crear" class="desk-view active">
+
+  <!-- Barra de sub-pestañas del flujo clínico -->
+  <div id="clin-tabbar-desk">
+    <button class="clin-tab-desk active" data-clin="texto" onclick="cambiarSubTab('texto')">
+      <span class="clin-num-desk">1</span> Texto completo
+    </button>
+    <button class="clin-tab-desk" data-clin="recortes" onclick="cambiarSubTab('recortes')">
+      <span class="clin-num-desk">2</span> Recortes literales
+      <span class="clin-badge-desk" id="clin-badge-recortes-desk" style="display:none">0</span>
+    </button>
+    <button class="clin-tab-desk" data-clin="inferior" onclick="cambiarSubTab('inferior')">
+      <span class="clin-num-desk">3</span> Capa Inferior
+    </button>
+    <button class="clin-tab-desk" data-clin="superior" onclick="cambiarSubTab('superior')">
+      <span class="clin-num-desk">4</span> Capa Superior
+    </button>
+  </div>
+
+  <div id="clin-panes-desk">
+
+    <!-- PESTAÑA 1 — TEXTO COMPLETO -->
+    <div id="clin-texto-desk" class="clin-pane-desk active">
+      <div id="texto-corpus-wrap-desk">
+        <div id="texto-corpus-highlight-desk" aria-hidden="true"></div>
+        <textarea id="texto-corpus-desk" placeholder="Pegá o transcribí acá el relato completo de la sesión / el sueño…" autocomplete="off" autocorrect="off" spellcheck="false" oninput="onCorpusInput()"></textarea>
+        <button id="btn-stats-texto-desk" onclick="abrirEstadisticasTexto()" title="Estadísticas del relato">📊 Estadísticas</button>
+      </div>
+      <div id="texto-fab-desk" class="texto-fab-desk">
+        <span id="texto-fab-count-desk">0 caracteres seleccionados</span>
+        <button onclick="enviarSeleccionARecortes()">✂ Enviar a Recortes</button>
+      </div>
+    </div>
+
+    <!-- PESTAÑA 2 — RECORTES LITERALES -->
+    <div id="clin-recortes-desk" class="clin-pane-desk">
+      <div id="recortes-wrap-desk">
+        <div id="recortes-toolbar-desk">
+          <input type="search" id="recortes-buscador-desk" placeholder="🔍 Buscar en recortes…" oninput="filtrarRecortes(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+        </div>
+        <div id="recortes-empty-desk">Todavía no hay recortes.<br>Seleccioná una frase en la pestaña «Texto completo» y hacé clic en «Enviar a Recortes».</div>
+        <div id="recortes-lista-desk"></div>
+      </div>
+    </div>
+
+    <!-- PESTAÑAS 3 y 4 — comparten el mismo lienzo (Capa Inferior + Capa Superior superpuesta) -->
+    <div id="clin-grafo-desk" class="clin-pane-desk">
 <div id="toolbar">
 
-  <span class="label-group">crear</span>
-  <button onclick="addNode()">+ Nodo</button>
-  <button onclick="addBarra()">— Barra</button>
+  <span class="label-group" data-clin="inferior">Capa Inferior</span>
+  <button data-clin="inferior" onclick="crearNodoVacio()" title="Crear un nodo vacío (significante sin contenido literal)">○ Nodo Vacío</button>
+  <button data-clin="inferior" onclick="autoOrdenarCapaInferior()" title="Ordenar los nodos según el orden en que fueron creados">▦ Auto-ordenar</button>
+
+  <span class="label-group" data-clin="superior">Capa Superior</span>
+  <button data-clin="superior" onclick="crearNodoInterpretativo()" title="Crear un nodo teórico (S1, S2, $, a, A, Φ…)">🔗 Nodo Teórico</button>
+  <button id="btn-vec-an-desk" data-clin="superior" onclick="toggleVectorAnaliticoMode()" title="Vector analítico: clic-clic para anclar a un nodo, a una línea, o al lienzo">⤢ V. Analítico</button>
+  <div id="fader-wrap-desk" data-clin="superior">
+    <span class="fader-lbl-desk">Opacidad Cap. Sup.</span>
+    <input type="range" id="fader-sup-desk" min="0" max="100" value="100" oninput="actualizarFaderSup(this.value)">
+    <span class="fader-pct-desk" id="fader-pct-desk">100%</span>
+  </div>
+
+  <div class="sep" data-clin="inferior"></div>
+  <span class="label-group" data-clin="inferior">relación</span>
+  <button class="rel-btn-desk" data-clin="inferior" data-rel="secuencia" onclick="aplicarTipoRelSeleccionado('secuencia')" title="Secuencia (default)">— Secuencia</button>
+  <button class="rel-btn-desk" data-clin="inferior" data-rel="metonimia" onclick="aplicarTipoRelSeleccionado('metonimia')" title="Metonimia">┄ Metonimia</button>
+  <button class="rel-btn-desk" data-clin="inferior" data-rel="corte" onclick="aplicarTipoRelSeleccionado('corte')" title="Corte">╌ Corte</button>
+  <button class="rel-btn-desk" data-clin="inferior" data-rel="sustitucion" onclick="aplicarTipoRelSeleccionado('sustitucion')" title="Sustitución">┈ Sustitución</button>
+
+  <div class="sep"></div>
+  <span class="label-group">anotar</span>
   <button onclick="addTexto()">T Texto</button>
   <button onclick="abrirImagenInputDesk()">🖼️ Imagen</button>
   <input id="img-file-input-desk" type="file" accept="image/*" style="display:none">
 
-  <div class="sep"></div>
-  <span class="label-group">vector</span>
-  <button id="btn-vec" onclick="toggleVectorMode()">↗ Vector</button>
+  <div class="sep" style="display:none"></div>
+  <span class="label-group" style="display:none">crear</span>
+  <button style="display:none" onclick="addNode()">+ Nodo</button>
+  <button style="display:none" onclick="addBarra()">— Barra</button>
+  <button id="btn-vec" style="display:none" onclick="toggleVectorMode()">↗ Vector</button>
 
   <div class="sep"></div>
   <span class="label-group">línea</span>
@@ -258,10 +432,10 @@ const _db   = firebase.firestore();
   <button onclick="resizeSelected(-10)">−</button>
   <button onclick="resizeSelected(+10)">+</button>
 
-  <div class="sep"></div>
-  <span class="label-group">grosor barra</span>
-  <button onclick="cambiarGrosorBarra(-1)" title="Barra más delgada">▬−</button>
-  <button onclick="cambiarGrosorBarra(+1)" title="Barra más gruesa">▬+</button>
+  <div class="sep" style="display:none"></div>
+  <span class="label-group" style="display:none">grosor barra</span>
+  <button style="display:none" onclick="cambiarGrosorBarra(-1)" title="Barra más delgada">▬−</button>
+  <button style="display:none" onclick="cambiarGrosorBarra(+1)" title="Barra más gruesa">▬+</button>
 
   <div class="sep"></div>
   <span class="label-group">editar</span>
@@ -312,6 +486,11 @@ const _db   = firebase.firestore();
   </div>
 
   <div class="sep"></div>
+  <button data-clin="inferior" onclick="abrirTriplesModal()" title="Exportar la Capa Inferior como tripletas RDF">▤ Triples RDF</button>
+  <button data-clin="superior" onclick="abrirTiposSupModal()" title="Catálogo de tipos de relación analítica (compartido entre todos tus casos)">◆ Tipos de relación</button>
+  <button onclick="abrirSnapshotsModal()" title="Fotos nombradas del caso a través del tratamiento">🕐 Snapshots</button>
+
+  <div class="sep"></div>
   <button onclick="guardarJSON()">💾 Guardar</button>
   <button onclick="abrirPublicarDesktop()" title="Publicar en el feed compartido">🌐 Publicar</button>
   <button class="danger" onclick="limpiar()">🧹 Limpiar</button>
@@ -322,6 +501,9 @@ const _db   = firebase.firestore();
 
 <div id="cy">
   <svg id="vec-svg"></svg>
+  <svg id="capa-sup-svg"><defs id="capa-sup-defs"></defs></svg>
+  <div id="clin-capa-chip-desk"></div>
+  <div id="an-context-desk"></div>
   <!-- Overlay de transformación: aparece sobre el elemento seleccionado -->
   <div id="transform-overlay">
     <div id="rot-stem"></div>
@@ -347,13 +529,157 @@ const _db   = firebase.firestore();
   <b>Línea Cytoscape</b>: doble clic para curvar (punto amarillo)<br>
   <b>▬− / ▬+</b> toolbar: grosor de barra &nbsp;|&nbsp; <b>supr</b>: eliminar
 </div>
+</div><!-- /clin-grafo-desk -->
+
+  </div><!-- /clin-panes-desk -->
 </div><!-- /view-crear -->
+
+<!-- ═══════════ MODALES DEL FLUJO CLÍNICO ═══════════ -->
+
+<!-- Estadísticas del relato -->
+<div class="clin-modal-desk" id="stats-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2>📊 Estadísticas del relato</h2>
+    <div class="stats-resumen-grid-desk" id="stats-resumen-desk"></div>
+    <div style="margin-top:16px">
+      <div style="color:#c9a84c;font-size:12px;font-weight:700;margin-bottom:6px">Palabras más repetidas</div>
+      <div id="stats-frecuentes-desk"></div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="color:#c9a84c;font-size:12px;font-weight:700;margin-bottom:6px">Posibles nombres propios</div>
+      <div class="sub" style="margin:0 0 8px;text-align:left">Heurística automática (palabras capitalizadas) — revisar a mano antes de anonimizar o publicar.</div>
+      <div id="stats-nombres-desk"></div>
+    </div>
+    <button class="clin-modal-close-desk" onclick="document.getElementById('stats-modal-desk').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Recorte: preview / edición / conversión -->
+<div class="clin-modal-desk" id="recorte-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2>Recorte literal</h2>
+    <textarea class="rc-preview-ta-desk" id="rc-preview-ta-desk" spellcheck="false" onmouseup="chequearSeleccionRecorteDesk()" onkeyup="chequearSeleccionRecorteDesk()" onselect="chequearSeleccionRecorteDesk()"></textarea>
+    <div class="rc-sel-bar-desk" id="rc-sel-bar-desk">
+      <span id="rc-sel-info-desk">0 caracteres seleccionados</span>
+      <button onclick="convertirSeleccionRecorte('literal')">▭ Literal</button>
+      <button onclick="convertirSeleccionRecorte('vacio')">○ Vacío</button>
+    </div>
+    <div class="clin-modal-row-desk">
+      <button class="clin-modal-cancel-desk" onclick="convertirRecorteEnNodo('literal')">Todo → Literal</button>
+      <button class="clin-modal-cancel-desk" onclick="convertirRecorteEnNodo('vacio')">Todo → Vacío</button>
+    </div>
+    <div class="clin-modal-row-desk">
+      <button class="clin-modal-cancel-desk" onclick="irANodoDeRecorte()">↳ Ir al nodo</button>
+      <button class="clin-modal-cancel-desk" onclick="editarRecorteActual()">✎ Editar texto</button>
+      <button class="clin-modal-cancel-desk" onclick="eliminarRecorteActual()" style="color:#e06060;border-color:#5a2020">🗑 Eliminar</button>
+    </div>
+    <button class="clin-modal-close-desk" onclick="cerrarRecorteModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- Catálogo de tipos de relación analítica (Capa Superior) -->
+<div class="clin-modal-desk" id="tipos-sup-modal-desk">
+  <div class="clin-modal-box-desk">
+    <h2>◆ Tipos de relación analítica</h2>
+    <div class="sub">Vocabulario propio del analista — compartido entre todos tus casos clínicos.</div>
+    <div id="tipos-sup-lista-desk" style="max-height:220px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="border-top:1px solid #333;padding-top:12px">
+      <input type="text" id="tipo-sup-nombre-desk" class="plain" style="width:100%;box-sizing:border-box;margin-bottom:8px" placeholder="Nombre (ej. Metáfora, Demanda…)">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span style="color:#888;font-size:11px">Color:</span>
+        <div id="tipo-sup-color-grid-desk" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px" id="tipo-sup-dash-grid-desk">
+        <button class="clin-modal-cancel-desk" data-dash="solid" onclick="elegirDashTipoSup('solid')" style="flex:1;padding:8px">— Sólida</button>
+        <button class="clin-modal-cancel-desk" data-dash="dashed" onclick="elegirDashTipoSup('dashed')" style="flex:1;padding:8px">┄ Punteada</button>
+        <button class="clin-modal-cancel-desk" data-dash="dotted" onclick="elegirDashTipoSup('dotted')" style="flex:1;padding:8px">┈ Punto</button>
+      </div>
+      <button class="clin-modal-ok-desk" style="width:100%;padding:10px" onclick="guardarNuevoTipoSup()">+ Agregar tipo</button>
+    </div>
+    <button class="clin-modal-close-desk" onclick="document.getElementById('tipos-sup-modal-desk').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Exportación de tripletas RDF (Capa Inferior) -->
+<div class="clin-modal-desk" id="triples-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2>▤ Tripletas RDF — Capa Inferior</h2>
+    <div class="sub">Sujeto – Predicado – Objeto, sólo lo efectivamente dicho (nodos Literal/Vacío). Los nodos teóricos y la interpretación no se incluyen.</div>
+    <textarea class="plain" id="triples-ta-desk" style="width:100%;height:260px" readonly></textarea>
+    <div class="clin-modal-row-desk">
+      <button class="clin-modal-ok-desk" onclick="descargarTriplesRDF()">⬇ Descargar .json</button>
+    </div>
+    <button class="clin-modal-close-desk" onclick="document.getElementById('triples-modal-desk').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Snapshots de sesión -->
+<div class="clin-modal-desk" id="snapshots-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2>🕐 Snapshots de sesión</h2>
+    <div class="sub">Fotos nombradas del caso a través del tratamiento ("Sesión 1", "Sesión 2"…), separadas del trabajo en curso.</div>
+    <button class="clin-modal-ok-desk" style="width:100%;padding:11px;margin-bottom:12px" onclick="guardarSnapshotSesion()">+ Guardar snapshot de hoy</button>
+    <div id="snapshots-lista-desk"></div>
+    <button class="clin-modal-close-desk" onclick="document.getElementById('snapshots-modal-desk').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Aviso de privacidad antes de publicar -->
+<div class="clin-modal-desk" id="aviso-publicar-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2>⚠ Antes de publicar</h2>
+    <div class="sub" style="text-align:left">La transcripción completa y los recortes nunca se publican. Pero las siguientes citas textuales ya forman parte del grafo (nodos Literal) y quedarán visibles si continúa:</div>
+    <div id="aviso-literal-lista-desk" style="max-height:260px;overflow-y:auto;margin:10px 0"></div>
+    <div class="clin-modal-row-desk">
+      <button class="clin-modal-cancel-desk" onclick="document.getElementById('aviso-publicar-modal-desk').classList.remove('open')">Cancelar</button>
+      <button class="clin-modal-ok-desk" onclick="document.getElementById('aviso-publicar-modal-desk').classList.remove('open');abrirPublicarDesktopReal()">Entiendo, continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal genérico de texto largo (edición de recortes, etc.) -->
+<div class="clin-modal-desk" id="textarea-modal-desk">
+  <div class="clin-modal-box-desk wide">
+    <h2 id="textarea-modal-titulo-desk">Editar texto</h2>
+    <textarea class="plain" id="textarea-modal-ta-desk" style="width:100%;height:180px"></textarea>
+    <div class="clin-modal-row-desk">
+      <button class="clin-modal-cancel-desk" onclick="document.getElementById('textarea-modal-desk').classList.remove('open')">Cancelar</button>
+      <button class="clin-modal-ok-desk" onclick="_textareaModalDeskConfirmar()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ════════════════════════════════════════════════
 // CONSTANTES
 // ════════════════════════════════════════════════
 var NODE_SIZE=48, BARRA_W=120, PX=160, PY=170, BW=130, BY=PY*0.47;
+
+// ════════════════════════════════════════════════
+// FLUJO CLÍNICO — estado
+// ════════════════════════════════════════════════
+var clinModo = 'texto';          // 'texto' | 'recortes' | 'inferior' | 'superior'
+var corpusTexto = '';            // transcripción completa (Pestaña 1)
+var recortes = [];               // {id, texto, origStart, origEnd, fecha, nodoId}
+var _recortesFiltro = '';
+var _recorteActualId = null;
+var vCount = 1;                  // contador nodos vacíos (V1, V2…)
+var iCount = 1;                  // contador nodos teóricos/interpretativos (S1, S2…)
+var RELACIONES_INFERIOR = [
+  {id:'secuencia',  label:'Secuencia'},
+  {id:'metonimia',  label:'Metonimia'},
+  {id:'corte',      label:'Corte'},
+  {id:'sustitucion',label:'Sustitución'}
+];
+var COLORES_PRESET_SUP = ['#c9a84c','#e06060','#4a90d9','#7ac97a','#b98cd6','#e0a860','#5ec9c9','#e06fb0'];
+var tiposRelacionSup = [];       // catálogo global {id, nombre, color, dash}
+var _tipoSupColorDraft = COLORES_PRESET_SUP[0];
+var _tipoSupDashDraft = 'solid';
+var analiticos = [];             // vectores analíticos {id, a:{...anchor}, b:{...anchor}, tipoId, colorProp, dashProp, label, bidir}
+var selAnalitico = null;
+var vectorSupMode = false;
+var vecSupStart = null;
+var _reanclarObjetivo = null;    // {obj, extremo:'a'|'b'} durante un re-anclaje
 
 // ════════════════════════════════════════════════
 // CYTOSCAPE
@@ -369,7 +695,21 @@ var cy=cytoscape({
     {selector:'edge.dashed',style:{'line-style':'dashed','line-dash-pattern':[8,4],'line-color':'#888','target-arrow-color':'#888'}},
     {selector:'edge.bidireccional',style:{'source-arrow-shape':'triangle','source-arrow-color':'#333'}},
     {selector:'edge.bidireccional.dashed',style:{'source-arrow-color':'#888'}},
-    {selector:'.barra',style:{'shape':'rectangle','width':100,'height':6,'background-color':'#1a1a1a','label':'','border-width':0}}
+    {selector:'.barra',style:{'shape':'rectangle','width':100,'height':6,'background-color':'#1a1a1a','label':'','border-width':0}},
+
+    /* ── Flujo clínico: tipos de nodo ── */
+    {selector:'node.nodo-literal',style:{'shape':'round-rectangle','background-color':'#2a2a2a','border-color':'#c9a84c','border-width':2,'width':'label','height':'label','padding':'10px','font-size':13,'text-wrap':'wrap','text-max-width':160}},
+    {selector:'node.nodo-literal:selected',style:{'border-color':'#fff','border-width':3}},
+    {selector:'node.nodo-vacio',style:{'shape':'ellipse','background-color':'#1a1a1a','border-color':'#888','border-style':'dashed','border-width':2,'width':44,'height':44}},
+    {selector:'node.nodo-vacio:selected',style:{'border-color':'#c9a84c','border-width':3}},
+    {selector:'node.nodo-interpretativo',style:{'shape':'ellipse','background-color':'#2a1a3a','border-color':'#b98cd6','border-style':'solid','border-width':2.5,'width':46,'height':46,'color':'#f0ead8','label':function(ele){ return '🔗 '+(ele.data('label')||''); }}},
+    {selector:'node.nodo-interpretativo:selected',style:{'border-color':'#fff','border-width':3.5}},
+
+    /* ── Flujo clínico: tipos de relación (Capa Inferior) ── */
+    {selector:'edge.rel-secuencia',style:{'line-style':'solid','line-color':'#555','target-arrow-color':'#555','width':2}},
+    {selector:'edge.rel-metonimia',style:{'line-style':'dashed','line-dash-pattern':[6,4],'line-color':'#c9a84c','target-arrow-color':'#c9a84c','width':2}},
+    {selector:'edge.rel-corte',style:{'line-style':'dashed','line-dash-pattern':[3,3],'line-color':'#c0392b','target-arrow-color':'#c0392b','width':3.5}},
+    {selector:'edge.rel-sustitucion',style:{'line-style':'dotted','line-color':'#4a90d9','target-arrow-color':'#4a90d9','width':2}}
   ],
   elements:[]
 });
@@ -377,7 +717,7 @@ var cy=cytoscape({
 // ════════════════════════════════════════════════
 // ESTADO
 // ════════════════════════════════════════════════
-var sCount=1,sourceNode=null,edgeType='normal',edgeDir='uni',dblPending=false,lastTap=0;
+var sCount=1,sourceNode=null,edgeType='normal',edgeDir='uni',dblPending=false,lastTap=0,lastTapNode=null;
 var textos=[],selTxt=null,txtCounter=0;
 var histList=[],histIdx=-1,skipSnap=false;
 var vectorMode=false,vecStart=null,vecDraft=null;
@@ -555,6 +895,15 @@ cy.on('add remove',function(){snapshot();});
 cy.on('data',function(){snapshot();});
 var moveTimer;
 cy.on('position','node',function(){clearTimeout(moveTimer);moveTimer=setTimeout(snapshot,400);});
+cy.on('position','node',function(){ if(typeof renderAnaliticos==='function') renderAnaliticos(); });
+cy.on('pan zoom',function(){ if(typeof renderAnaliticos==='function') renderAnaliticos(); });
+cy.on('select unselect','edge',function(){ if(typeof actualizarBarraRelInferior==='function') actualizarBarraRelInferior(); });
+cy.on('remove',function(evt){
+  var id; try{ id = evt.target.id(); }catch(e){ id=null; }
+  if(!id || !analiticos.length) return;
+  var afectados = analiticos.filter(function(o){ return (o.a&&o.a.id===id) || (o.b&&o.b.id===id); });
+  afectados.forEach(function(o){ if(typeof eliminarAnalitico==='function') eliminarAnalitico(o); });
+});
 
 // ════════════════════════════════════════════════
 // UI HELPERS
@@ -569,6 +918,14 @@ function showInd(msg){var e=document.getElementById('mode-indicator');e.textCont
 // ════════════════════════════════════════════════
 function duplicarSeleccionado(){
   var sel = cy.$('node:selected');
+  if(clinModo==='superior' && sel.length){
+    var bloqueados = sel.filter(function(n){ return n.hasClass('nodo-literal')||n.hasClass('nodo-vacio'); });
+    if(bloqueados.length){
+      showInd('Para editar, andá a Capa Inferior');
+      sel = sel.not(bloqueados);
+      if(!sel.length) return;
+    }
+  }
   if(sel.length){
     var idMap = {};
     var newNodes = [];
@@ -628,10 +985,25 @@ function duplicarSeleccionado(){
 }
 function eliminarSeleccionado(){
   var sel=cy.$(':selected');
+  if(clinModo==='superior' && sel.length>0){
+    var bloqueados = sel.filter(function(ele){
+      if(ele.isNode()) return ele.hasClass('nodo-literal')||ele.hasClass('nodo-vacio');
+      return ele.source().hasClass('nodo-literal')||ele.source().hasClass('nodo-vacio')||ele.target().hasClass('nodo-literal')||ele.target().hasClass('nodo-vacio');
+    });
+    if(bloqueados.length){
+      showInd('Para editar, andá a Capa Inferior');
+      sel = sel.not(bloqueados);
+      if(!sel.length){ if(selAnalitico){ eliminarAnalitico(selAnalitico); } return; }
+    }
+  }
   if(sel.length>0){
     hideOverlay();
     if(_curveDot){_curveDot.remove();_curveDot=null;_curveEdge=null;}
     sel.remove();
+    return;
+  }
+  if(selAnalitico){
+    eliminarAnalitico(selAnalitico);
     return;
   }
   if(selTxt){
@@ -1193,7 +1565,16 @@ function addEdge(s,t,label,opts){
   var classes=[];
   if(tipo==='dashed') classes.push('dashed');
   if(dir==='bi') classes.push('bidireccional');
-  return cy.add({group:'edges',data:{id:'e'+Date.now()+Math.random(),source:s,target:t,label:label},classes:classes});
+  var data={id:'e'+Date.now()+Math.random(),source:s,target:t,label:label};
+  // Cadena significante (Capa Inferior): las líneas entre nodos literales/vacíos
+  // arrancan tipificadas como "Secuencia" para que el selector de Relación
+  // siempre tenga un valor coherente desde el primer momento.
+  try{
+    var sn=cy.getElementById(s), tn=cy.getElementById(t);
+    var esCadena = sn.length && tn.length && (sn.hasClass('nodo-literal')||sn.hasClass('nodo-vacio')) && (tn.hasClass('nodo-literal')||tn.hasClass('nodo-vacio'));
+    if(esCadena){ classes.push('rel-secuencia'); data.tipoRel='secuencia'; }
+  }catch(e){}
+  return cy.add({group:'edges',data:data,classes:classes});
 }
 
 // ════════════════════════════════════════════════
@@ -1201,11 +1582,29 @@ function addEdge(s,t,label,opts){
 // ════════════════════════════════════════════════
 cy.on('tap','node',function(evt){
   if(vectorMode) return;
+  // Mientras se dibuja o re-ancla un vector analítico (Capa Superior), este
+  // click ya lo procesa el overlay SVG (#capa-sup-svg) — dejar que ADEMÁS
+  // siga su curso normal acá (conectar nodos, redoble = bucle, etc.) sería
+  // una interferencia: Cytoscape hace su propio hit-test de clicks
+  // independientemente del z-index/pointer-events del overlay, así que sin
+  // este guard un solo click dispara las dos cosas a la vez.
+  if(vectorSupMode || _reanclarObjetivo) return;
   if(evt.target.hasClass('barra')) return;
   if(dblPending) return;
-  var now=Date.now(),node=evt.target;
-  if(now-lastTap<280){
-    lastTap=0;dblPending=true;setTimeout(function(){dblPending=false;},350);
+  var node=evt.target;
+  if(clinModo==='superior' && (node.hasClass('nodo-literal')||node.hasClass('nodo-vacio'))){
+    showInd('Para editar, andá a Capa Inferior');
+    if(sourceNode){sourceNode.removeClass('source-selected');sourceNode=null;}
+    return;
+  }
+  var now=Date.now();
+  // El doble-click sólo debe crear un bucle si es DOS VECES SOBRE EL MISMO
+  // nodo — si no, conectar rápido dos nodos DISTINTOS (el flujo normal de
+  // "clic nodo A, clic nodo B" para armar la cadena significante) se
+  // interpretaba por error como doble-tap y creaba un bucle en el segundo
+  // nodo en lugar de la arista entre ambos.
+  if(now-lastTap<280 && lastTapNode===node.id()){
+    lastTap=0;lastTapNode=null;dblPending=true;setTimeout(function(){dblPending=false;},350);
     if(sourceNode){sourceNode.removeClass('source-selected');sourceNode=null;}
     var e=addEdge(node.id(),node.id());
     // Bucle: loop nativo. loop-sweep grande = círculo más redondo.
@@ -1217,7 +1616,7 @@ cy.on('tap','node',function(evt){
     });
     return;
   }
-  lastTap=now;
+  lastTap=now; lastTapNode=node.id();
   if(selTxt){selTxt.el.classList.remove('selected-txt');selTxt=null;hideOverlay();}
   actualizarBarraEstiloDesk();
   if(selVec){deselectVec(selVec);selVec=null;}
@@ -1230,12 +1629,21 @@ cy.on('tap','node',function(evt){
   else{if(sourceNode.id()!==node.id()) addEdge(sourceNode.id(),node.id());sourceNode.removeClass('source-selected');sourceNode=null;}
 });
 cy.on('tap','edge',function(evt){
+  if(vectorSupMode || _reanclarObjetivo) return;
   if(!evt.originalEvent.shiftKey) return;
-  var e=evt.target,txt=prompt('Renombrar línea:',e.data('label')||'');
+  var e=evt.target;
+  if(clinModo==='superior' && (e.source().hasClass('nodo-literal')||e.source().hasClass('nodo-vacio')||e.target().hasClass('nodo-literal')||e.target().hasClass('nodo-vacio'))){
+    showInd('Para editar, andá a Capa Inferior'); return;
+  }
+  var txt=prompt('Renombrar línea:',e.data('label')||'');
   if(txt!==null) e.data('label',txt);
 });
 cy.on('dbltap','edge',function(evt){
+  if(vectorSupMode || _reanclarObjetivo) return;
   var e=evt.target;
+  if(clinModo==='superior' && (e.source().hasClass('nodo-literal')||e.source().hasClass('nodo-vacio')||e.target().hasClass('nodo-literal')||e.target().hasClass('nodo-vacio'))){
+    showInd('Para editar, andá a Capa Inferior'); return;
+  }
   // Si shift: renombrar. Si no: entrar en modo de curvatura
   if(evt.originalEvent.shiftKey){
     var txt=prompt('Renombrar línea:',e.data('label')||'');
@@ -1336,6 +1744,7 @@ cy.on('tap',function(evt){
     actualizarBarraEstiloDesk();
     if(sourceNode){sourceNode.removeClass('source-selected');sourceNode=null;}
     if(selVec){deselectVec(selVec);selVec=null;hideOverlay();}
+    if(selAnalitico) deselAnalitico();
   }
 });
 
@@ -1428,11 +1837,21 @@ function actualizarContadorS(){
 }
 function guardarJSON(){
   var data={
-    nodes:cy.nodes().map(function(n){return {id:n.id(),label:n.data('label'),x:n.position('x'),y:n.position('y'),classes:n.className(),angle:n.data('angle')||0,barraW:n.data('barraW')||null,barraThick:n.data('barraThick')||3,width:parseFloat(n.style('width')),height:parseFloat(n.style('height')),color:n.hasClass('barra')?null:n.style('background-color')};}),
-    edges:cy.edges().map(function(e){return {id:e.id(),source:e.source().id(),target:e.target().id(),label:e.data('label')||'',classes:e.className(),curveStyle:e.style('curve-style'),loopDirection:e.style('loop-direction'),loopSweep:e.style('loop-sweep'),color:e.style('line-color')};}),
+    nodes:cy.nodes().map(function(n){return {id:n.id(),label:n.data('label'),x:n.position('x'),y:n.position('y'),classes:n.className(),angle:n.data('angle')||0,barraW:n.data('barraW')||null,barraThick:n.data('barraThick')||3,width:parseFloat(n.style('width')),height:parseFloat(n.style('height')),color:n.hasClass('barra')?null:n.style('background-color'),recorteId:n.data('recorteId')||null};}),
+    edges:cy.edges().map(function(e){return {id:e.id(),source:e.source().id(),target:e.target().id(),label:e.data('label')||'',classes:e.className(),curveStyle:e.style('curve-style'),loopDirection:e.style('loop-direction'),loopSweep:e.style('loop-sweep'),color:e.style('line-color'),tipoRel:e.data('tipoRel')||null};}),
     textos:textos.map(function(t){return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||16,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null};}),
     vectors:serializeVectors(),
-    imagenes:serializarImagenesDesk()
+    imagenes:serializarImagenesDesk(),
+    // Datos del flujo clínico. IMPORTANTE: este "Guardar" es una copia de trabajo
+    // personal (se descarga a la computadora del analista), no la publicación
+    // pública — por eso acá SÍ va la transcripción completa y los recortes.
+    // confirmarPublicarDesktop() arma su propio objeto por separado y nunca
+    // debe incluir estos dos campos.
+    corpusTexto: corpusTexto,
+    recortes: recortes,
+    analiticos: serializarAnaliticosDesk(),
+    vCount: vCount,
+    iCount: iCount
   };
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='esquema-lacan.json';
@@ -1681,6 +2100,992 @@ cy.on('tap', function(evt){ if(evt.target===cy) hideOverlay(); });
 // Mostrar overlay al seleccionar texto
 // (lo hacemos desde crearTextoEl al seleccionar)
 
+
+// ════════════════════════════════════════════════════════════
+// FLUJO CLÍNICO — lógica completa
+// (state vars: clinModo, corpusTexto, recortes, vCount, iCount,
+//  RELACIONES_INFERIOR, COLORES_PRESET_SUP, tiposRelacionSup, analiticos,
+//  selAnalitico, vectorSupMode, vecSupStart, _reanclarObjetivo — declaradas
+//  más arriba junto a NODE_SIZE)
+// ════════════════════════════════════════════════════════════
+var _vecSupDraftEl = null;
+
+function escapeHtmlClinDesk(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Navegación entre las 4 sub-pestañas ──────────────────────
+function cambiarSubTab(sub){
+  clinModo = sub;
+  document.querySelectorAll('.clin-tab-desk').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-clin')===sub);
+  });
+  var elTexto=document.getElementById('clin-texto-desk'), elRecortes=document.getElementById('clin-recortes-desk'), elGrafo=document.getElementById('clin-grafo-desk');
+  if(elTexto) elTexto.classList.toggle('active', sub==='texto');
+  if(elRecortes) elRecortes.classList.toggle('active', sub==='recortes');
+  var esGrafo = (sub==='inferior'||sub==='superior');
+  if(elGrafo) elGrafo.classList.toggle('active', esGrafo);
+
+  deselTodoClinDesk();
+  if(vectorSupMode && sub!=='superior') toggleVectorAnaliticoMode();
+  _reanclarObjetivo = null;
+
+  if(esGrafo){
+    var chip=document.getElementById('clin-capa-chip-desk');
+    if(chip) chip.textContent = sub==='inferior' ? 'Capa Inferior' : 'Capa Superior';
+    actualizarVisibilidadToolbarClinDesk();
+    actualizarVisibilidadInterpretativos();
+    actualizarBarraRelInferior();
+    if(sub==='superior'){
+      var faderInput=document.getElementById('fader-sup-desk');
+      if(faderInput) faderInput.value = 100;
+      actualizarFaderSup(100);
+    }
+    try{ cy.resize(); }catch(e){}
+    setTimeout(function(){
+      try{ cy.resize(); }catch(e){}
+      if(sub==='superior') renderAnaliticos();
+    }, 30);
+  }
+  if(sub==='recortes') renderRecortes();
+  if(sub==='texto') renderTextoHighlight();
+}
+
+function actualizarVisibilidadToolbarClinDesk(){
+  document.querySelectorAll('#toolbar [data-clin]').forEach(function(el){
+    var v = el.getAttribute('data-clin');
+    el.classList.toggle('clin-hide-desk', v!==clinModo);
+  });
+}
+
+function deselTodoClinDesk(){
+  try{ cy.$(':selected').unselect(); }catch(e){}
+  if(typeof hideOverlay==='function') hideOverlay();
+  if(typeof selTxt!=='undefined' && selTxt){ selTxt.el.classList.remove('selected-txt'); selTxt=null; }
+  if(typeof selVec!=='undefined' && selVec){ deselectVec(selVec); selVec=null; }
+  if(typeof selImgDesk!=='undefined' && selImgDesk){ selImgDesk=null; }
+  if(selAnalitico) deselAnalitico();
+}
+
+// ── PESTAÑA 1: TEXTO COMPLETO ────────────────────────────────
+var textoCorpusElDesk = null;
+function initTextoCorpusListenersDesk(){
+  textoCorpusElDesk = document.getElementById('texto-corpus-desk');
+  if(!textoCorpusElDesk || textoCorpusElDesk._clinListo) return;
+  textoCorpusElDesk._clinListo = true;
+  function chequearSeleccion(){
+    var s=textoCorpusElDesk.selectionStart, e=textoCorpusElDesk.selectionEnd;
+    var fab=document.getElementById('texto-fab-desk');
+    if(e>s){
+      fab.classList.add('show');
+      document.getElementById('texto-fab-count-desk').textContent=(e-s)+' caracteres seleccionados';
+    } else {
+      fab.classList.remove('show');
+    }
+  }
+  textoCorpusElDesk.addEventListener('mouseup', chequearSeleccion);
+  textoCorpusElDesk.addEventListener('keyup', chequearSeleccion);
+  textoCorpusElDesk.addEventListener('select', chequearSeleccion);
+  textoCorpusElDesk.addEventListener('scroll', function(){
+    var hl=document.getElementById('texto-corpus-highlight-desk');
+    if(hl){ hl.scrollTop=textoCorpusElDesk.scrollTop; hl.scrollLeft=textoCorpusElDesk.scrollLeft; }
+  });
+}
+
+function onCorpusInput(){
+  if(!textoCorpusElDesk) initTextoCorpusListenersDesk();
+  corpusTexto = textoCorpusElDesk.value;
+  renderTextoHighlight();
+}
+
+function renderTextoHighlight(){
+  initTextoCorpusListenersDesk();
+  if(!textoCorpusElDesk) return;
+  if(textoCorpusElDesk.value !== corpusTexto) textoCorpusElDesk.value = corpusTexto;
+  var hl = document.getElementById('texto-corpus-highlight-desk');
+  if(!hl) return;
+  var texto = corpusTexto || '';
+  // Sólo resaltar si el texto en ese rango TODAVÍA coincide exactamente con
+  // el recorte guardado (si el corpus se editó después, el resaltado de esa
+  // parte se apaga solo en vez de marcar mal).
+  var rangos = [];
+  recortes.forEach(function(r){
+    if(typeof r.origStart!=='number' || typeof r.origEnd!=='number') return;
+    var actual = texto.slice(r.origStart, r.origEnd);
+    if(actual === r.texto){ rangos.push({start:r.origStart, end:r.origEnd}); }
+  });
+  rangos.sort(function(a,b){ return a.start-b.start; });
+  var html='', cursor=0;
+  rangos.forEach(function(r){
+    if(r.start<cursor) return; // superpuestos: ignorar el segundo
+    html += escapeHtmlClinDesk(texto.slice(cursor, r.start));
+    html += '<mark class="rc-highlight-desk">'+escapeHtmlClinDesk(texto.slice(r.start, r.end))+'</mark>';
+    cursor = r.end;
+  });
+  html += escapeHtmlClinDesk(texto.slice(cursor));
+  hl.innerHTML = html + '\n';
+  hl.scrollTop = textoCorpusElDesk.scrollTop;
+  hl.scrollLeft = textoCorpusElDesk.scrollLeft;
+}
+
+function enviarSeleccionARecortes(){
+  if(!textoCorpusElDesk) return;
+  var s=textoCorpusElDesk.selectionStart, e=textoCorpusElDesk.selectionEnd;
+  if(e<=s){ showInd('Seleccioná una parte del texto primero'); return; }
+  var raw = corpusTexto.slice(s,e);
+  var trimmed = raw.trim();
+  if(!trimmed){ showInd('La selección está vacía'); return; }
+  // Ajustar los límites si trim() sacó espacios, para que el resaltado futuro
+  // siga coincidiendo con el corpus.
+  var lead = raw.length - raw.replace(/^\s+/,'').length;
+  var trail = raw.length - raw.replace(/\s+$/,'').length;
+  var origStart = s+lead, origEnd = e-trail;
+  recortes.push({
+    id:'rc'+Date.now()+Math.floor(Math.random()*1000),
+    texto: trimmed,
+    origStart: origStart,
+    origEnd: origEnd,
+    fecha: Date.now(),
+    nodoId: null
+  });
+  document.getElementById('texto-fab-desk').classList.remove('show');
+  textoCorpusElDesk.setSelectionRange(e,e);
+  renderTextoHighlight();
+  actualizarBadgeRecortes();
+  showInd('Enviado a Recortes ✓');
+  snapshot();
+}
+
+function actualizarBadgeRecortes(){
+  var b = document.getElementById('clin-badge-recortes-desk');
+  if(!b) return;
+  if(recortes.length){ b.style.display='flex'; b.textContent = recortes.length; }
+  else { b.style.display='none'; }
+}
+
+// ── Estadísticas del relato ──────────────────────────────────
+var STOPWORDS_ES_DESK = ['el','la','los','las','un','una','unos','unas','de','del','al','a','ante','bajo','cabe','con','contra','desde','en','entre','hacia','hasta','para','por','según','sin','so','sobre','tras','y','o','u','e','ni','que','como','cuando','donde','pero','porque','pues','si','aunque','mas','se','su','sus','mi','mis','tu','tus','le','les','lo','me','te','nos','os','yo','tú','él','ella','ello','nosotros','vosotros','ellos','ellas','usted','ustedes','es','son','fue','fueron','era','eran','ser','estar','está','están','estaba','estaban','he','ha','han','había','habían','muy','más','menos','también','ya','no','sí','esto','eso','aquello','este','esta','estos','estas','ese','esa','esos','esas','aquel','aquella','aquellos','aquellas','mí','ti','nada','algo','alguien','nadie','todo','toda','todos','todas','otro','otra','otros','otras'];
+var PALABRAS_COMUNES_MAYUS_DESK = ['El','La','Los','Las','Un','Una','Unos','Unas','Y','O','Pero','Porque','Aunque','Sin','Con','Cuando','Donde','Como','Que','Si','No','Ya','Entonces','Después','Antes','Luego','Mientras','Ahora','Bueno','Bien','Así','Además','Tal','Vez','Eso','Esto','Aquello','Su','Sus','Mi','Mis','Nunca','Siempre','Quizás','Tal Vez','Ah','Oh','Bueno,'];
+
+function analizarTexto(texto){
+  texto = texto || '';
+  var palabras = (texto.match(/[A-Za-zÁÉÍÓÚÑÜáéíóúñü]+/g)) || [];
+  var caracteres = texto.length;
+  var oracionesArr = texto.match(/[^.!?…]+[.!?…]+/g);
+  var oraciones = oracionesArr ? oracionesArr.length : (texto.trim() ? 1 : 0);
+  var unicas = {};
+  palabras.forEach(function(w){ unicas[w.toLowerCase()]=true; });
+  var nUnicas = Object.keys(unicas).length;
+  var minutosLectura = palabras.length ? Math.max(1, Math.round(palabras.length/200)) : 0;
+
+  var freq = {};
+  palabras.forEach(function(w){
+    var wl = w.toLowerCase();
+    if(wl.length<3) return;
+    if(STOPWORDS_ES_DESK.indexOf(wl)!==-1) return;
+    freq[wl]=(freq[wl]||0)+1;
+  });
+  var frecuentes = Object.keys(freq).map(function(w){ return {palabra:w, n:freq[w]}; })
+    .sort(function(a,b){ return b.n-a.n; }).slice(0,10);
+
+  // Heurística de nombres propios: cualquier palabra capitalizada, sin
+  // importar su posición en la oración (para no perder los que sólo
+  // aparecen al comienzo de una frase, que es el caso más común).
+  var nombresSet = {};
+  palabras.forEach(function(w){
+    if(w.length<2) return;
+    var inicial = w.charAt(0);
+    if(inicial.toUpperCase()!==inicial || inicial.toUpperCase()===inicial.toLowerCase()) return;
+    if(PALABRAS_COMUNES_MAYUS_DESK.indexOf(w)!==-1) return;
+    nombresSet[w]=(nombresSet[w]||0)+1;
+  });
+  var nombres = Object.keys(nombresSet).map(function(w){ return {palabra:w,n:nombresSet[w]}; })
+    .sort(function(a,b){ return b.n-a.n; });
+
+  return {palabras:palabras.length, caracteres:caracteres, oraciones:oraciones, unicas:nUnicas, minutosLectura:minutosLectura, frecuentes:frecuentes, nombres:nombres};
+}
+
+function abrirEstadisticasTexto(){
+  var st = analizarTexto(corpusTexto);
+  var resumen = document.getElementById('stats-resumen-desk');
+  resumen.innerHTML = [['Palabras',st.palabras],['Caracteres',st.caracteres],['Oraciones',st.oraciones],['Palabras únicas',st.unicas],['Min. de lectura',st.minutosLectura],['Recortes',recortes.length]]
+    .map(function(p){ return '<div class="stats-card-desk"><div class="n">'+p[1]+'</div><div class="lbl">'+p[0]+'</div></div>'; }).join('');
+
+  var maxN = st.frecuentes.length ? st.frecuentes[0].n : 1;
+  document.getElementById('stats-frecuentes-desk').innerHTML = st.frecuentes.length ? st.frecuentes.map(function(f){
+    var pct = Math.round((f.n/maxN)*100);
+    return '<div class="stats-word-row-desk"><span class="w">'+escapeHtmlClinDesk(f.palabra)+'</span><span class="barwrap"><span class="bar" style="width:'+pct+'%"></span></span><span class="count">'+f.n+'</span></div>';
+  }).join('') : '<div style="color:#666;font-size:11px;text-align:center;padding:10px">Sin datos suficientes.</div>';
+
+  document.getElementById('stats-nombres-desk').innerHTML = st.nombres.length ? st.nombres.map(function(n){
+    return '<span style="display:inline-block;background:#222;border:1px solid #333;border-radius:12px;padding:4px 10px;margin:3px 4px 0 0;font-size:11px;color:#f0ead8">'+escapeHtmlClinDesk(n.palabra)+' <span style="color:#888">×'+n.n+'</span></span>';
+  }).join('') : '<div style="color:#666;font-size:11px;text-align:center;padding:10px">No se detectaron nombres propios.</div>';
+
+  document.getElementById('stats-modal-desk').classList.add('open');
+}
+
+// ── PESTAÑA 2: RECORTES LITERALES ────────────────────────────
+function filtrarRecortes(q){ _recortesFiltro = (q||'').toLowerCase(); renderRecortes(); }
+
+function contarNodosDeRecorte(r){
+  return cy.nodes().filter(function(n){ return n.data('recorteId')===r.id; });
+}
+
+function renderRecortes(){
+  actualizarBadgeRecortes();
+  var lista = document.getElementById('recortes-lista-desk');
+  var empty = document.getElementById('recortes-empty-desk');
+  var toolbar = document.getElementById('recortes-toolbar-desk');
+  if(!lista) return;
+  toolbar.classList.toggle('show', recortes.length>0);
+  if(!recortes.length){ empty.style.display='block'; lista.innerHTML=''; return; }
+  empty.style.display='none';
+  var items = recortes.slice().sort(function(a,b){ return b.fecha-a.fecha; });
+  if(_recortesFiltro){ items = items.filter(function(r){ return r.texto.toLowerCase().indexOf(_recortesFiltro)!==-1; }); }
+  if(!items.length){
+    lista.innerHTML = '<div style="color:#998;text-align:center;padding:30px;font-family:JetBrains Mono,monospace;font-size:12px">Sin resultados.</div>';
+    return;
+  }
+  lista.innerHTML = items.map(function(r){
+    var fecha = new Date(r.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    var nNodos = contarNodosDeRecorte(r).length;
+    var badge = nNodos ? '<span class="rc-badge-desk">✓ '+nNodos+' nodo'+(nNodos>1?'s':'')+'</span>' : '';
+    return '<div class="recorte-card-desk" onclick="abrirRecorteModal(\''+r.id+'\')"><div class="rc-txt-desk">'+escapeHtmlClinDesk(r.texto)+'</div><div class="rc-meta-desk"><span>'+fecha+'</span>'+badge+'</div></div>';
+  }).join('');
+}
+
+function recorteActual(){ return recortes.filter(function(r){ return r.id===_recorteActualId; })[0] || null; }
+
+function abrirRecorteModal(id){
+  _recorteActualId = id;
+  var r = recorteActual();
+  if(!r) return;
+  document.getElementById('rc-preview-ta-desk').value = r.texto;
+  document.getElementById('rc-sel-bar-desk').classList.remove('show');
+  document.getElementById('recorte-modal-desk').classList.add('open');
+}
+function cerrarRecorteModal(){
+  document.getElementById('recorte-modal-desk').classList.remove('open');
+  _recorteActualId = null;
+  renderRecortes();
+}
+function chequearSeleccionRecorteDesk(){
+  var ta = document.getElementById('rc-preview-ta-desk');
+  var s=ta.selectionStart, e=ta.selectionEnd;
+  var bar = document.getElementById('rc-sel-bar-desk');
+  if(e>s){
+    bar.classList.add('show');
+    document.getElementById('rc-sel-info-desk').textContent=(e-s)+' caracteres seleccionados';
+  } else { bar.classList.remove('show'); }
+}
+
+function _crearNodoClinInterno(texto, tipo, recorteId){
+  // Jitter aleatorio (±40px) alrededor del centro: sin esto, crear dos nodos
+  // seguidos (p. ej. un literal y después un vacío) los deja exactamente
+  // superpuestos en el mismo punto, y el primer clic para "conectar A con B"
+  // termina tocando dos veces el mismo nodo (que además dispara por error el
+  // doble-tap = bucle) en lugar de tocar cada uno por separado.
+  cy.resize();
+  var id = (tipo==='vacio') ? ('vac'+(vCount++)+'_'+Date.now().toString(36)) : ('lit'+Date.now().toString(36)+Math.floor(Math.random()*100));
+  var cls = (tipo==='vacio') ? 'nodo-vacio' : 'nodo-literal';
+  var center = cyCenterDesk();
+  var n = cy.add({group:'nodes', data:{id:id, label:texto, recorteId:recorteId||null}, classes:cls,
+    position:{x:center.x+(-40+Math.random()*80), y:center.y+(-40+Math.random()*80)}});
+  n.select();
+  snapshot();
+  return n;
+}
+function crearNodoVacio(){
+  cy.resize();
+  var id = 'vac'+(vCount++)+'_'+Date.now().toString(36);
+  var center = cyCenterDesk();
+  var n = cy.add({group:'nodes', data:{id:id, label:'', recorteId:null}, classes:'nodo-vacio',
+    position:{x:center.x+(-40+Math.random()*80), y:center.y+(-40+Math.random()*80)}});
+  n.select();
+  snapshot();
+  showInd('Nodo vacío creado ✓');
+  return n;
+}
+
+function convertirRecorteEnNodo(tipo){
+  var r = recorteActual();
+  if(!r) return;
+  cambiarSubTab('inferior');
+  cy.resize();
+  var n = _crearNodoClinInterno(r.texto, tipo, r.id);
+  r.nodoId = n.id();
+  cerrarRecorteModal();
+  showInd('Nodo creado en Capa Inferior ✓');
+}
+function convertirSeleccionRecorte(tipo){
+  var ta = document.getElementById('rc-preview-ta-desk');
+  var s=ta.selectionStart, e=ta.selectionEnd;
+  if(e<=s){ showInd('Seleccioná una parte del recorte primero'); return; }
+  var texto = ta.value.slice(s,e).trim();
+  if(!texto) return;
+  var r = recorteActual();
+  cambiarSubTab('inferior');
+  cy.resize();
+  var n = _crearNodoClinInterno(texto, tipo, r?r.id:null);
+  if(r) r.nodoId = n.id();
+  cerrarRecorteModal();
+  showInd('Nodo creado en Capa Inferior ✓');
+}
+function irANodoDeRecorte(){
+  var r = recorteActual();
+  if(!r) return;
+  var nodos = contarNodosDeRecorte(r);
+  if(!nodos.length){ showInd('Este recorte todavía no generó nodos'); return; }
+  cambiarSubTab('inferior');
+  cerrarRecorteModal();
+  setTimeout(function(){
+    cy.$(':selected').unselect();
+    nodos.select();
+    cy.animate({fit:{eles:nodos, padding:80}}, {duration:300});
+  }, 60);
+}
+function editarRecorteActual(){
+  var r = recorteActual();
+  if(!r) return;
+  abrirTextareaModalDesk('Editar recorte', r.texto, function(nuevo){
+    nuevo = (nuevo||'').trim();
+    if(!nuevo) return;
+    r.texto = nuevo;
+    // Al editar el texto se pierde la referencia exacta al corpus original,
+    // así el resaltado no marca mal si ya no coincide literalmente.
+    r.origStart = null; r.origEnd = null;
+    var ta = document.getElementById('rc-preview-ta-desk');
+    if(ta) ta.value = nuevo;
+    renderRecortes();
+    renderTextoHighlight();
+    snapshot();
+  });
+}
+function eliminarRecorteActual(){
+  var r = recorteActual();
+  if(!r) return;
+  if(!confirm('¿Eliminar este recorte? Los nodos que ya generó no se van a borrar.')) return;
+  recortes = recortes.filter(function(x){ return x.id!==r.id; });
+  cerrarRecorteModal();
+  renderTextoHighlight();
+  snapshot();
+  showInd('Recorte eliminado');
+}
+
+// ── Modal genérico de texto largo (reutilizable) ─────────────
+var _textareaModalDeskCallback = null;
+function abrirTextareaModalDesk(titulo, valor, callback){
+  document.getElementById('textarea-modal-titulo-desk').textContent = titulo;
+  document.getElementById('textarea-modal-ta-desk').value = valor||'';
+  _textareaModalDeskCallback = callback;
+  document.getElementById('textarea-modal-desk').classList.add('open');
+}
+function _textareaModalDeskConfirmar(){
+  var v = document.getElementById('textarea-modal-ta-desk').value;
+  document.getElementById('textarea-modal-desk').classList.remove('open');
+  var cb = _textareaModalDeskCallback;
+  _textareaModalDeskCallback = null;
+  if(typeof cb==='function') cb(v);
+}
+
+// ── PESTAÑA 3: CAPA INFERIOR ──────────────────────────────────
+function extraerTimestampIdDesk(id){
+  var m = /(\d{10,})/.exec(id);
+  return m ? parseInt(m[1],10) : 0;
+}
+function autoOrdenarCapaInferior(){
+  var nodos = cy.nodes('.nodo-literal, .nodo-vacio');
+  if(!nodos.length){ showInd('No hay nodos para ordenar'); return; }
+  var arr = nodos.toArray().sort(function(a,b){ return extraerTimestampIdDesk(a.id())-extraerTimestampIdDesk(b.id()); });
+  var cols = Math.max(1, Math.ceil(Math.sqrt(arr.length*1.4)));
+  var gapX=150, gapY=130;
+  arr.forEach(function(n,i){
+    var col=i%cols, row=Math.floor(i/cols);
+    n.position({x:col*gapX+100, y:row*gapY+100});
+  });
+  cy.animate({fit:{eles:nodos, padding:60}}, {duration:350});
+  snapshot();
+  showInd('Nodos ordenados ✓');
+}
+
+function setTipoRelInferior(edge, tipo){
+  RELACIONES_INFERIOR.forEach(function(r){ edge.removeClass('rel-'+r.id); });
+  edge.addClass('rel-'+tipo);
+  edge.data('tipoRel', tipo);
+}
+function aplicarTipoRelSeleccionado(tipo){
+  var sel = cy.$('edge:selected');
+  if(!sel.length){ showInd('Seleccioná una línea primero'); return; }
+  sel.forEach(function(e){ setTipoRelInferior(e, tipo); });
+  actualizarBarraRelInferior();
+  snapshot();
+}
+function actualizarBarraRelInferior(){
+  var sel = cy.$('edge:selected');
+  var tipoActivo = (sel.length===1) ? (sel.data('tipoRel')||'secuencia') : null;
+  document.querySelectorAll('.rel-btn-desk').forEach(function(b){
+    b.classList.toggle('active', !!tipoActivo && b.getAttribute('data-rel')===tipoActivo);
+  });
+}
+
+// ── Exportar Capa Inferior como tripletas RDF ────────────────
+function grafoATriples(){
+  var nodos = cy.nodes().not('.barra').not('.nodo-interpretativo').map(function(n){
+    var tipo = n.hasClass('nodo-literal') ? 'literal' : (n.hasClass('nodo-vacio') ? 'vacio' : 'otro');
+    return {id:n.id(), tipo:tipo, texto:n.data('label')||''};
+  });
+  var idsValidos = {}; nodos.forEach(function(n){ idsValidos[n.id]=true; });
+  var triples = cy.edges().filter(function(e){ return idsValidos[e.source().id()] && idsValidos[e.target().id()]; })
+    .map(function(e){ return {subject:e.source().id(), predicate:(e.data('tipoRel')||'secuencia'), object:e.target().id()}; });
+  return {nodos:nodos, triples:triples};
+}
+function abrirTriplesModal(){
+  document.getElementById('triples-ta-desk').value = JSON.stringify(grafoATriples(), null, 2);
+  document.getElementById('triples-modal-desk').classList.add('open');
+}
+function descargarTriplesRDF(){
+  var blob = new Blob([JSON.stringify(grafoATriples(),null,2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'grafolisis-rdf-'+Date.now()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  showInd('Descargado ✓');
+}
+
+// ── PESTAÑA 4: CAPA SUPERIOR — nodo teórico ──────────────────
+function crearNodoInterpretativo(){
+  cy.resize();
+  var id='int'+Date.now()+Math.floor(Math.random()*1000);
+  var center=cyCenterDesk();
+  var n=cy.add({group:'nodes', data:{id:id, label:'S'+(iCount++)}, classes:'nodo-interpretativo', position:{x:center.x+(-40+Math.random()*80), y:center.y+(-40+Math.random()*80)}});
+  n.select();
+  snapshot();
+  showInd('Nodo teórico creado ✓');
+  return n;
+}
+function actualizarVisibilidadInterpretativos(){
+  var mostrar = (clinModo==='superior');
+  cy.nodes('.nodo-interpretativo').style('display', mostrar?'element':'none');
+  cy.nodes('.nodo-interpretativo').connectedEdges().style('display', mostrar?'element':'none');
+  var svg=document.getElementById('capa-sup-svg');
+  if(svg) svg.style.display = mostrar ? '' : 'none';
+}
+
+// ── Catálogo global de tipos de relación analítica ───────────
+function cargarTiposSupGlobal(){
+  try{ var raw=localStorage.getItem('grafolisisTiposRelacionSup'); tiposRelacionSup = raw?JSON.parse(raw):[]; }
+  catch(e){ tiposRelacionSup=[]; }
+}
+function guardarTiposSupGlobal(){
+  try{ localStorage.setItem('grafolisisTiposRelacionSup', JSON.stringify(tiposRelacionSup)); }catch(e){}
+}
+function tipoRelSupPorId(id){ return tiposRelacionSup.filter(function(t){ return t.id===id; })[0] || null; }
+function renderTipoSupColorGrid(){
+  document.getElementById('tipo-sup-color-grid-desk').innerHTML = COLORES_PRESET_SUP.map(function(c){
+    var activo = (c===_tipoSupColorDraft);
+    return '<div onclick="elegirColorTipoSup(\''+c+'\')" style="width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid '+(activo?'#fff':'transparent')+'"></div>';
+  }).join('');
+}
+function elegirColorTipoSup(c){ _tipoSupColorDraft=c; renderTipoSupColorGrid(); }
+function elegirDashTipoSup(d){
+  _tipoSupDashDraft = d;
+  document.querySelectorAll('#tipo-sup-dash-grid-desk button').forEach(function(b){
+    var activo = b.getAttribute('data-dash')===d;
+    b.classList.toggle('clin-modal-ok-desk', activo);
+    b.classList.toggle('clin-modal-cancel-desk', !activo);
+  });
+}
+function renderTiposSupLista(){
+  var lista = document.getElementById('tipos-sup-lista-desk');
+  if(!tiposRelacionSup.length){ lista.innerHTML='<div style="color:#666;font-size:11px;text-align:center;padding:14px">Todavía no definiste ningún tipo.</div>'; return; }
+  lista.innerHTML = tiposRelacionSup.map(function(t){
+    var style = t.dash==='dashed' ? 'border-top:2px dashed '+t.color : (t.dash==='dotted' ? 'border-top:2px dotted '+t.color : 'border-top:2px solid '+t.color);
+    return '<div class="tipo-sup-row-desk"><div style="width:24px;height:0;'+style+'"></div><span class="tipo-sup-nombre-desk">'+escapeHtmlClinDesk(t.nombre)+'</span><button class="tipo-sup-del-desk" onclick="eliminarTipoSup(\''+t.id+'\')">Borrar</button></div>';
+  }).join('');
+}
+function abrirTiposSupModal(){
+  renderTipoSupColorGrid();
+  elegirDashTipoSup('solid');
+  document.getElementById('tipo-sup-nombre-desk').value='';
+  renderTiposSupLista();
+  document.getElementById('tipos-sup-modal-desk').classList.add('open');
+}
+function guardarNuevoTipoSup(){
+  var nombre = document.getElementById('tipo-sup-nombre-desk').value.trim();
+  if(!nombre){ showInd('Ponele un nombre al tipo'); return; }
+  tiposRelacionSup.push({id:'trs'+Date.now(), nombre:nombre, color:_tipoSupColorDraft, dash:_tipoSupDashDraft});
+  guardarTiposSupGlobal();
+  document.getElementById('tipo-sup-nombre-desk').value='';
+  renderTiposSupLista();
+  showInd('Tipo agregado ✓');
+}
+function eliminarTipoSup(id){
+  if(!confirm('¿Borrar este tipo de relación? Los vectores que ya lo usaban conservan su apariencia actual.')) return;
+  analiticos.forEach(function(o){
+    if(o.tipoId===id){
+      var t=tipoRelSupPorId(id);
+      if(t){ o.colorProp=t.color; o.dashProp=t.dash; }
+      o.tipoId=null;
+    }
+  });
+  tiposRelacionSup = tiposRelacionSup.filter(function(t){ return t.id!==id; });
+  guardarTiposSupGlobal();
+  renderTiposSupLista();
+  renderAnaliticos();
+}
+
+// ── Vector analítico: coordenadas y anclaje ──────────────────
+function screenToModel(px,py){
+  var pan=cy.pan(), zoom=cy.zoom();
+  return {x:(px-pan.x)/zoom, y:(py-pan.y)/zoom};
+}
+function modelToScreen(pt){
+  var pan=cy.pan(), zoom=cy.zoom();
+  return {x:pt.x*zoom+pan.x, y:pt.y*zoom+pan.y};
+}
+function anchorModelPoint(a){
+  if(!a) return {x:0,y:0};
+  if(a.type==='nodo'){
+    var n=cy.getElementById(a.id);
+    return n.length ? n.position() : {x:0,y:0};
+  }
+  if(a.type==='arista'){
+    var e=cy.getElementById(a.id);
+    if(!e.length) return {x:0,y:0};
+    var sp=e.source().position(), tp=e.target().position();
+    return {x:(sp.x+tp.x)/2, y:(sp.y+tp.y)/2};
+  }
+  return {x:a.x||0, y:a.y||0};
+}
+function distToSegmentClin(px,py,x1,y1,x2,y2){
+  var dx=x2-x1, dy=y2-y1;
+  var len2=dx*dx+dy*dy;
+  var t = len2 ? ((px-x1)*dx+(py-y1)*dy)/len2 : 0;
+  t = Math.max(0, Math.min(1,t));
+  var cx=x1+t*dx, cy2=y1+t*dy;
+  return Math.hypot(px-cx, py-cy2);
+}
+function hitTestAnchor(px,py){
+  var UMBRAL_NODO=30, UMBRAL_ARISTA=14;
+  var mejor=null, mejorD=UMBRAL_NODO;
+  // Nota: se usa cy.nodes()/cy.edges() sin filtrar por ':visible' a propósito.
+  // Esta función sólo se llama en Capa Superior (el botón de V. Analítico no
+  // existe en otra pestaña), donde todo nodo/arista anclable ya es visible
+  // para el usuario por definición. El pseudo-selector ':visible' de
+  // Cytoscape puede devolver resultados desactualizados justo después de
+  // crear un nodo con ancho basado en el texto ('width':'label'), porque esa
+  // medición de texto se resuelve en un paso de render aparte — filtrar por
+  // él acá sólo introduce una carrera de tiempos sin necesidad real.
+  cy.nodes().forEach(function(n){
+    var rp=n.renderedPosition();
+    var d=Math.hypot(px-rp.x, py-rp.y);
+    if(d<mejorD){ mejorD=d; mejor={type:'nodo', id:n.id()}; }
+  });
+  if(mejor) return mejor;
+  var mejorE=null, mejorDE=UMBRAL_ARISTA;
+  cy.edges().forEach(function(e){
+    var sp=e.source().renderedPosition(), tp=e.target().renderedPosition();
+    var d=distToSegmentClin(px,py, sp.x,sp.y, tp.x,tp.y);
+    if(d<mejorDE){ mejorDE=d; mejorE={type:'arista', id:e.id()}; }
+  });
+  if(mejorE) return mejorE;
+  var m=screenToModel(px,py);
+  return {type:'libre', x:m.x, y:m.y};
+}
+function sanitizarIdColorDesk(c){ return String(c).replace('#','clr'); }
+function asegurarMarkerColorDesk(c){
+  var id='an-arrow-'+sanitizarIdColorDesk(c);
+  var defs=document.getElementById('capa-sup-defs');
+  if(document.getElementById(id)) return id;
+  var svgns='http://www.w3.org/2000/svg';
+  var marker=document.createElementNS(svgns,'marker');
+  marker.setAttribute('id',id);
+  marker.setAttribute('markerWidth','8'); marker.setAttribute('markerHeight','8');
+  marker.setAttribute('refX','6'); marker.setAttribute('refY','3');
+  marker.setAttribute('orient','auto');
+  var path=document.createElementNS(svgns,'path');
+  path.setAttribute('d','M0,0 L6,3 L0,6 Z');
+  path.setAttribute('fill', c);
+  marker.appendChild(path);
+  defs.appendChild(marker);
+  return id;
+}
+
+function crearAnaliticoVector(a,b,opts){
+  opts = opts||{};
+  var primerTipo = tiposRelacionSup.length ? tiposRelacionSup[0] : null;
+  var obj = {
+    id:'an'+Date.now()+Math.floor(Math.random()*1000),
+    a:a, b:b,
+    tipoId: primerTipo ? primerTipo.id : null,
+    colorProp: primerTipo ? primerTipo.color : '#c9a84c',
+    dashProp: primerTipo ? primerTipo.dash : 'solid',
+    label:'', bidir:false
+  };
+  var svgns='http://www.w3.org/2000/svg';
+  obj.lineEl=document.createElementNS(svgns,'line');
+  obj.lineEl.setAttribute('stroke-width','2.5');
+  obj.hitEl=document.createElementNS(svgns,'line');
+  obj.hitEl.setAttribute('stroke','transparent');
+  obj.hitEl.setAttribute('stroke-width','16');
+  obj.hitEl.style.pointerEvents='stroke';
+  obj.hitEl.style.cursor='pointer';
+  obj.hitEl.classList.add('an-hit-desk');
+  obj.labelEl=document.createElementNS(svgns,'text');
+  obj.labelEl.setAttribute('font-size','11'); obj.labelEl.setAttribute('fill','#f0ead8');
+  obj.labelEl.setAttribute('font-family',"'JetBrains Mono',monospace"); obj.labelEl.setAttribute('text-anchor','middle');
+  var svg=document.getElementById('capa-sup-svg');
+  svg.appendChild(obj.lineEl); svg.appendChild(obj.labelEl); svg.appendChild(obj.hitEl);
+  obj.hitEl.addEventListener('mousedown', function(evt){
+    // Si se está dibujando un vector nuevo o re-anclando uno existente, dejar
+    // pasar el click al lienzo (si no, un vector ya dibujado "tapa" el punto
+    // y el click para anclar ahí cerca nunca llega al handler del SVG).
+    if(vectorSupMode || _reanclarObjetivo) return;
+    evt.stopPropagation();
+    seleccionarAnalitico(obj);
+  });
+  analiticos.push(obj);
+  posicionarAnalitico(obj);
+  if(!opts.silent){ seleccionarAnalitico(obj); snapshot(); }
+  return obj;
+}
+function posicionarAnalitico(obj){
+  var p0=modelToScreen(anchorModelPoint(obj.a)), p1=modelToScreen(anchorModelPoint(obj.b));
+  obj.lineEl.setAttribute('x1',p0.x); obj.lineEl.setAttribute('y1',p0.y);
+  obj.lineEl.setAttribute('x2',p1.x); obj.lineEl.setAttribute('y2',p1.y);
+  obj.hitEl.setAttribute('x1',p0.x); obj.hitEl.setAttribute('y1',p0.y);
+  obj.hitEl.setAttribute('x2',p1.x); obj.hitEl.setAttribute('y2',p1.y);
+  var tipo = obj.tipoId ? tipoRelSupPorId(obj.tipoId) : null;
+  var color = tipo ? tipo.color : obj.colorProp;
+  var dash = tipo ? tipo.dash : obj.dashProp;
+  obj.lineEl.setAttribute('stroke', color);
+  obj.lineEl.setAttribute('stroke-dasharray', dash==='dashed'?'7,5':(dash==='dotted'?'2,4':''));
+  var markerId = asegurarMarkerColorDesk(color);
+  obj.lineEl.setAttribute('marker-end','url(#'+markerId+')');
+  if(obj.bidir) obj.lineEl.setAttribute('marker-start','url(#'+markerId+')');
+  else obj.lineEl.removeAttribute('marker-start');
+  obj.labelEl.setAttribute('x',(p0.x+p1.x)/2); obj.labelEl.setAttribute('y',(p0.y+p1.y)/2-6);
+  obj.labelEl.textContent = obj.label||'';
+  obj.lineEl.setAttribute('stroke-width', obj===selAnalitico ? '3.5' : '2.5');
+  if(obj===selAnalitico) renderContextoAnalitico();
+}
+function renderAnaliticos(){ analiticos.forEach(posicionarAnalitico); }
+function seleccionarAnalitico(obj){
+  deselTodoClinDesk();
+  selAnalitico = obj;
+  posicionarAnalitico(obj);
+  renderContextoAnalitico();
+}
+function deselAnalitico(){
+  if(!selAnalitico) return;
+  var prev = selAnalitico;
+  selAnalitico = null;
+  posicionarAnalitico(prev);
+  renderContextoAnalitico();
+}
+function eliminarAnalitico(obj){
+  if(obj.lineEl) obj.lineEl.remove();
+  if(obj.hitEl) obj.hitEl.remove();
+  if(obj.labelEl) obj.labelEl.remove();
+  analiticos = analiticos.filter(function(o){ return o!==obj; });
+  if(selAnalitico===obj){ selAnalitico=null; renderContextoAnalitico(); }
+  snapshot();
+}
+function serializarAnaliticosDesk(){
+  return analiticos.map(function(o){ return {id:o.id, a:o.a, b:o.b, tipoId:o.tipoId, colorProp:o.colorProp, dashProp:o.dashProp, label:o.label, bidir:!!o.bidir}; });
+}
+function cargarAnaliticosDesde(arr){
+  (arr||[]).forEach(function(o){
+    var obj = crearAnaliticoVector(o.a, o.b, {silent:true});
+    obj.tipoId = o.tipoId || null;
+    obj.colorProp = o.colorProp || obj.colorProp;
+    obj.dashProp = o.dashProp || obj.dashProp;
+    obj.label = o.label || '';
+    obj.bidir = !!o.bidir;
+    posicionarAnalitico(obj);
+  });
+}
+
+// ── Contexto flotante del vector seleccionado ────────────────
+function renderContextoAnalitico(){
+  var panel = document.getElementById('an-context-desk');
+  if(!panel) return;
+  // Mientras se está dibujando (o re-anclando) no se muestra el panel: si no,
+  // al terminar un vector y quedar éste seleccionado, el panel puede quedar
+  // tapando justo el próximo punto donde el usuario quiere anclar el
+  // siguiente vector, y ese click nunca le llegaría al lienzo.
+  if(!selAnalitico || vectorSupMode || _reanclarObjetivo){ panel.classList.remove('show'); return; }
+  var obj = selAnalitico;
+  var opciones = '<option value="">(sin tipo — color propio)</option>' + tiposRelacionSup.map(function(t){
+    return '<option value="'+t.id+'"'+(obj.tipoId===t.id?' selected':'')+'>'+escapeHtmlClinDesk(t.nombre)+'</option>';
+  }).join('');
+  panel.innerHTML =
+    '<select onchange="cambiarTipoAnalitico(this.value)" style="width:100%;margin-bottom:2px">'+opciones+'</select>'+
+    '<button onclick="renombrarAnalitico()">✎ Etiqueta</button>'+
+    '<button onclick="toggleBidirAnalitico()">'+(obj.bidir?'↔ bi':'→ uni')+'</button>'+
+    '<button onclick="iniciarReanclar(\'a\')">⇤ Mover inicio</button>'+
+    '<button onclick="iniciarReanclar(\'b\')">⇥ Mover fin</button>'+
+    '<button class="danger" onclick="eliminarAnalitico(selAnalitico)">✕ Borrar</button>';
+  var p0=modelToScreen(anchorModelPoint(obj.a)), p1=modelToScreen(anchorModelPoint(obj.b));
+  panel.style.left = Math.max(4,Math.min(p0.x,p1.x))+'px';
+  panel.style.top = Math.max(4,(Math.min(p0.y,p1.y)-8))+'px';
+  panel.classList.add('show');
+}
+function cambiarTipoAnalitico(tipoId){
+  if(!selAnalitico) return;
+  selAnalitico.tipoId = tipoId || null;
+  posicionarAnalitico(selAnalitico);
+  snapshot();
+}
+function renombrarAnalitico(){
+  if(!selAnalitico) return;
+  var txt = prompt('Etiqueta del vector:', selAnalitico.label||'');
+  if(txt!==null){ selAnalitico.label=txt; posicionarAnalitico(selAnalitico); snapshot(); }
+}
+function toggleBidirAnalitico(){
+  if(!selAnalitico) return;
+  selAnalitico.bidir = !selAnalitico.bidir;
+  posicionarAnalitico(selAnalitico);
+  renderContextoAnalitico();
+  snapshot();
+}
+function iniciarReanclar(extremo){
+  if(!selAnalitico) return;
+  _reanclarObjetivo = {obj:selAnalitico, extremo:extremo};
+  document.getElementById('capa-sup-svg').classList.add('drawing');
+  showInd('Hacé clic en el nuevo destino ('+(extremo==='a'?'inicio':'fin')+')…');
+}
+
+// ── Modo de dibujo del vector analítico (clic-clic, como el vector libre) ──
+function toggleVectorAnaliticoMode(){
+  vectorSupMode = !vectorSupMode;
+  var btn=document.getElementById('btn-vec-an-desk');
+  if(btn) btn.classList.toggle('active', vectorSupMode);
+  var svg=document.getElementById('capa-sup-svg');
+  if(svg) svg.classList.toggle('drawing', vectorSupMode);
+  vecSupStart = null;
+  if(_vecSupDraftEl){ _vecSupDraftEl.remove(); _vecSupDraftEl=null; }
+  // Deseleccionar cualquier vector: si no, su panel flotante de contexto
+  // (que se posiciona pegado a uno de sus anclajes) puede quedar tapando
+  // justo el nodo/arista al que el usuario quiere anclar el vector nuevo,
+  // y el click nunca le llega al lienzo.
+  if(vectorSupMode && selAnalitico) deselAnalitico();
+  if(!vectorSupMode) renderContextoAnalitico(); // al salir del modo dibujo, mostrar el panel del último vector si sigue seleccionado
+  showInd(vectorSupMode ? 'V. analítico: clic inicio, clic fin (Esc cancela)' : 'V. analítico desactivado');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var svgSup = document.getElementById('capa-sup-svg');
+  if(!svgSup) return;
+  // El panel de contexto del vector analítico vive DENTRO de #cy (para
+  // posicionarse pegado al vector), como hermano del SVG — un click en sus
+  // botones burbujea hasta #cy iguel que cualquier otro, y Cytoscape no
+  // distingue de dónde vino: sin cortar acá, cada click en el panel también
+  // dispara el tap de fondo (que deselecciona todo, incluido este mismo
+  // vector, antes de que el botón llegue a procesar su propio onclick).
+  var panelCtx = document.getElementById('an-context-desk');
+  if(panelCtx){
+    panelCtx.addEventListener('mousedown', function(evt){ evt.stopPropagation(); });
+    panelCtx.addEventListener('click', function(evt){ evt.stopPropagation(); });
+  }
+  svgSup.addEventListener('mousedown', function(evt){
+    if(evt.button!==0) return;
+    // Cytoscape hace su propio hit-test de todo click dentro de #cy
+    // (independiente del elemento DOM concreto que lo recibe), así que sin
+    // cortar la propagación acá el mismo click también dispararía su lógica
+    // nativa (conectar nodos, deseleccionar al tocar el fondo, etc.) — ver
+    // notas en cy.on('tap','node',...) y en el fondo genérico cy.on('tap',...).
+    if(_reanclarObjetivo || vectorSupMode) evt.stopPropagation();
+    var rect = document.getElementById('cy').getBoundingClientRect();
+    var px = evt.clientX-rect.left, py = evt.clientY-rect.top;
+    var anchor = hitTestAnchor(px,py);
+    if(_reanclarObjetivo){
+      _reanclarObjetivo.obj[_reanclarObjetivo.extremo] = anchor;
+      posicionarAnalitico(_reanclarObjetivo.obj);
+      renderContextoAnalitico();
+      if(!vectorSupMode) svgSup.classList.remove('drawing');
+      _reanclarObjetivo = null;
+      showInd('Reanclado ✓');
+      snapshot();
+      return;
+    }
+    if(!vectorSupMode) return;
+    if(!vecSupStart){
+      // Al arrancar un vector nuevo, deseleccionar cualquier otro: su panel
+      // de contexto flotante podría estar tapando justo el próximo punto de
+      // anclaje (ver nota en toggleVectorAnaliticoMode).
+      if(selAnalitico) deselAnalitico();
+      vecSupStart = anchor;
+      showInd('Ahora hacé clic en el destino…');
+    } else {
+      crearAnaliticoVector(vecSupStart, anchor);
+      vecSupStart = null;
+      if(_vecSupDraftEl){ _vecSupDraftEl.remove(); _vecSupDraftEl=null; }
+    }
+  });
+  svgSup.addEventListener('mousemove', function(evt){
+    if(!vectorSupMode || !vecSupStart) return;
+    var rect = document.getElementById('cy').getBoundingClientRect();
+    var px = evt.clientX-rect.left, py = evt.clientY-rect.top;
+    var p0 = modelToScreen(anchorModelPoint(vecSupStart));
+    var svgns='http://www.w3.org/2000/svg';
+    if(!_vecSupDraftEl){
+      _vecSupDraftEl = document.createElementNS(svgns,'line');
+      _vecSupDraftEl.setAttribute('stroke','#c9a84c');
+      _vecSupDraftEl.setAttribute('stroke-width','2');
+      _vecSupDraftEl.setAttribute('stroke-dasharray','5,4');
+      svgSup.appendChild(_vecSupDraftEl);
+    }
+    _vecSupDraftEl.setAttribute('x1',p0.x); _vecSupDraftEl.setAttribute('y1',p0.y);
+    _vecSupDraftEl.setAttribute('x2',px); _vecSupDraftEl.setAttribute('y2',py);
+  });
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && vectorSupMode && vecSupStart){
+    vecSupStart=null;
+    if(_vecSupDraftEl){ _vecSupDraftEl.remove(); _vecSupDraftEl=null; }
+    showInd('Cancelado');
+  }
+});
+
+// ── Fader de opacidad de la Capa Superior ────────────────────
+function actualizarFaderSup(v){
+  var op = Math.max(0, Math.min(100, parseFloat(v)))/100;
+  var pct = document.getElementById('fader-pct-desk');
+  if(pct) pct.textContent = Math.round(op*100)+'%';
+  var svg = document.getElementById('capa-sup-svg');
+  if(svg) svg.style.opacity = op;
+  try{ cy.nodes('.nodo-interpretativo').style('opacity', op); }catch(e){}
+  try{ cy.nodes('.nodo-interpretativo').connectedEdges().style('opacity', op); }catch(e){}
+}
+
+// ── Snapshots de sesión ───────────────────────────────────────
+// Nota de arquitectura: a diferencia de mobile, este editor desktop no tiene
+// autoguardado ni un registro de grafos en localStorage (acá "Guardar" es una
+// descarga manual de archivo). Por eso los snapshots viven en su propia
+// clave de localStorage, autocontenida — no hay ningún autoguardado que
+// pueda llegar a pisarlos.
+var SNAP_KEY_DESK = 'grafolisisDesktopSnapshots';
+function _leerSnapshotsDesk(){
+  try{ var raw=localStorage.getItem(SNAP_KEY_DESK); return raw?JSON.parse(raw):[]; }catch(e){ return []; }
+}
+function _guardarSnapshotsArrDesk(arr){
+  try{ localStorage.setItem(SNAP_KEY_DESK, JSON.stringify(arr)); }catch(e){ showInd('No se pudo guardar (¿localStorage lleno?)'); }
+}
+function _capturarEstadoCompletoDesk(){
+  return {
+    nodes:cy.nodes().map(function(n){return {id:n.id(),label:n.data('label'),x:n.position('x'),y:n.position('y'),classes:n.className(),angle:n.data('angle')||0,barraW:n.data('barraW')||null,barraThick:n.data('barraThick')||3,width:parseFloat(n.style('width')),height:parseFloat(n.style('height')),color:n.hasClass('barra')?null:n.style('background-color'),recorteId:n.data('recorteId')||null};}),
+    edges:cy.edges().map(function(e){return {id:e.id(),source:e.source().id(),target:e.target().id(),label:e.data('label')||'',classes:e.className(),curveStyle:e.style('curve-style'),loopDirection:e.style('loop-direction'),loopSweep:e.style('loop-sweep'),color:e.style('line-color'),tipoRel:e.data('tipoRel')||null};}),
+    textos:textos.map(function(t){return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||16,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null};}),
+    vectors:serializeVectors(),
+    imagenes:serializarImagenesDesk(),
+    corpusTexto: corpusTexto,
+    recortes: recortes,
+    analiticos: serializarAnaliticosDesk(),
+    vCount: vCount, iCount: iCount
+  };
+}
+function guardarSnapshotSesion(){
+  var arr = _leerSnapshotsDesk();
+  var sugerido = 'Sesión '+(arr.length+1);
+  var nombre = prompt('Nombre del snapshot:', sugerido);
+  if(nombre===null) return;
+  nombre = nombre.trim() || sugerido;
+  arr.push({id:'snap'+Date.now(), nombre:nombre, fecha:Date.now(), estado:_capturarEstadoCompletoDesk()});
+  _guardarSnapshotsArrDesk(arr);
+  renderSnapshotsListaDesk();
+  showInd('Snapshot guardado ✓');
+}
+function renderSnapshotsListaDesk(){
+  var arr = _leerSnapshotsDesk().slice().sort(function(a,b){ return b.fecha-a.fecha; });
+  var lista = document.getElementById('snapshots-lista-desk');
+  if(!lista) return;
+  if(!arr.length){ lista.innerHTML='<div style="color:#666;font-size:11px;text-align:center;padding:20px">Todavía no guardaste ningún snapshot.</div>'; return; }
+  lista.innerHTML = arr.map(function(s){
+    var fecha = new Date(s.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    var nn = (s.estado.nodes||[]).length;
+    return '<div class="snap-row-desk"><div class="snap-info"><div class="snap-nombre">'+escapeHtmlClinDesk(s.nombre)+'</div><div class="snap-meta">'+fecha+' · '+nn+' nodo'+(nn===1?'':'s')+'</div></div>'+
+      '<button onclick="restaurarSnapshotSesion(\''+s.id+'\')">Restaurar</button>'+
+      '<button class="danger" onclick="borrarSnapshotSesion(\''+s.id+'\')">Borrar</button></div>';
+  }).join('');
+}
+function abrirSnapshotsModal(){
+  renderSnapshotsListaDesk();
+  document.getElementById('snapshots-modal-desk').classList.add('open');
+}
+function restaurarSnapshotSesion(id){
+  var arr = _leerSnapshotsDesk();
+  var s = arr.filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  if(!confirm('¿Restaurar «'+s.nombre+'»? Antes se guarda automáticamente una copia de seguridad de lo que tenés abierto ahora, para no perder nada.')) return;
+  arr.push({id:'snap'+Date.now(), nombre:'(auto) antes de restaurar «'+s.nombre+'»', fecha:Date.now(), estado:_capturarEstadoCompletoDesk()});
+  _guardarSnapshotsArrDesk(arr);
+  _cargarEstadoCompletoDesk(s.estado);
+  document.getElementById('snapshots-modal-desk').classList.remove('open');
+  showInd('Snapshot restaurado ✓');
+}
+function borrarSnapshotSesion(id){
+  if(!confirm('¿Borrar este snapshot? No se puede deshacer.')) return;
+  _guardarSnapshotsArrDesk(_leerSnapshotsDesk().filter(function(x){ return x.id!==id; }));
+  renderSnapshotsListaDesk();
+}
+function _cargarEstadoCompletoDesk(estado){
+  // Limpieza total del canvas (mismo criterio que limpiar(), pero ya
+  // confirmado por restaurarSnapshotSesion() y sin tocar los snapshots).
+  if(sourceNode){ sourceNode.removeClass('source-selected'); sourceNode=null; }
+  textos.forEach(function(t){ t.el.remove(); }); textos.length=0; selTxt=null;
+  vectors.forEach(function(v){ if(v.hit) v.hit.remove(); if(v.cpDot) v.cpDot.remove(); v.el.remove(); }); vectors.length=0; selVec=null;
+  imagenesDesk.forEach(function(im){ if(im.el) im.el.remove(); }); imagenesDesk.length=0;
+  analiticos.forEach(function(o){ o.lineEl.remove(); o.hitEl.remove(); o.labelEl.remove(); }); analiticos.length=0; selAnalitico=null;
+  if(_curveDot){ _curveDot.remove(); _curveDot=null; _curveEdge=null; }
+  if(vectorMode) toggleVectorMode();
+  if(vectorSupMode) toggleVectorAnaliticoMode();
+  hideOverlay();
+  cy.elements().remove();
+
+  (estado.nodes||[]).forEach(function(n){
+    var st={}; if(n.width) st.width=n.width; if(n.height) st.height=n.height; if(n.color) st['background-color']=n.color;
+    cy.add({group:'nodes', data:{id:n.id, label:n.label, angle:n.angle||0, barraW:n.barraW||null, barraThick:n.barraThick||3, recorteId:n.recorteId||null}, classes:n.classes||'', position:{x:n.x,y:n.y}, style:st});
+  });
+  (estado.edges||[]).forEach(function(e){
+    var st={}; if(e.curveStyle) st['curve-style']=e.curveStyle; if(e.loopDirection) st['loop-direction']=e.loopDirection; if(e.loopSweep) st['loop-sweep']=e.loopSweep; if(e.color) st['line-color']=e.color;
+    cy.add({group:'edges', data:{id:e.id, source:e.source, target:e.target, label:e.label||'', tipoRel:e.tipoRel||null}, classes:e.classes||'', style:st});
+  });
+  (estado.textos||[]).forEach(function(t){
+    var newId = 'txt_'+(++txtCounter);
+    var obj = crearTextoEl(newId, t.x, t.y, t.content);
+    if(t.fontSize && t.fontSize!==16){ obj.fontSize=t.fontSize; obj.el.style.fontSize=t.fontSize+'px'; }
+    if(t.rotation){ obj.rotation=t.rotation; obj.el.style.transform='rotate('+t.rotation+'deg)'; obj.el.style.transformOrigin='left top'; }
+    if(t.bold){ obj.bold=true; obj.el.style.fontWeight='bold'; }
+    if(t.italic){ obj.italic=true; obj.el.style.fontStyle='italic'; }
+    if(t.underline){ obj.underline=true; obj.el.style.textDecoration='underline'; }
+    if(t.fontIdx){ obj.fontIdx=t.fontIdx; obj.el.style.fontFamily=FUENTES_TXT[t.fontIdx]||FUENTES_TXT[0]; }
+    if(t.color){ obj.color=t.color; obj.el.style.color=t.color; }
+  });
+  (estado.vectors||[]).forEach(function(v){
+    var obj = crearVectorEl(v.x1, v.y1, v.x2, v.y2, v.cpx, v.cpy);
+    if(v.color) aplicarColorVectorDesk(obj, v.color);
+  });
+  (estado.imagenes||[]).forEach(function(im){
+    insertarImagenDesk(im.dataURL, {x:im.x,y:im.y}, {w:im.w,h:im.h}, im.rotation, undefined, true);
+  });
+
+  corpusTexto = estado.corpusTexto || '';
+  recortes = estado.recortes || [];
+  vCount = estado.vCount || 1;
+  iCount = estado.iCount || 1;
+  cargarAnaliticosDesde(estado.analiticos||[]);
+
+  actualizarContadorS();
+  renderTextoHighlight();
+  renderRecortes();
+  actualizarVisibilidadInterpretativos();
+  cy.fit(undefined, 60);
+  histList=[]; histIdx=-1; updateUR();
+  snapshot();
+}
+
+// ── Inicialización del flujo clínico al cargar la página ──────
+cargarTiposSupGlobal();
+cambiarSubTab('texto');
 
 snapshot();
 </script>
@@ -2436,7 +3841,23 @@ function descargarPubDesk(pubId, titulo){
 }
 
 // ── Publicar ──
+// Privacidad: lo que se publica es, como máximo, Capa Inferior + Capa Superior.
+// La transcripción completa (corpusTexto) y los recortes NUNCA se publican —
+// grafoData en confirmarPublicarDesktop() se arma aparte y no los incluye.
+// Pero un Nodo Literal ES una cita textual exacta que sí va a quedar visible,
+// así que antes de abrir el formulario avisamos cuáles son.
 function abrirPublicarDesktop(){
+  if(!_deskUser){ abrirAuthModal(); return; }
+  var literales = cy.nodes('.nodo-literal').map(function(n){ return n.data('label')||''; }).filter(Boolean);
+  var lista = document.getElementById('aviso-literal-lista-desk');
+  if(literales.length){
+    lista.innerHTML = literales.map(function(t){ return '<div class="aviso-literal-item-desk">«'+escapeHTMLDesk(t)+'»</div>'; }).join('');
+  } else {
+    lista.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:10px">No hay ninguna cita textual (Nodo Literal) en este grafo.</div>';
+  }
+  document.getElementById('aviso-publicar-modal-desk').classList.add('open');
+}
+function abrirPublicarDesktopReal(){
   if(!_deskUser){ abrirAuthModal(); return; }
   document.getElementById('pub-title').value = '';
   document.getElementById('pub-desc').value = '';
@@ -2469,12 +3890,16 @@ function confirmarPublicarDesktop(){
     }
   }catch(e){ console.error('confirmarPublicarDesktop: fallo general al capturar miniatura', e); }
   // Serializar grafo completo
+  // OJO privacidad: este objeto se arma desde cero acá — a propósito nunca
+  // agregamos corpusTexto ni recortes, aunque guardarJSON() (copia personal)
+  // sí los incluya. Ver nota en abrirPublicarDesktop().
   var grafoData = {
     nodes: cy.nodes().map(function(n){ return {id:n.id(),label:n.data('label'),x:n.position('x'),y:n.position('y'),classes:n.className(),angle:n.data('angle')||0,barraW:n.data('barraW')||null,barraThick:n.data('barraThick')||3,width:parseFloat(n.style('width')),height:parseFloat(n.style('height')),color:n.hasClass('barra')?null:n.style('background-color')}; }),
-    edges: cy.edges().map(function(e){ return {id:e.id(),source:e.source().id(),target:e.target().id(),label:e.data('label')||'',classes:e.className(),curveStyle:e.style('curve-style'),color:e.style('line-color')}; }),
+    edges: cy.edges().map(function(e){ return {id:e.id(),source:e.source().id(),target:e.target().id(),label:e.data('label')||'',classes:e.className(),curveStyle:e.style('curve-style'),color:e.style('line-color'),tipoRel:e.data('tipoRel')||null}; }),
     textos: textos.map(function(t){ return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||16,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null}; }),
     vectors: serializeVectors(),
-    imagenes: serializarImagenesDesk()
+    imagenes: serializarImagenesDesk(),
+    analiticos: serializarAnaliticosDesk()
   };
   grafoData = limpiarUndefinedProfundoDesk(grafoData);
   try{
