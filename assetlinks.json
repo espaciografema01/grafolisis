@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "REEMPLAZAR.CON.TU.APPLICATION.ID",
+      "sha256_cert_fingerprints": [
+        "REEMPLAZAR: huella SHA-256 de la 'Clave de firma de la app' (Play Console → Integridad de la app)",
+        "REEMPLAZAR: huella SHA-256 de tu clave de subida (bubblewrap fingerprint list)"
+      ]
+    }
+  }
+]
