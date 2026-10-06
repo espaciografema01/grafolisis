@@ -3,10 +3,10 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "REEMPLAZAR.CON.TU.APPLICATION.ID",
+      "package_name": "io.github.espaciografema01.twa.grafolisis",
       "sha256_cert_fingerprints": [
         "REEMPLAZAR: huella SHA-256 de la 'Clave de firma de la app' (Play Console → Integridad de la app)",
-        "REEMPLAZAR: huella SHA-256 de tu clave de subida (bubblewrap fingerprint list)"
+        "A:96:7E:8D:95:38:4B:C4:94:E1:45:DE:57:B2:87:2A:A2:63:A1:BB:8B:78:57:F3:C2:CE:4C:56:E9:FA:8D:37"
       ]
     }
   }
