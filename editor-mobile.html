@@ -843,7 +843,7 @@ const _db   = firebase.firestore();
     <button class="login-submit" onclick="enviarLogin()" id="login-submit-btn">Ingresar</button>
     <button class="login-cancel" onclick="cerrarLogin()">Cancelar</button>
     <div class="login-hint" id="login-hint-msg" style="color:#e06060"></div>
-    <div style="font-size:11px;color:#8a8478;text-align:center;margin:6px 0 2px;line-height:1.4">Al crear una cuenta aceptás la <a href="privacidad.html" target="_blank" rel="noopener" style="color:#c9a84c">política de privacidad</a>.</div>
+    <div style="font-size:11px;color:#8a8478;text-align:center;margin:6px 0 2px;line-height:1.4">Al crear una cuenta aceptás la <a href="privacidad.html" target="_blank" rel="noopener" style="color:#c9a84c">política de privacidad</a> y las <a href="privacidad.html#normas" target="_blank" rel="noopener" style="color:#c9a84c">normas de la comunidad</a>.</div>
     <div class="grafema-credito" onclick="abrirGrafema()" style="margin-top:2px;padding-top:4px"><svg class="gc-eg"><use href="#eg-mark"/></svg><span class="gc-por">Desarrollado por</span><span class="gc-nom">Espacio [G]rafema</span></div>
   </div>
 </div>
@@ -1246,6 +1246,12 @@ var cy = cytoscape({
     {selector:'node[color]', style:{'background-color':'data(color)'}},
     {selector:'node[textColor]', style:{'color':'data(textColor)'}},
     {selector:'node.sin-fondo[color]', style:{'background-opacity':0,'color':'data(color)','text-outline-color':'#faf8f4'}},
+    // ── Nodo "punto": círculo pequeño, el nombre queda afuera (offset ajustable). Las líneas se pegan al punto.
+    {selector:'node.punto', style:{'width':10,'height':10,'background-opacity':1,'border-width':0,'border-opacity':0,'text-valign':'bottom','text-halign':'center','font-size':14,'color':'#1a1a1a','text-outline-color':'#faf8f4','text-outline-width':3,'text-outline-opacity':0.95,'font-weight':'bold','text-events':'yes'}},
+    {selector:'node.punto[lblDx]', style:{'text-margin-x':'data(lblDx)'}},
+    {selector:'node.punto[lblDy]', style:{'text-margin-y':'data(lblDy)'}},
+    {selector:'node.punto[color]', style:{'color':'data(color)'}},
+    {selector:'node.punto:selected', style:{'background-opacity':1,'border-width':3,'border-opacity':1,'border-color':'#2563eb','border-style':'solid','underlay-padding':6}},
     {selector:'edge', style:{'width':2.5,'line-color':'#333','target-arrow-color':'#333','target-arrow-shape':'triangle','arrow-scale':1.3,'curve-style':'bezier','label':'data(label)','font-family':'IM Fell English, serif','font-size':13,'color':'#222','text-background-color':'#faf8f4','text-background-opacity':1,'text-background-padding':4,'text-rotation':'autorotate'}},
     {selector:'edge.bidireccional.rel-secuencia',style:{'source-arrow-color':'#1a1a1a'}},
     {selector:'edge.bidireccional.rel-metonimia',style:{'source-arrow-color':'#8a5a2a'}},
@@ -1371,6 +1377,78 @@ if(window._aplicarEstiloTemaMobile) window._aplicarEstiloTemaMobile();
 // ── ESTADO ────────────────────────────────────
 var sCount=1, sourceNode=null, edgeType='normal', edgeDir='uni';
 var textos=[], selTxt=null, txtCounter=0;
+// ── Registro de estilos "directos" (los que se aplican con ele.style({...})) ──
+// cy.json() no los incluye, así que se perdían al deshacer / reabrir. Se
+// registran en scratch y se serializan junto al resto del estado.
+(function(){
+  var proto=Object.getPrototypeOf(cy.collection());
+  if(!proto || proto.__inlRec) return;
+  var oS=proto.style, oR=proto.removeStyle;
+  var IGNORAR={'opacity':1,'display':1};
+  function rec(coll,obj){
+    coll.forEach(function(el){
+      try{
+        var m=el.scratch('_inl')||{};
+        Object.keys(obj).forEach(function(k){ if(!IGNORAR[k]) m[k]=obj[k]; });
+        el.scratch('_inl',m);
+      }catch(e){}
+    });
+  }
+  proto.style=function(a,b){
+    var r=oS.apply(this,arguments);
+    try{
+      if(a && typeof a==='object') rec(this,a);
+      else if(typeof a==='string' && b!==undefined && b!==null){ var o={}; o[a]=b; rec(this,o); }
+    }catch(e){}
+    return r;
+  };
+  proto.removeStyle=function(names){
+    var r=oR.apply(this,arguments);
+    try{
+      this.forEach(function(el){
+        var m=el.scratch('_inl'); if(!m) return;
+        if(names===undefined){ el.removeScratch('_inl'); return; }
+        String(names).split(/\s+/).forEach(function(k){ delete m[k]; });
+        el.scratch('_inl',m);
+      });
+    }catch(e){}
+    return r;
+  };
+  proto.__inlRec=true;
+})();
+function serEstilos(){
+  var o={};
+  cy.elements().forEach(function(el){
+    var m=el.scratch('_inl');
+    if(m && Object.keys(m).length) o[el.id()]=JSON.parse(JSON.stringify(m));
+  });
+  return o;
+}
+function aplicarEstilos(o){
+  Object.keys(o||{}).forEach(function(id){
+    var el=cy.getElementById(id);
+    if(el && el.length){ try{ el.style(JSON.parse(JSON.stringify(o[id]))); }catch(e){} }
+  });
+}
+function serCurvas(){
+  var o={};
+  Object.keys(_edgeCpData||{}).forEach(function(id){
+    var cps=(_edgeCpData[id]||{}).cps||[];
+    if(cps.length && cy.getElementById(id).length) o[id]=cps.map(function(c){ return {t:c.t,d:c.d}; });
+  });
+  return o;
+}
+function restaurarCurvas(c){
+  _edgeCpData={};
+  Object.keys(c||{}).forEach(function(id){
+    var e=cy.getElementById(id);
+    if(!e || !e.length || !e.isEdge()) return;
+    var cps=c[id].map(function(x){ return {t:x.t,d:x.d}; });
+    _edgeCpData[id]={cps:cps};
+    aplicarCurvaEdge(e);
+    cps.forEach(function(cp){ crearDotEdge(e,cp); });
+  });
+}
 var histList=[], histIdx=-1, skipSnap=false;
 var vectorMode=false, vecStart=null, vecDraft=null, vectors=[], selVec=null;
 
@@ -2497,6 +2575,8 @@ function snapshot(){
     cy:_cyJsonSinEstilo(),
     txts:textos.map(function(t){ return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||18,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null,locked:!!t.locked,aplicado:!!t.aplicado,grupo:t.grupo||null}; }),
     vecs:serVecs(),
+    ests:serEstilos(),
+    curvas:serCurvas(),
     bars:serBarras(),
     imgs:(typeof serImagenes==='function')?serImagenes():[],
     loops:(typeof serLoops==='function')?serLoops():[],
@@ -2529,6 +2609,8 @@ function snapshotEstadoActual(){
     cy: _cyJsonSinEstilo(),
     txts: textos.map(function(t){ return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||18,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null,locked:!!t.locked,aplicado:!!t.aplicado,grupo:t.grupo||null}; }),
     vecs: serVecs(),
+    ests: serEstilos(),
+    curvas: serCurvas(),
     bars: serBarras(),
     imgs: (typeof serImagenes==='function') ? serImagenes() : [],
     loops: (typeof serLoops==='function') ? serLoops() : [],
@@ -2540,10 +2622,17 @@ function snapshotEstadoActual(){
   };
 }
 
+function _lienzoVacio(){
+  return !( cy.elements().length>0 || textos.length || vectors.length || barras.length ||
+    (typeof imagenes!=='undefined' && imagenes.length) || (typeof loops!=='undefined' && loops.length) ||
+    (corpusTexto && String(corpusTexto).trim()) || (recortes && recortes.length) || (analiticos && analiticos.length) );
+}
 function autoguardar(){
   try{
-    var estado = snapshotEstadoActual();
     var key = _grafoActualId ? ('grafo_'+_grafoActualId) : 'grafo_borrador';
+    // Un lienzo vacío que nunca se guardó no crea ningún borrador (y uno borrado no "vuelve").
+    if(_lienzoVacio() && !localStorage.getItem(key)) return;
+    var estado = snapshotEstadoActual();
     // Preservar los snapshots de sesión ya guardados: autoguardar() sólo
     // actualiza el estado "en curso", nunca el historial de snapshots.
     var snapshotsPrevios = [];
@@ -2594,11 +2683,40 @@ function cargarGrafoGuardado(id){
 }
 
 function eliminarGrafoGuardado(id){
+  var actual = _grafoActualId || 'borrador';
   try{
     localStorage.removeItem('grafo_'+id);
     var idx = JSON.parse(localStorage.getItem('grafos_indice')||'[]');
     idx = idx.filter(function(g){ return g.id!==id; });
     localStorage.setItem('grafos_indice', JSON.stringify(idx));
+  }catch(e){}
+  // Si se borró el grafo que está abierto, el lienzo vuelve a cero y no se re-guarda
+  if(id===actual){
+    if(_autosaveTimer){ clearTimeout(_autosaveTimer); _autosaveTimer=null; }
+    _grafoActualId = null;
+    _grafoActualNombre = 'Borrador';
+    try{ limpiarSilencioso(); }catch(e){}
+    histList=[]; histIdx=-1; skipSnap=false;
+    actualizarTituloGrafoActual();
+    snapshot();
+  }
+}
+function _podarBorradoresVacios(){
+  try{
+    var idx = listarGrafosGuardados();
+    var nuevo = idx.filter(function(g){
+      if(g.id!=='borrador') return true;
+      var reg = cargarGrafoGuardado('borrador'), est = reg && reg.estado;
+      var els = est && est.cy && est.cy.elements;
+      var vacio = !est || !( (els && ((els.nodes||[]).length || (els.edges||[]).length)) ||
+        (est.txts&&est.txts.length) || (est.vecs&&est.vecs.length) || (est.bars&&est.bars.length) ||
+        (est.imgs&&est.imgs.length) || (est.loops&&est.loops.length) ||
+        (est.corpusTexto&&String(est.corpusTexto).trim()) || (est.recortes&&est.recortes.length) ||
+        (est.analiticos&&est.analiticos.length) );
+      if(vacio){ localStorage.removeItem('grafo_borrador'); return false; }
+      return true;
+    });
+    if(nuevo.length!==idx.length) localStorage.setItem('grafos_indice', JSON.stringify(nuevo));
   }catch(e){}
 }
 
@@ -2764,6 +2882,7 @@ window.confirmarTextareaModal = function(){
 
 // Al cargar, intentar restaurar el último grafo en uso (borrador)
 function intentarRestaurarUltimo(){
+  _podarBorradoresVacios();
   try{
     // Buscamos el grafo más reciente del índice
     var idx = listarGrafosGuardados();
@@ -2792,7 +2911,10 @@ function intentarRestaurarUltimo(){
 function restoreSnap(s, soloGrafo){
   skipSnap=true;
   if(_edgeDots) Object.keys(_edgeDots).forEach(function(id){ limpiarDotsEdge(id); });
+  _edgeCpData={};
   cy.elements().remove(); _cyRestaurarSinEstilo(s.cy);
+  aplicarEstilos(s.ests);
+  restaurarCurvas(s.curvas);
   limpiarBarrasSVG();
   (s.bars||[]).forEach(function(b){ var bo=crearBarraSVG(b.cx,b.cy,b.angle,b.w,b.thick,b.dash||''); if(bo){ bo.locked=!!b.locked; bo.grupo=b.grupo||null; } });
   textos.forEach(function(t){ try{t.el.remove();}catch(e){} }); textos=[]; selTxt=null;
@@ -3158,11 +3280,52 @@ function resizeSelected(delta){
     if(el.hasClass('barra')){
       var cur=el.data('barraW')||BARRA_W, next=Math.max(40,cur+delta*2);
       el.data('barraW',next); aplicarRotacionBarra(el); showInd('Barra: '+next+'px');
+    } else if(el.hasClass('punto')){
+      var curP=parseFloat(el.style('width'))||10, nextP=Math.max(5,Math.min(30,curP+(delta>0?3:-3)));
+      el.style({'width':nextP,'height':nextP}); showInd('Punto: '+nextP+'px');
     } else {
       var cur=parseFloat(el.style('width'))||NODE_SIZE, next=Math.max(28,cur+delta);
       el.style({'width':next,'height':next,'font-size':Math.max(10,next*0.35)}); showInd('Nodo: '+next+'px');
     }
   });
+}
+
+// ── NODO PUNTO ────────────────────────────────
+function alternarPunto(){
+  var sels=cy.$('node:selected').not('.barra').not('.union');
+  if(!sels.length){ showInd('No hay nodo seleccionado'); return; }
+  skipSnap=true;
+  sels.forEach(function(nn){
+    if(nn.hasClass('punto')){
+      nn.removeClass('punto');
+      var w=nn.data('prevSize')||NODE_SIZE, fs=nn.data('prevFs')||Math.max(10,w*0.35);
+      nn.style({'width':w,'height':w,'font-size':fs});
+      nn.removeData('prevSize'); nn.removeData('prevFs');
+    } else {
+      nn.data('prevSize', parseFloat(nn.style('width'))||NODE_SIZE);
+      nn.data('prevFs', parseFloat(nn.style('font-size'))||18);
+      nn.removeClass('sin-fondo'); nn.removeClass('sin-borde');
+      nn.removeStyle('background-opacity text-outline-width text-outline-opacity text-outline-color color font-weight border-width border-opacity');
+      if(nn.data('lblDx')==null) nn.data('lblDx',0);
+      if(nn.data('lblDy')==null) nn.data('lblDy',4);
+      nn.addClass('punto');
+      nn.style({'width':10,'height':10,'font-size':14});
+    }
+  });
+  skipSnap=false;
+  snapshot(); actualizarBarraContexto();
+  showInd(sels.first().hasClass('punto')?'Nodo convertido en punto':'Punto vuelto a nodo');
+}
+function moverEtiquetaPunto(dx,dy){
+  var sels=cy.$('node.punto:selected');
+  if(!sels.length) return;
+  skipSnap=true;
+  sels.forEach(function(nn){
+    nn.data('lblDx',(Number(nn.data('lblDx'))||0)+dx);
+    nn.data('lblDy',(Number(nn.data('lblDy'))||0)+dy);
+  });
+  skipSnap=false;
+  snapshot();
 }
 
 // ── ROTACIÓN VECTOR ───────────────────────────
@@ -3613,6 +3776,18 @@ function _actualizarBarraContextoOrig(){
     }));
     row2.appendChild(mkBtn('−','Tam',function(){ resizeSelected(-10); }));
     row2.appendChild(mkBtn('+','Tam',function(){ resizeSelected(+10); }));
+    row2.appendChild(mkBtn(n1.hasClass('punto')?'◯':'•', n1.hasClass('punto')?'Volver a nodo':'Punto', function(){ alternarPunto(); }));
+    if(n1.hasClass('punto')){
+      row2.appendChild(mkLbl('Nombre:'));
+      row2.appendChild(mkBtn('↑','Nombre arriba',function(){ moverEtiquetaPunto(0,-6); }));
+      row2.appendChild(mkBtn('↓','Nombre abajo',function(){ moverEtiquetaPunto(0,6); }));
+      row2.appendChild(mkBtn('←','Nombre izquierda',function(){ moverEtiquetaPunto(-6,0); }));
+      row2.appendChild(mkBtn('→','Nombre derecha',function(){ moverEtiquetaPunto(6,0); }));
+      row2.appendChild(mkBtn('◐','Color',function(){ abrirSelectorColor('node', n1); }));
+      row2.appendChild(mkBtn('⧉','Duplicar',function(){ duplicarSeleccionado(); }));
+      if(selNode.length>=2) _mobAlinear(row2,selNode.length);
+      return;
+    }
     // Toggle Sin fondo
     var sinFondoActivo = n1.hasClass('sin-fondo');
     row2.appendChild(mkBtn(sinFondoActivo?'●':'○', sinFondoActivo?'Con fondo':'Sin fondo', function(){
@@ -3621,25 +3796,12 @@ function _actualizarBarraContextoOrig(){
       sels.forEach(function(nn){
         if(nn.hasClass('sin-fondo')){
           nn.removeClass('sin-fondo');
-          // Quitar overrides directos
-          nn.style({
-            'background-opacity':1,
-            'text-outline-width':0,
-            'text-outline-opacity':0,
-            'color': nn.data('textColor') || '#f0ead8'
-          });
         } else {
           nn.addClass('sin-fondo');
-          // Aplicar overrides directos para asegurar que tomen efecto
-          nn.style({
-            'background-opacity':0,
-            'color':'#1a1a1a',
-            'text-outline-color':'#faf8f4',
-            'text-outline-width':3,
-            'text-outline-opacity':0.95,
-            'font-weight':'bold'
-          });
         }
+        // Limpia overrides directos antiguos: el aspecto lo dan las clases/datos,
+        // así el color del nombre se puede cambiar con el selector de color.
+        nn.removeStyle('background-opacity text-outline-width text-outline-opacity text-outline-color color font-weight');
       });
       showInd('Sin fondo: '+(n1.hasClass('sin-fondo')?'ON':'OFF'));
       snapshot();
@@ -6617,6 +6779,7 @@ function manejarDobleTapEdge(edge,clientX,clientY){
   _edgeCpData[id].cps.push(cp);
   aplicarCurvaEdge(edge);
   crearDotEdge(edge,cp);
+  snapshot();
   showInd('Arrastrá el punto para curvar');
 }
 
@@ -9655,12 +9818,26 @@ window.cerrarReportar = function(){
 window.enviarReporte = function(){
   var motivo = document.querySelector('input[name="report-reason"]:checked');
   if(!motivo){ alert('Seleccioná un motivo'); return; }
-  // En Firebase: esto guarda el reporte en una colección 'reportes' que vos
-  // moderás desde un panel admin. Por ahora solo mostramos confirmación.
-  toast('Reporte enviado. Lo revisaremos pronto.');
-  cerrarReportar();
+  if(!session.user || !reportandoId){ toast('Necesitás iniciar sesión para reportar'); return; }
+  var detalle = (document.getElementById('report-extra').value || '').trim().slice(0,500);
+  var pubId = reportandoId, btn = document.querySelector('.report-submit');
+  if(btn) btn.disabled = true;
+  // Se guarda en la colección 'reportes' (solo se puede crear; la lectura la hace quien modera desde la consola de Firebase)
+  _db.collection('reportes').add({
+    pubId: pubId,
+    motivo: motivo.value,
+    detalle: detalle,
+    reporteroId: session.user.id,
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    estado: 'pendiente'
+  }).then(function(){
+    toast('Reporte enviado. Lo revisaremos.');
+    cerrarReportar();
+  }).catch(function(e){
+    console.warn('reporte:', e);
+    toast('No se pudo enviar el reporte. Probá de nuevo más tarde.');
+  }).then(function(){ if(btn) btn.disabled = false; });
 };
-
 // ───── COMPARTIR ─────
 window.compartirPub = function(pubId){
   var p = feedMock.find(function(x){ return x.id===pubId; });
