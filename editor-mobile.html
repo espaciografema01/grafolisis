@@ -2467,12 +2467,12 @@ window.toggleCandadoSeleccionMob = toggleCandadoSeleccionMob;
 function _guardEliminarMob(){
   if(typeof selAnalitico!=='undefined' && selAnalitico) return true;
   var o = (typeof selLoop!=='undefined' && selLoop) ? ['loop',selLoop] : (typeof selImg!=='undefined' && selImg) ? ['imagen',selImg] : (typeof selBar!=='undefined' && selBar) ? ['barra',selBar] : null;
-  var msg = function(x){ return _modoAplicar && !x.locked ? 'Modo Aplicar: la estructura está fija' : 'Elemento con candado: quitalo primero'; };
+  var msg = function(x){ return _modoAplicar && !x.locked ? 'Modo Aplicar: la estructura está fija' : 'Elemento con candado: quítalo primero'; };
   if(o){ if(esFijoMob(o[0],o[1])){ showInd(msg(o[1])); return false; } return true; }
   var sel=cy.$(':selected');
   if(sel.length){
     var fijos=sel.filter(function(n){ return _modoAplicar || (n.isNode() && n.locked()); });
-    if(fijos.length){ fijos.unselect(); showInd(_modoAplicar ? 'Modo Aplicar: la estructura está fija' : 'Elemento con candado: quitalo primero'); }
+    if(fijos.length){ fijos.unselect(); showInd(_modoAplicar ? 'Modo Aplicar: la estructura está fija' : 'Elemento con candado: quítalo primero'); }
     return cy.$(':selected').length>0;
   }
   o = selTxt ? ['texto',selTxt] : selVec ? ['vector',selVec] : null;
@@ -2633,31 +2633,55 @@ window.abrirModelosModal=function(){ abrirBibliotecaMob('modelos'); };
 function showInd(msg){ var e=document.getElementById('indicator'); e.textContent=msg; e.classList.add('show'); clearTimeout(indT); indT=setTimeout(function(){ e.classList.remove('show'); },2000); }
 
 // ── UNDO/REDO ─────────────────────────────────
-function serVecs(){ return vectors.map(function(v){ return {x1:v.x1,y1:v.y1,x2:v.x2,y2:v.y2,dir:v.dir||'uni',cps:v.cps||[],dash:v.dash||'',sw:v.el.getAttribute('stroke-width')||'2.5',arrowTs:v.arrowTs||[v.arrowT||1.05],color:v.color||null,locked:!!v.locked,grupo:v.grupo||null}; }); }
+function serVecs(){ return vectors.map(function(v){ return {x1:v.x1,y1:v.y1,x2:v.x2,y2:v.y2,dir:v.dir||'uni',cps:v.cps||[],dash:v.dash||'',sw:v.el.getAttribute('stroke-width')||'2.5',arrowTs:v.arrowTs||[v.arrowT||1.05],color:v.color||null,locked:!!v.locked,grupo:v.grupo||null,arrowSty:_extraVec(v).arrowSty,esc:!!v.esc}; }); }
 
 // cy.json() también trae la HOJA DE ESTILOS. Si se restaura un guardado viejo, pisa los
 // estilos actuales (el punto de unión volvía a ser un nodo enorme; el modo oscuro se perdía al deshacer).
 // Por eso se guarda y se restaura SOLO el contenido del grafo, nunca el estilo.
 function _cyJsonSinEstilo(){ var j=cy.json(); delete j.style; return j; }
 function _cyRestaurarSinEstilo(j){ if(j && j.style){ j=Object.assign({},j); delete j.style; } return cy.json(j); }
+// Un gesto del usuario puede disparar varios snapshot() (eventos 'add', 'data' y la propia acción).
+// Se juntan en UNO solo al final de la tarea, y se omite si no cambió nada: así «Deshacer»
+// siempre revierte exactamente la última acción y el historial no se llena de copias.
+var _snapTimer=null, _snapPend=false;
 function snapshot(){
   if(skipSnap) return;
+  _snapPend=true;
+  if(!_snapTimer) _snapTimer=setTimeout(_flushSnap,0);
+}
+function _flushSnap(){
+  if(_snapTimer){ clearTimeout(_snapTimer); _snapTimer=null; }
+  if(!_snapPend) return;
+  _snapPend=false;
+  if(skipSnap) return;
+  _snapshotAhora();
+}
+function _snapshotAhora(){
+  var nuevo=_armarSnap();
+  if(histIdx>=0 && histList[histIdx]){
+    try{ if(JSON.stringify(nuevo)===JSON.stringify(histList[histIdx])) return; }catch(e){}
+  }
   if(histIdx<histList.length-1) histList=histList.slice(0,histIdx+1);
-  histList.push({
-    cy:_cyJsonSinEstilo(),
-    txts:textos.map(function(t){ return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||18,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null,locked:!!t.locked,aplicado:!!t.aplicado,grupo:t.grupo||null,sc:t.sc||1,rell:!!t.rell,valor:t.valor||'',cons:!!t.cons}; }),
-    vecs:serVecs(),
-    ests:serEstilos(),
-    curvas:serCurvas(),
-    bars:serBarras(),
-    imgs:(typeof serImagenes==='function')?serImagenes():[],
-    loops:(typeof serLoops==='function')?serLoops():[],
-    modoAplicar:_modoAplicar
-  });
+  histList.push(nuevo);
   if(histList.length>50) histList.shift();
   histIdx=histList.length-1; updateUR();
   programarAutoguardado();
 }
+function _armarSnap(){
+  return ({
+    cy:_cyJsonSinEstilo(),
+    txts:textos.map(function(t){ return {id:t.id,x:t.x,y:t.y,content:t.content,fontSize:t.fontSize||18,rotation:t.rotation||0,bold:!!t.bold,italic:!!t.italic,underline:!!t.underline,fontIdx:t.fontIdx||0,color:t.color||null,locked:!!t.locked,aplicado:!!t.aplicado,grupo:t.grupo||null,sc:t.sc||1,rell:!!t.rell,valor:t.valor||'',cons:!!t.cons}; }),
+    vecs:_ser(serVecs),
+    ests:_ser(serEstilos),
+    curvas:_ser(serCurvas),
+    bars:_ser(serBarras),
+    imgs:(typeof serImagenes==='function')?_ser(serImagenes):[],
+    loops:(typeof serLoops==='function')?_ser(serLoops):[],
+    modoAplicar:_modoAplicar
+  });
+}
+// Si un serializador falla, no se pierde todo el historial ni se rompe el gesto en curso
+function _ser(fn){ try{ return fn(); }catch(e){ console.warn('serializar',e); return (fn===serEstilos||fn===serCurvas)?{}:[]; } }
 
 // ═══════════ AUTOGUARDADO ═══════════
 // Guarda el estado actual en localStorage, debounce 800ms para no saturar.
@@ -3019,7 +3043,8 @@ function _restoreSnapInner(s, soloGrafo){
     if(v.dash) obj.el.setAttribute('stroke-dasharray',v.dash);
     if(v.sw)   obj.el.setAttribute('stroke-width',v.sw);
     if(v.color) obj.color = v.color;
-    if(v.arrowTs){ obj.arrowTs=v.arrowTs; obj.arrowT=v.arrowTs[0]; actualizarArrowEls(obj); }
+    if(v.arrowTs){ obj.arrowTs=v.arrowTs.slice(); obj.arrowT=v.arrowTs[0]; }
+    _aplicarExtraVec(obj,v); actualizarArrowEls(obj);
     if(v.cps&&v.cps.length){
       v.cps.forEach(function(cp){ crearDotVec(obj,{t:cp.t,d:cp.d}); });
       ocultarDotsVec(obj);
@@ -3094,7 +3119,28 @@ function _restoreSnapInner(s, soloGrafo){
   skipSnap=false; updateUR(); actualizarBarraContexto();
 }
 function restoreSnap(s, soloGrafo){
+  // Deshacer/rehacer conserva la selección si el objeto sigue existiendo
+  var _selIds=null, _selTxtId=null, _selLoopId=null;
+  if(soloGrafo){
+    try{
+      _selIds=cy.$(':selected').map(function(e){ return e.id(); });
+      _selTxtId=(selTxt&&selTxt.id)||null;
+      _selLoopId=(typeof selLoop!=='undefined'&&selLoop&&selLoop.id)||null;
+    }catch(e){}
+  }
+  _restoreSnapConVista(s, soloGrafo);
+  if(soloGrafo){
+    try{
+      if(_selIds&&_selIds.length){ _selIds.forEach(function(id){ var el=cy.getElementById(id); if(el.length) el.select(); }); }
+      else if(_selTxtId){ var t=textos.filter(function(x){ return x.id===_selTxtId; })[0]; if(t) _seleccionarTexto(t); }
+      else if(_selLoopId){ var lp=loops.filter(function(x){ return x.id===_selLoopId; })[0]; if(lp) seleccionarLoop(lp); }
+      actualizarBarraContexto();
+    }catch(e){ console.warn(e); }
+  }
+}
+function _restoreSnapConVista(s, soloGrafo){
   var vpAntes=_vpAhora();
+  try{ if(!_canvasLocked){ cy.userPanningEnabled(true); cy.userZoomingEnabled(true); } }catch(e){}
   _vpSusp=true;
   try{ _restoreSnapInner(s, soloGrafo); }
   finally{ _vpSusp=false; }
@@ -3109,8 +3155,8 @@ function restoreSnap(s, soloGrafo){
   _vpPrev=_vpAhora();
   try{ actualizarTodosLosDots(); }catch(e){}
 }
-function undo(){ if(histIdx<=0) return; histIdx--; restoreSnap(histList[histIdx], true); }
-function redo(){ if(histIdx>=histList.length-1) return; histIdx++; restoreSnap(histList[histIdx], true); }
+function undo(){ _flushSnap(); if(histIdx<=0) return; histIdx--; restoreSnap(histList[histIdx], true); }
+function redo(){ _flushSnap(); if(histIdx>=histList.length-1) return; histIdx++; restoreSnap(histList[histIdx], true); }
 function updateUR(){
   var ud=histIdx<=0, rd=histIdx>=histList.length-1;
   document.getElementById('btn-undo').disabled=ud;
@@ -3329,7 +3375,7 @@ function eliminarSeleccionado(){
   if(selImg){
     selImg.el.remove();
     imagenes = imagenes.filter(function(i){ return i!==selImg; });
-    selImg=null; snapshot(); return;
+    selImg=null; actualizarBarraContexto(); snapshot(); return;
   }
   // Barra SVG
   if(selBar){
@@ -3346,7 +3392,7 @@ function eliminarSeleccionado(){
   if(selTxt){
     selTxt.el.remove();
     textos=textos.filter(function(t){ return t!==selTxt; });
-    selTxt=null; snapshot(); return;
+    selTxt=null; actualizarBarraContexto(); snapshot(); return;
   }
   if(selVec){
     if(selVec.cpDots) selVec.cpDots.forEach(function(info){
@@ -3496,7 +3542,7 @@ function actualizarBarraContexto(){
       var row2=document.getElementById('bar-row2');
       if(row2 && ESP.cantidad()===1 && !_modoAplicar && ESP_A.activo() && row2.children.length) _mobCompartir(row2,1);
     }
-  }catch(e){ console.warn(e); } try{ _filtrarContextoMob(); }catch(e){ console.warn(e); } }
+  }catch(e){ console.warn(e); } try{ _filtrarContextoMob(); }catch(e){ console.warn(e); } try{ _jerarquizarBarra(); }catch(e){ console.warn(e); } }
 function mkBtn(icon, lbl, fn, cls){
   var b=document.createElement('button');
   b.className='bar-btn ctx'+(cls?' '+cls:'');
@@ -3507,6 +3553,78 @@ function mkBtn(icon, lbl, fn, cls){
   b.addEventListener('touchend',function(e){ if(_scrolled) return; e.preventDefault(); fn(); },{passive:false});
   b.addEventListener('click', fn);
   return b;
+}
+// ── Barra contextual jerarquizada ──────────────────────────────
+// Se muestra lo esencial de cada objeto y el resto se agrupa en «Más», organizado por tema.
+var _JER_PRIM={
+  'Nodo':   ['AaRenombrar','✎Rellenar','▭Casilla','▭Casilla ✓','⟶Conectar','⟲Bucle','Color'],
+  'Texto':  ['AaEditar','✎Rellenar','▭Casilla','−Tamaño','+Tamaño','Color'],
+  'Vector': ['➤Puntas','→Uni','↔Bi','—Sin','Color'],
+  'Barra':  ['−Largo','+Largo','−Grosor','+Grosor'],
+  'Bucle':  ['AaEtiqueta','−Tamaño','+Tamaño','↔Extremos','Color'],
+  'Línea':  ['AaRenombrar','→Uni','↔Bi','—Sin','Color','∿Curvatura','➤Puntas'],
+  'Imagen': ['−Tamaño','+Tamaño']
+};
+function _jerGrupo(k){
+  if(/^(↺|↻|∠)/.test(k)) return 'Girar';
+  if(/(Tamaño|Tam$|Largo|Grosor|Meter|Sacar)/.test(k)) return 'Tamaño y posición';
+  if(/(Uni|Bi|Sin$|Sólido|Punt\.|Normal|Punto|Sin fondo|Sin borde|Volver a nodo)/.test(k)) return 'Forma y dirección';
+  if(/(Negrita|Cursiva|Subrayar|Mono)/.test(k)) return 'Estilo del texto';
+  if(/(Punta|Escala|Tamaño fijo|Extremos|Curvatura)/.test(k)) return 'Puntas y curvas';
+  if(/(Color|Copiar estilo)/.test(k)) return 'Color y estilo';
+  if(/(Nombre|Casilla|Rellenar|Vaciar|Etiqueta|Renombrar|Editar)/.test(k)) return 'Contenido';
+  return 'Acciones';
+}
+var _JER_REPETIBLE=/^(−|\+|↺|↻|∠|⇤|⇥|[bi]|U|Tt)/;
+function _jerarquizarBarra(){
+  var row2=document.getElementById('bar-row2'); if(!row2) return;
+  var abierto=(_panelLinea && _panelLinea.tipo==='mas');
+  var kids=Array.prototype.slice.call(row2.children);
+  var lbl0=kids.length&&kids[0].tagName!=='BUTTON'?kids[0].textContent.replace(':','').trim():'';
+  var prim=_JER_PRIM[lbl0];
+  var btns=kids.filter(function(e){ return e.tagName==='BUTTON'; });
+  if(!prim || btns.length<=prim.length+2){ if(abierto) cerrarPanelLinea(); return; }
+  function clave(b){ return b.textContent.trim(); }
+  var resto=[];
+  btns.forEach(function(b){
+    var k=clave(b), lb=((b.querySelector('.lbl')||{}).textContent||'').trim();
+    if(k==='Candado' || prim.indexOf(k)>=0 || prim.indexOf(lb)>=0) return;
+    resto.push(b);
+  });
+  // limpiar lecturas sueltas (por ejemplo los grados) y etiquetas de sección
+  kids.forEach(function(e){ if(e.tagName!=='BUTTON' && e!==kids[0]) e.remove(); });
+  if(!resto.length){ if(abierto) cerrarPanelLinea(); return; }
+  var mas=mkBtn('⋯','Más ('+resto.length+')',function(){ _abrirPanelMas(lbl0,resto); },'');
+  mas.classList.add('active');
+  var cand=btns.filter(function(b){ return clave(b)==='Candado'; })[0];
+  resto.forEach(function(b){ if(b.parentNode) b.parentNode.removeChild(b); });
+  if(cand) row2.insertBefore(mas,cand); else row2.appendChild(mas);
+  if(abierto){
+    if(_panelLinea.ctx===lbl0) _abrirPanelMas(lbl0,resto,true); else cerrarPanelLinea();
+  }
+}
+function _abrirPanelMas(titulo,btns,mantener){
+  _panelLinea={tipo:'mas',ctx:titulo};
+  var body=_plAbrir('Más opciones · '+titulo);
+  var grupos={}, orden=[];
+  btns.forEach(function(b){
+    var g=_jerGrupo(b.textContent.trim());
+    if(!grupos[g]){ grupos[g]=[]; orden.push(g); }
+    grupos[g].push(b);
+  });
+  var pref=['Contenido','Puntas y curvas','Forma y dirección','Tamaño y posición','Girar','Estilo del texto','Color y estilo','Acciones'];
+  orden.sort(function(a,b){ return pref.indexOf(a)-pref.indexOf(b); });
+  orden.forEach(function(g){
+    var t=document.createElement('div'); t.style.cssText='font:600 11px Inter,sans-serif;color:#c9a84c;letter-spacing:.4px;text-transform:uppercase;margin:8px 0 6px'; t.textContent=g; body.appendChild(t);
+    var grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px';
+    grupos[g].forEach(function(b){
+      b.style.width='100%'; b.style.minWidth='0';
+      var k=b.textContent.trim();
+      if(!_JER_REPETIBLE.test(k)){ var cerrar=function(){ setTimeout(function(){ if(_panelLinea&&_panelLinea.tipo==='mas') cerrarPanelLinea(); },0); }; b.addEventListener('click',cerrar); b.addEventListener('touchend',cerrar,{passive:true}); }
+      grid.appendChild(b);
+    });
+    body.appendChild(grid);
+  });
 }
 function mkLbl(text){
   var s=document.createElement('span');
@@ -3562,7 +3680,7 @@ function _actualizarBarraContextoOrig(){
     row2.appendChild(mkBtn('↻','+5°',function(){ rotarBarraSVG(+5); }));
     row2.appendChild(degLbl);
     _mobAngBtns(row2,selBar.angle||0,function(a){
-      if(!selBar) return; if(_fijoMob('barra',selBar)){ showInd('Elemento con candado: quitalo primero'); return; }
+      if(!selBar) return; if(_fijoMob('barra',selBar)){ showInd('Elemento con candado: quítalo primero'); return; }
       rotarBarraSVG(a-(selBar.angle||0)); actualizarBarraContexto();
     });
     row2.appendChild(mkBtn('−','Largo',function(){
@@ -3666,7 +3784,7 @@ function _actualizarBarraContextoOrig(){
       snapshot();
     }));
     _mobAngBtns(row2,selTxt.rotation||0,function(a){
-      if(!selTxt) return; if(_fijoMob('texto',selTxt)){ showInd('Elemento con candado: quitalo primero'); return; }
+      if(!selTxt) return; if(_fijoMob('texto',selTxt)){ showInd('Elemento con candado: quítalo primero'); return; }
       selTxt.rotation=a; selTxt.el.style.transform='rotate('+a+'deg)'; selTxt.el.style.transformOrigin='left top';
       snapshot(); showInd('Texto: '+a+'°'); actualizarBarraContexto();
     });
@@ -3690,7 +3808,7 @@ function _actualizarBarraContextoOrig(){
     row2.appendChild(mkBtn('↻','+5°',function(){ rotarVector(+5); }));
     row2.appendChild(vecDegLbl);
     _mobAngBtns(row2,va,function(a){
-      if(!selVec) return; if(_fijoMob('vector',selVec)){ showInd('Elemento con candado: quitalo primero'); return; }
+      if(!selVec) return; if(_fijoMob('vector',selVec)){ showInd('Elemento con candado: quítalo primero'); return; }
       var v=selVec, cur=(Math.atan2(v.y2-v.y1,v.x2-v.x1)*180/Math.PI+360)%360;
       rotarVector(a-cur); actualizarBarraContexto();
     });
@@ -3719,28 +3837,21 @@ function _actualizarBarraContextoOrig(){
       selVec.el.setAttribute('stroke-width',Math.min(10,sw+0.5));
       snapshot();
     }));
-    row2.appendChild(mkBtn('↗','+ Flecha',function(){
+    row2.appendChild(mkBtn('↗','+ Punta',function(){
       if(!selVec) return;
-      if(!selVec.arrowTs) selVec.arrowTs=[selVec.arrowT||1.0];
-      if(selVec.arrowTs.length>=3){ showInd('Máximo 3 flechas'); return; }
-      var newT=selVec.arrowTs.length===1?0.5:0.25;
-      selVec.arrowTs.push(newT);
-      actualizarArrowEls(selVec);
-      showInd('Flecha añadida');
-      snapshot();
-      actualizarBarraContexto(); // refrescar para mostrar nuevo botón de ciclar
+      agregarPunta(selVec);
+      actualizarBarraContexto();
     }));
-    // Botón para ciclar cada flecha existente
-    if(selVec&&selVec.arrowTs){
-      selVec.arrowTs.forEach(function(t,i){
-        var pct=Math.round(t*100);
-        var lbl=pct>100?'fin':'%'+pct;
-        row2.appendChild(mkBtn('↗',lbl,function(){
-          ciclarPosicionFlecha(selVec, i);
-          actualizarBarraContexto();
-        }));
-      });
-    }
+    row2.appendChild(mkBtn('➤','Puntas',function(){
+      if(!selVec) return;
+      abrirPanelPuntas(selVec);
+    }));
+    row2.appendChild(mkBtn(selVec&&selVec.esc?'⤢':'⊡', selVec&&selVec.esc?'Escala: sí':'Tamaño fijo',function(){
+      if(!selVec) return;
+      selVec.esc=!selVec.esc; snapshot();
+      showInd(selVec.esc?'El vector se agranda y achica con el zoom':'El vector mantiene su tamaño al hacer zoom');
+      actualizarBarraContexto();
+    }));
     // Color del vector
     row2.appendChild(mkBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><circle cx="13.5" cy="6.5" r="1"></circle><circle cx="17.5" cy="10.5" r="1"></circle><circle cx="8.5" cy="7.5" r="1"></circle><circle cx="6.5" cy="12.5" r="1"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.7-.4-1-.2-.3-.4-.6-.4-1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"></path></svg>','Color',function(){
       abrirSelectorColor('vector', selVec);
@@ -3784,6 +3895,7 @@ function _actualizarBarraContextoOrig(){
       redibujarLoop(selLoop);
       snapshot();
     }));
+    row2.appendChild(mkBtn('↔','Extremos',function(){ if(selLoop) abrirPanelLoopExt(selLoop); }));
     // Dirección de la flecha
     row2.appendChild(mkBtn('→','Uni',function(){
       if(!selLoop) return;
@@ -3836,6 +3948,7 @@ function _actualizarBarraContextoOrig(){
     }));
     row2.appendChild(mkBtn('◐','Color',function(){ abrirSelectorColor('edge', e1); }));
     row2.appendChild(mkBtn('∿','Curvatura',function(){ abrirPanelCurva(e1); }));
+    row2.appendChild(mkBtn('➤','Puntas',function(){ abrirPanelPuntasEdge(e1); }));
     row2.appendChild(mkBtn('⟶','Unir desde',function(){ iniciarConexionDesdeLinea(); }));
     row2.appendChild(mkBtn('⧉','Duplicar',function(){ duplicarSeleccionado(); }));
     // ── Flujo clínico: tipo de relación de la Capa Inferior ──
@@ -4146,7 +4259,9 @@ function crearLoopDesdeData(d){
     color: d.color || _tinta(),
     arrow: d.arrow || 'uni',
     label: d.label || '',
-    overlap: (typeof d.overlap==='number') ? d.overlap : 0.7
+    overlap: (typeof d.overlap==='number') ? d.overlap : 0.7,
+    eS: (typeof d.eS==='number') ? d.eS : 0,
+    eF: (typeof d.eF==='number') ? d.eF : 0
   };
   var ns = 'http://www.w3.org/2000/svg';
   lp.pathEl = document.createElementNS(ns,'path');
@@ -4286,13 +4401,21 @@ function redibujarLoop(lp){
   // El hueco necesita más espacio cuando hay DOS puntas de flecha (bidireccional):
   // cada triángulo mide ~5×grosor de largo, así que si están muy juntas se pisan
   // entre sí — por eso aquí el target de separación es más grande en modo 'bi'.
-  var targetGapPx = (lp.arrow==='bi') ? Math.max(24, lp.sw*11) : 10;
-  var gapAngle = Math.max(0.12, Math.min(0.9, targetGapPx/loopR));
+  // Extremos del bucle: por defecto cada uno llega justo hasta el borde del nodo (donde el círculo del
+  // bucle lo cruza); «eS» y «eF» (en píxeles, a zoom 1) los alargan (+) o acortan (−) a gusto.
+  var dC=nR+loopR*overlap;
+  var cosT=(dC*dC+loopR*loopR-nR*nR)/(2*dC*loopR); cosT=Math.max(-1,Math.min(1,cosT));
+  var halfBorde=Math.acos(cosT);
+  var minHalf=((lp.arrow==='bi') ? Math.max(12, lp.sw*5.5) : Math.max(3, lp.sw*1.5))/loopR;
+  var halfAuto=Math.max(halfBorde,minHalf);
+  var z=cy.zoom();
+  var halfS=Math.max(0.03,Math.min(2.6, halfAuto-((lp.eS||0)*z)/loopR));
+  var halfE=Math.max(0.03,Math.min(2.6, halfAuto-((lp.eF||0)*z)/loopR));
   // Ángulo desde el centro del bucle hacia el punto de attach
   var attachAngle = Math.atan2(attachY - centerY, attachX - centerX);
-  // Punto de inicio del arco (un poco antes del attach, en sentido antihorario)
-  var startAngle = attachAngle + gapAngle/2;
-  var endAngle = attachAngle - gapAngle/2 + 2*Math.PI;
+  var startAngle = attachAngle + halfS;
+  var endAngle = attachAngle - halfE + 2*Math.PI;
+  var gapAngle = halfS+halfE;
   // Recorte adicional donde haya punta de flecha: si el trazo llega hasta el
   // mismo punto donde arranca el triángulo, el trazo (de ancho constante)
   // sobresale a los costados de la punta (que ahí es angosta). El mínimo
@@ -4304,8 +4427,9 @@ function redibujarLoop(lp){
   // sobresalga a los costados de la punta.
   var arrowLen = lp.sw*6;
   var arcTrim = Math.min(arrowLen/loopR, (2*Math.PI-gapAngle)*0.3);
-  var drawStartAngle = (lp.arrow==='bi') ? startAngle + arcTrim : startAngle;
-  var drawEndAngle = (lp.arrow!=='none') ? endAngle - arcTrim : endAngle;
+  var arcTrimS = arcTrim, arcTrimE = arcTrim;
+  var drawStartAngle = (lp.arrow==='bi') ? startAngle + arcTrimS : startAngle;
+  var drawEndAngle = (lp.arrow!=='none') ? endAngle - arcTrimE : endAngle;
   var sx = centerX + Math.cos(drawStartAngle) * loopR;
   var sy = centerY + Math.sin(drawStartAngle) * loopR;
   var ex = centerX + Math.cos(drawEndAngle) * loopR;
@@ -4379,14 +4503,10 @@ function redibujarLoop(lp){
 }
 
 function seleccionarLoop(lp){
-  // Deseleccionar otros
-  cy.$(':selected').unselect();
-  if(selVec) selVec = null;
-  if(selTxt && selTxt.el) selTxt.el.classList.remove('sel-txt');
-  selTxt = null;
-  if(selBar) selBar = null;
-  if(selImg && selImg.el) selImg.el.classList.remove('sel-img');
-  selImg = null;
+  // Deseleccionar otros (con sus efectos visuales: color, puntos de control, etc.)
+  var _lpAnt=selLoop; selLoop=null;
+  _limpiarOtrasSel('loop');
+  selLoop=_lpAnt;
   // Deseleccionar otros loops
   loops.forEach(function(other){
     if(other!==lp){ /* nada — solo redibujamos */ }
@@ -4401,6 +4521,7 @@ function deseleccionarLoop(){
   if(selLoop){
     selLoop = null;
     loops.forEach(redibujarLoop);
+    if(_panelLinea && _panelLinea.tipo==='loopext') cerrarPanelLinea();
     actualizarBarraContexto();
   }
 }
@@ -4703,6 +4824,7 @@ function addNode(){
   if(bloqueadoAplicarMob()) return;
   var id='S'+sCount++;
   var pos=cyCenter();
+  _limpiarOtrasSel('none'); if(sourceNode){ sourceNode.removeClass('source-selected'); sourceNode=null; }
   var node=cy.add({group:'nodes', data:{id:id,label:id}, position:{x:pos.x+(-40+Math.random()*80), y:pos.y+(-40+Math.random()*80)}});
   node.select();
   snapshot();
@@ -4716,7 +4838,9 @@ function addBarra(){
   if(bloqueadoAplicarMob()) return;
   var wrap=document.getElementById('cy-wrap');
   var r=wrap.getBoundingClientRect();
-  crearBarraSVG(r.width/2, r.height/2-10, 0, BARRA_W, 5);
+  _limpiarOtrasSel('none');
+  var nb=crearBarraSVG(r.width/2, r.height/2-10, 0, BARRA_W, 5);
+  if(nb){ selBar=nb; nb.el.setAttribute('fill',_selMob()); actualizarBarraContexto(); }
   snapshot();
 }
 
@@ -4753,7 +4877,7 @@ function crearBarraSVG(cx,cy2,angle,w,thick,dashIn){
       selBar=obj;
       justSelected=true; // marcar que acabamos de seleccionar en este toque
       obj.el.setAttribute('fill',_selMob());
-      deselTxt(); deselVec(); cy.$(':selected').unselect();
+      _limpiarOtrasSel('bar');
       actualizarBarraContexto();
       showInd('Barra — botones ↺↻ para rotar');
     }
@@ -4903,100 +5027,227 @@ function ciclarPosicionFlecha(v, idx){
   snapshot();
 }
 
-function limpiarArrowEls(v){
+function limpiarHeads(v){
   if(v.arrowEls) v.arrowEls.forEach(function(ae){
     try{if(ae&&ae.parentNode)ae.parentNode.removeChild(ae);}catch(e){}
   });
   v.arrowEls=[];
-  // compatibilidad con nombre anterior
+}
+function limpiarArrowEls(v){
+  limpiarHeads(v);
   if(v.arrowOverlays) v.arrowOverlays.forEach(function(ov){
     try{if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);}catch(e){}
   });
   v.arrowOverlays=[];
+  quitarAhDots(v);
+}
+
+// ── Geometría del vector: recta, cuadrática o cúbica (según los puntos de curvatura) ──
+function vecGeom(v){
+  var P0={x:v.x1,y:v.y1}, P3={x:v.x2,y:v.y2}, cps=v.cps||[];
+  if(cps.length===0) return {n:1,p:[P0,P3]};
+  if(cps.length===1) return {n:2,p:[P0,cpFromTD(v,cps[0].t,cps[0].d),P3]};
+  return {n:3,p:[P0,cpFromTD(v,cps[0].t,cps[0].d),cpFromTD(v,cps[1].t,cps[1].d),P3]};
+}
+function bzPt(g,u){
+  var p=g.p, m=1-u;
+  if(g.n===1) return {x:m*p[0].x+u*p[1].x, y:m*p[0].y+u*p[1].y};
+  if(g.n===2) return {x:m*m*p[0].x+2*m*u*p[1].x+u*u*p[2].x, y:m*m*p[0].y+2*m*u*p[1].y+u*u*p[2].y};
+  return {x:m*m*m*p[0].x+3*m*m*u*p[1].x+3*m*u*u*p[2].x+u*u*u*p[3].x, y:m*m*m*p[0].y+3*m*m*u*p[1].y+3*m*u*u*p[2].y+u*u*u*p[3].y};
+}
+function bzDer(g,u){
+  var p=g.p, m=1-u;
+  if(g.n===1) return {x:p[1].x-p[0].x, y:p[1].y-p[0].y};
+  if(g.n===2) return {x:2*m*(p[1].x-p[0].x)+2*u*(p[2].x-p[1].x), y:2*m*(p[1].y-p[0].y)+2*u*(p[2].y-p[1].y)};
+  return {x:3*m*m*(p[1].x-p[0].x)+6*m*u*(p[2].x-p[1].x)+3*u*u*(p[3].x-p[2].x), y:3*m*m*(p[1].y-p[0].y)+6*m*u*(p[2].y-p[1].y)+3*u*u*(p[3].y-p[2].y)};
+}
+// Tabla de longitudes de arco (para ubicar puntos por distancia recorrida, no por parámetro)
+function bzTabla(g){
+  var N=120, cum=[0], prev=bzPt(g,0), tot=0;
+  for(var i=1;i<=N;i++){ var q=bzPt(g,i/N); tot+=Math.hypot(q.x-prev.x,q.y-prev.y); cum.push(tot); prev=q; }
+  return {cum:cum,total:tot||1,N:N};
+}
+function bzUenLong(tab,L){
+  if(L<=0) return 0; if(L>=tab.total) return 1;
+  var c=tab.cum, lo=0, hi=tab.N;
+  while(hi-lo>1){ var mid=(lo+hi)>>1; if(c[mid]<=L) lo=mid; else hi=mid; }
+  var seg=(c[hi]-c[lo])||1;
+  return (lo+(L-c[lo])/seg)/tab.N;
+}
+function bzCortar(pts,u){
+  // de Casteljau: devuelve [izquierda, derecha]
+  var izq=[pts[0]], der=[pts[pts.length-1]], cur=pts;
+  while(cur.length>1){
+    var sig=[];
+    for(var i=0;i<cur.length-1;i++) sig.push({x:cur[i].x+(cur[i+1].x-cur[i].x)*u, y:cur[i].y+(cur[i+1].y-cur[i].y)*u});
+    izq.push(sig[0]); der.unshift(sig[sig.length-1]); cur=sig;
+  }
+  return [izq,der];
+}
+function bzSub(g,u0,u1){
+  var pts=g.p;
+  if(u0>0) pts=bzCortar(pts,u0)[1];
+  if(u1<1){ var r=(u1-u0)/(1-u0); pts=bzCortar(pts,r)[0]; }
+  return {n:g.n,p:pts};
+}
+function bzD(g){
+  var p=g.p; function f(q){ return q.x.toFixed(2)+' '+q.y.toFixed(2); }
+  if(g.n===1) return 'M'+f(p[0])+' L'+f(p[1]);
+  if(g.n===2) return 'M'+f(p[0])+' Q'+f(p[1])+' '+f(p[2]);
+  return 'M'+f(p[0])+' C'+f(p[1])+' '+f(p[2])+' '+f(p[3]);
+}
+
+// ── Puntas de flecha: lista, estilo y recorte del trazo ──
+var PUNTAS_TIPOS=[['tri','▶','Triángulo'],['tri0','▷','Vacía'],['chev','›','Punta >'],['stealth','➤','Con muesca'],['dot','●','Círculo']];
+function _estiloPunta(v,i){
+  var a=(v.arrowSty||[])[i];
+  return a ? {k:a.k||'tri', f:(a.f===undefined?null:a.f), s:a.s||1, r:!!a.r} : {k:'tri',f:null,s:1,r:false};
+}
+function vecFlechas(v){
+  var out=[]; if(v.dir==='none') return out;
+  var ts=v.arrowTs?v.arrowTs:[1];
+  ts.forEach(function(t,i){ out.push({i:i,t:Math.max(0,Math.min(1,t)),st:_estiloPunta(v,i)}); });
+  if(v.dir==='bi'){ var s0=_estiloPunta(v,0); out.push({i:-1,t:0,st:{k:s0.k,f:s0.f,s:s0.s,r:!s0.r}}); }
+  return out;
+}
+function _largoPunta(st,sw){
+  var L=sw*6*st.s;
+  return st.k==='tri0'?L : st.k==='stealth'?L*0.7 : st.k==='tri'?L*0.9 : st.k==='dot'?L*0.45 : 0;
+}
+function vecRecortes(v,sw,total){
+  var a=0,b=0;
+  vecFlechas(v).forEach(function(f){
+    var tr=_largoPunta(f.st,sw);
+    if(!f.st.r && f.t>=0.98) b=Math.max(b,tr);
+    if(f.st.r && f.t<=0.02) a=Math.max(a,tr);
+  });
+  var tope=total*0.7; if(a+b>tope){ var k=tope/(a+b); a*=k; b*=k; }
+  return {a:a,b:b};
+}
+// Trazo ya recortado (para que no sobresalga por los lados de la punta)
+function vecTrazo(v){
+  var sw=parseFloat((v.el&&v.el.getAttribute('stroke-width'))||v.sw||2.5);
+  var g=vecGeom(v), tab=bzTabla(g), r=vecRecortes(v,sw,tab.total);
+  var u0=bzUenLong(tab,r.a), u1=bzUenLong(tab,tab.total-r.b);
+  return {g:g,sub:bzSub(g,u0,u1),tab:tab,sw:sw};
+}
+function reconstruirPath(v){ return bzD(vecTrazo(v).sub); }
+
+function _colorLinea(v){ return v.color || (selVec===v?_selMob():_tinta()); }
+function _dibujarPunta(v,fl,g,tab,stroke,sw){
+  var u=bzUenLong(tab,fl.t*tab.total), P=bzPt(g,u), D=bzDer(g,u), l=Math.hypot(D.x,D.y);
+  if(!l){ D={x:g.p[g.p.length-1].x-g.p[0].x,y:g.p[g.p.length-1].y-g.p[0].y}; l=Math.hypot(D.x,D.y)||1; }
+  var T={x:D.x/l,y:D.y/l}; if(fl.st.r){ T.x=-T.x; T.y=-T.y; }
+  var N={x:-T.y,y:T.x}, st=fl.st, L=sw*6*st.s, W=sw*5*st.s, ns='http://www.w3.org/2000/svg';
+  var fill=(st.f===null||st.f===undefined)?(st.k==='tri0'?'none':stroke):st.f;
+  var el, d, B, c1, c2;
+  function f(q){ return q.x.toFixed(2)+' '+q.y.toFixed(2); }
+  if(st.k==='chev'){
+    var Ar=sw*5*st.s, ang=Math.PI/6, ca=Math.cos(ang), sa=Math.sin(ang);
+    var b1={x:-T.x*ca+N.x*sa, y:-T.y*ca+N.y*sa}, b2={x:-T.x*ca-N.x*sa, y:-T.y*ca-N.y*sa};
+    var a1={x:P.x+b1.x*Ar,y:P.y+b1.y*Ar}, a2={x:P.x+b2.x*Ar,y:P.y+b2.y*Ar};
+    el=document.createElementNS(ns,'path'); el.setAttribute('d','M'+f(a1)+' L'+f(P)+' L'+f(a2));
+    el.setAttribute('fill','none'); el.setAttribute('stroke',stroke); el.setAttribute('stroke-width',sw);
+    el.setAttribute('stroke-linecap','round'); el.setAttribute('stroke-linejoin','round');
+  } else if(st.k==='dot'){
+    var r=W*0.5; el=document.createElementNS(ns,'circle');
+    el.setAttribute('cx',(P.x-T.x*r).toFixed(2)); el.setAttribute('cy',(P.y-T.y*r).toFixed(2)); el.setAttribute('r',r.toFixed(2));
+    el.setAttribute('fill',fill); el.setAttribute('stroke',stroke); el.setAttribute('stroke-width',Math.max(1,sw*0.6));
+  } else {
+    B={x:P.x-T.x*L,y:P.y-T.y*L}; c1={x:B.x+N.x*W/2,y:B.y+N.y*W/2}; c2={x:B.x-N.x*W/2,y:B.y-N.y*W/2};
+    if(st.k==='stealth'){ var M={x:P.x-T.x*L*0.7,y:P.y-T.y*L*0.7}; d='M'+f(P)+' L'+f(c1)+' L'+f(M)+' L'+f(c2)+' Z'; }
+    else d='M'+f(P)+' L'+f(c1)+' L'+f(c2)+' Z';
+    el=document.createElementNS(ns,'path'); el.setAttribute('d',d);
+    el.setAttribute('fill',fill); el.setAttribute('stroke',stroke); el.setAttribute('stroke-width',Math.max(1,sw*(st.k==='tri0'?0.8:0.5)));
+    el.setAttribute('stroke-linejoin','miter'); el.setAttribute('stroke-miterlimit','6');
+  }
+  el.style.pointerEvents='none';
+  return {el:el,P:P,T:T,L:L};
 }
 
 function actualizarArrowEls(v){
   if(!v||!v.el) return;
-  if(!v.arrowTs||!v.arrowTs.length) v.arrowTs=[1.0];
-  var sel=selVec===v;
-  // Si el vector tiene color personalizado, lo usamos. Si está seleccionado y
-  // tiene color custom, lo aclaramos un poco para feedback visual; si no
-  // tiene custom, usamos los defaults (dorado seleccionado / negro normal).
-  var customColor = v.color || null;
-  var stroke = customColor || (sel?_selMob():_tinta());
+  if(!v.arrowTs) v.arrowTs=[1.0];
+  var stroke=_colorLinea(v);
   var sw=parseFloat(v.el.getAttribute('stroke-width')||'2.5');
-  // Markers: si hay color custom, generamos uno ad hoc inline; si no, usamos
-  // los predefinidos (#ah / #ah-s).
-  var mEnd, mStart;
-  if(v.dir==='none'){
-    mEnd = 'none';
-  } else {
-    asegurarMarkerColor(stroke);
-    mEnd = 'url(#ah-c-' + sanitizarIdColor(stroke) + ')';
-  }
-  if(v.dir==='bi'){
-    asegurarMarkerColor(stroke, true);
-    mStart = 'url(#ah-c-rev-' + sanitizarIdColor(stroke) + ')';
-  } else {
-    mStart = 'none';
-  }
-
-  // Línea/path principal: solo el trazo, sin markers
   v.el.setAttribute('stroke', stroke);
   v.el.setAttribute('stroke-width', sw);
   v.el.setAttribute('marker-end','none');
-  v.el.setAttribute('marker-start', mStart);
-  // Si todavía es una <line> recta (no se convirtió en <path> curvo), el
-  // recorte para que no compita con la punta de flecha se hace aquí mismo
-  // (para <path> ya lo hace reconstruirPath).
+  v.el.setAttribute('marker-start','none');
+  var tz=vecTrazo(v);
   if(v.el.tagName==='line'){
-    var trim = sw*6;
-    var dx=v.x2-v.x1, dy=v.y2-v.y1, dl=Math.sqrt(dx*dx+dy*dy)||1;
-    var safeTrim = Math.min(trim, dl*0.35);
-    var nx1=v.x1, ny1=v.y1, nx2=v.x2, ny2=v.y2;
-    var hayFlechaFinal = v.dir!=='none' && (!v.arrowTs || v.arrowTs.some(function(t){ return Math.abs(t-1)<0.05; }));
-    if(hayFlechaFinal){ nx2 = v.x2 - (dx/dl)*safeTrim; ny2 = v.y2 - (dy/dl)*safeTrim; }
-    if(v.dir==='bi'){ nx1 = v.x1 + (dx/dl)*safeTrim; ny1 = v.y1 + (dy/dl)*safeTrim; }
-    v.el.setAttribute('x1',nx1); v.el.setAttribute('y1',ny1);
-    v.el.setAttribute('x2',nx2); v.el.setAttribute('y2',ny2);
+    var q=tz.sub.p; v.el.setAttribute('x1',q[0].x); v.el.setAttribute('y1',q[0].y); v.el.setAttribute('x2',q[1].x); v.el.setAttribute('y2',q[1].y);
+  } else {
+    v.el.setAttribute('d',bzD(tz.sub));
+    if(v.hit) v.hit.setAttribute('d',bzD(tz.g));
   }
   var ud=v.dash||'';
-  if(ud) v.el.setAttribute('stroke-dasharray',ud);
-  else v.el.removeAttribute('stroke-dasharray');
+  if(ud) v.el.setAttribute('stroke-dasharray',ud); else v.el.removeAttribute('stroke-dasharray');
 
-  // Si está seleccionado pero hay color custom, dibujar un halo de selección
-  // sutil (un segundo path detrás más grueso y semitransparente)
-  // Para simplicidad por ahora: solo cambiar el cursor visual sin halo.
-
-  // Limpiar flechas anteriores
-  limpiarArrowEls(v);
-  if(!v.arrowEls) v.arrowEls=[];
-
-  if(v.dir==='none') return;
-
-  // Crear una flecha por cada t en arrowTs
-  v.arrowTs.forEach(function(t){
-    var pt=getPuntoEnVector(v,t);
-    var tg=tangentEnVector(v,t);
-    // Línea auxiliar: va desde atrás hasta la punta (pt)
-    // marker-end en x2=pt con orient="auto" → flecha apunta en dirección del trazo
-    var alen=2; // mínimo para que orient="auto" funcione
-    var ae=document.createElementNS('http://www.w3.org/2000/svg','line');
-    ae.setAttribute('x1',(pt.x-tg.x*alen).toFixed(2));
-    ae.setAttribute('y1',(pt.y-tg.y*alen).toFixed(2));
-    ae.setAttribute('x2',pt.x.toFixed(2));
-    ae.setAttribute('y2',pt.y.toFixed(2));
-    ae.setAttribute('stroke','#000000');
-    ae.setAttribute('stroke-opacity','0');
-    ae.setAttribute('stroke-width', sw);
-    ae.setAttribute('marker-end', mEnd);
-    ae.setAttribute('marker-start','none');
-    ae.style.pointerEvents='none';
-    vecSVG.appendChild(ae);
-    v.arrowEls.push(ae);
+  limpiarHeads(v);
+  v.arrowEls=[];
+  vecFlechas(v).forEach(function(fl){
+    var h=_dibujarPunta(v,fl,tz.g,tz.tab,stroke,sw);
+    h.el.setAttribute('class','vec-head');
+    vecSVG.appendChild(h.el); v.arrowEls.push(h.el);
+    fl.geo=h;
   });
+  sincronizarAhDots(v,tz);
 }
 
+// ── Rombos dorados para arrastrar cada punta a lo largo de la línea ──
+function quitarAhDots(v){
+  if(v.ahDots) v.ahDots.forEach(function(d){ try{ if(d.parentNode) d.parentNode.removeChild(d); }catch(e){} });
+  v.ahDots=[];
+}
+function sincronizarAhDots(v,tz){
+  var fl=vecFlechas(v).filter(function(f){ return f.i>=0; });
+  if(!v.ahDots) v.ahDots=[];
+  var wrap=document.getElementById('cy-wrap'); if(!wrap) return;
+  while(v.ahDots.length>fl.length){ var d=v.ahDots.pop(); try{ if(d.parentNode) d.parentNode.removeChild(d); }catch(e){} }
+  while(v.ahDots.length<fl.length){ v.ahDots.push(_crearAhDot(v,v.ahDots.length,wrap)); }
+  if(!fl.length) return;
+  tz=tz||vecTrazo(v);
+  var sel=(selVec===v);
+  fl.forEach(function(f,k){
+    var u=bzUenLong(tz.tab,f.t*tz.tab.total), P=bzPt(tz.g,u), D=bzDer(tz.g,u), l=Math.hypot(D.x,D.y)||1;
+    var sg=f.st.r?-1:1, back=tz.sw*6*f.st.s+15;
+    var dot=v.ahDots[k];
+    dot.style.left=(P.x-sg*D.x/l*back)+'px'; dot.style.top=(P.y-sg*D.y/l*back)+'px';
+    dot.style.display=sel?'':'none';
+    dot.classList.toggle('sel',(v.selFlecha||0)===k);
+  });
+}
+function _tAdesdePunto(v,px,py){
+  var g=vecGeom(v), tab=bzTabla(g), best=1e18, bi=0, N=tab.N;
+  for(var i=0;i<=N;i++){ var q=bzPt(g,i/N), d=(q.x-px)*(q.x-px)+(q.y-py)*(q.y-py); if(d<best){ best=d; bi=i; } }
+  var t=tab.cum[bi]/tab.total;
+  if(t<0.03) t=0; else if(t>0.97) t=1;
+  return t;
+}
+function _crearAhDot(v,idx,wrap){
+  var dot=document.createElement('div'); dot.className='ah-dot'; wrap.appendChild(dot);
+  var moved=false;
+  dot.addEventListener('touchstart',function(e){
+    e.stopPropagation(); e.preventDefault(); moved=false;
+    v.selFlecha=idx; sincronizarAhDots(v);
+  },{passive:false});
+  dot.addEventListener('touchmove',function(e){
+    e.stopPropagation(); e.preventDefault();
+    if(esFijoMob('vector',v)) return;
+    var r=wrap.getBoundingClientRect(), t0=e.touches[0];
+    var t=_tAdesdePunto(v,t0.clientX-r.left,t0.clientY-r.top);
+    moved=true; v.arrowTs[idx]=t; if(idx===0) v.arrowT=t;
+    actualizarArrowEls(v);
+  },{passive:false});
+  dot.addEventListener('touchend',function(e){
+    e.stopPropagation();
+    if(moved){ snapshot(); if(_panelLinea&&_panelLinea.tipo==='puntas') renderPanelPuntas(); }
+    else abrirPanelPuntas(v);
+    actualizarBarraContexto();
+  },{passive:true});
+  return dot;
+}
 function actualizarArrowEl(v){ actualizarArrowEls(v); }
 var vecSVG=document.getElementById('vec-svg');
 var defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
@@ -5044,6 +5295,7 @@ function asegurarMarkerColor(c, esReverso){
 function toggleVectorMode(){
   if(_modoAplicar && !vectorMode){ bloqueadoAplicarMob(); return; }
   vectorMode=!vectorMode;
+  if(vectorMode){ deselAll(); actualizarBarraContexto(); }
   document.getElementById('btn-vec').classList.toggle('active',vectorMode);
   document.getElementById('vec-overlay').classList.toggle('active',vectorMode);
   if(!vectorMode){ vecStart=null; if(vecDraft){vecDraft.remove();vecDraft=null;} }
@@ -5151,8 +5403,145 @@ vecOv.addEventListener('touchend',function(e){
 
 function aplicarDirVector(obj, d){
   obj.dir = d;
+  if(d!=='none' && obj.arrowTs && !obj.arrowTs.length){ obj.arrowTs=[1.0]; obj.arrowT=1.0; }
   actualizarArrowEls(obj);
 }
+function agregarPunta(v){
+  if(!v.arrowTs) v.arrowTs=[1.0];
+  if(v.arrowTs.length>=12){ showInd('Máximo 12 puntas'); return; }
+  var ts=[0,1].concat(v.arrowTs.map(function(t){ return Math.max(0,Math.min(1,t)); })).sort(function(a,b){ return a-b; });
+  var best=0, at=.5;
+  for(var i=1;i<ts.length;i++){ if(ts[i]-ts[i-1]>best){ best=ts[i]-ts[i-1]; at=(ts[i]+ts[i-1])/2; } }
+  var base=_estiloPunta(v,Math.min(v.selFlecha||0,Math.max(0,v.arrowTs.length-1)));
+  if(v.dir==='none') v.dir='uni';
+  v.arrowTs.push(at);
+  if(!v.arrowSty) v.arrowSty=[];
+  while(v.arrowSty.length<v.arrowTs.length-1) v.arrowSty.push(_estiloPunta(v,v.arrowSty.length));
+  v.arrowSty.push({k:base.k,f:base.f,s:base.s,r:base.r});
+  v.selFlecha=v.arrowTs.length-1;
+  actualizarArrowEls(v); snapshot();
+  showInd('Punta añadida — arrastra el rombo dorado para moverla');
+}
+function _asegurarSty(v){
+  if(!v.arrowSty) v.arrowSty=[];
+  while(v.arrowSty.length<(v.arrowTs||[1]).length) v.arrowSty.push(_estiloPunta(v,v.arrowSty.length));
+}
+function _extraVec(v){ return {arrowSty:(v.arrowSty||[]).map(function(a){ return {k:a.k,f:a.f,s:a.s,r:!!a.r}; }), esc:!!v.esc}; }
+function _aplicarExtraVec(o,d){
+  if(d.arrowSty) o.arrowSty=d.arrowSty.map(function(a){ return {k:a.k||'tri',f:(a.f===undefined?null:a.f),s:a.s||1,r:!!a.r}; });
+  o.esc=!!d.esc;
+}
+
+// ── Panel «Puntas de flecha» ──
+var PUNTA_COLORES=['#ffffff','#faf8f4','#c9a84c','#c0392b','#2e7d32','#1565c0','#6a1b9a','#000000'];
+function abrirPanelPuntas(v){
+  if(!v) return;
+  _panelLinea={tipo:'puntas'};
+  if(v.selFlecha==null) v.selFlecha=0;
+  renderPanelPuntas();
+}
+function renderPanelPuntas(){
+  var v=selVec; if(!v){ cerrarPanelLinea(); return; }
+  _panelLinea={tipo:'puntas'};
+  var body=_plAbrir('Puntas de flecha');
+  var n=(v.arrowTs||[]).length;
+  if(v.dir==='none'){ body.appendChild(_plNota('Este vector está «Sin» punta. Toca «Uni» o «Bi» en la barra, o añade una punta.')); }
+  var k=Math.min(v.selFlecha||0,Math.max(0,n-1)); v.selFlecha=k;
+  var chips=[];
+  for(var i=0;i<n;i++){ (function(i){ var b=_plBtn('Punta '+(i+1),function(){ v.selFlecha=i; sincronizarAhDots(v); renderPanelPuntas(); },i===k); chips.push(b); })(i); }
+  chips.push(_plBtn('+ Añadir',function(){ agregarPunta(v); renderPanelPuntas(); actualizarBarraContexto(); }));
+  var fila=_plFila(chips); fila.style.flexWrap='wrap'; fila.querySelectorAll('button').forEach(function(b){ b.style.flex='0 0 auto'; b.style.padding='8px 12px'; });
+  body.appendChild(fila);
+  if(!n){ body.appendChild(_plNota('Este vector no tiene puntas. Toca «+ Añadir».')); return; }
+  _asegurarSty(v);
+  var st=v.arrowSty[k];
+  function ya(){ actualizarArrowEls(v); }
+  function listo(){ snapshot(); renderPanelPuntas(); }
+  var tl=document.createElement('div'); tl.style.cssText='font:12px Inter,sans-serif;color:#bbb;margin:2px 0 6px'; tl.textContent='Forma'; body.appendChild(tl);
+  var tipos=PUNTAS_TIPOS.map(function(t){
+    var b=_plBtn(t[1]+' '+t[2],function(){ st.k=t[0]; if(t[0]==='tri0' && st.f===null) {} ya(); listo(); },st.k===t[0]);
+    b.style.flex='1 1 30%'; b.style.fontSize='11px'; return b;
+  });
+  var ft=_plFila(tipos); ft.style.flexWrap='wrap'; body.appendChild(ft);
+  if(st.k!=='chev'){
+    var tr=document.createElement('div'); tr.style.cssText='font:12px Inter,sans-serif;color:#bbb;margin:2px 0 6px'; tr.textContent='Relleno'; body.appendChild(tr);
+    body.appendChild(_plFila([
+      _plBtn('Color de la línea',function(){ st.f=null; ya(); listo(); },st.f===null),
+      _plBtn('Sin relleno',function(){ st.f='none'; ya(); listo(); },st.f==='none')
+    ]));
+    var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap';
+    PUNTA_COLORES.forEach(function(c){
+      var b=document.createElement('button'); b.style.cssText='width:30px;height:30px;border-radius:50%;cursor:pointer;background:'+c+';border:'+(st.f===c?'3px solid #c9a84c':'2px solid #555');
+      b.addEventListener('click',function(){ st.f=c; ya(); listo(); }); sw.appendChild(b);
+    });
+    var ci=document.createElement('input'); ci.type='color'; ci.value=(st.f&&st.f[0]==='#')?st.f:'#c9a84c'; ci.style.cssText='width:36px;height:30px;border:none;background:none;padding:0';
+    ci.addEventListener('input',function(){ st.f=ci.value; ya(); }); ci.addEventListener('change',function(){ listo(); });
+    sw.appendChild(ci); body.appendChild(sw);
+  } else { body.appendChild(_plNota('La punta « > » es abierta: se dibuja solo con el color de la línea.')); }
+  body.appendChild(_plSlider('Tamaño',0.5,3,0.1,st.s,function(x){ return x.toFixed(1)+'×'; },function(x){ st.s=x; ya(); },function(){ snapshot(); }));
+  var posSl=_plSlider('Posición en la línea (0% inicio · 100% final)',0,100,0.5,Math.round(v.arrowTs[k]*1000)/10,function(x){ return x.toFixed(1)+'%'; },function(x){ v.arrowTs[k]=x/100; if(k===0) v.arrowT=x/100; ya(); },function(){ snapshot(); });
+  body.appendChild(posSl);
+  body.appendChild(_plFila([
+    _plBtn(st.r?'↩ Sentido: hacia el inicio':'↪ Sentido: hacia el final',function(){ st.r=!st.r; ya(); listo(); }),
+    _plBtn('✕ Quitar esta punta',function(){ v.arrowTs.splice(k,1); v.arrowSty.splice(k,1); v.selFlecha=0; if(v.arrowTs.length) v.arrowT=v.arrowTs[0]; actualizarArrowEls(v); snapshot(); renderPanelPuntas(); actualizarBarraContexto(); })
+  ]));
+  body.appendChild(_plNota('También puedes arrastrar el rombo dorado de cada punta directamente sobre la línea (se pega a los extremos).'));
+}
+window.abrirPanelPuntas=abrirPanelPuntas;
+
+// ── Puntas de las líneas entre nodos (forma, relleno y color de cada extremo) ──
+var EDGE_FORMAS=[['triangle','▶ Triángulo'],['chevron','› Punta >'],['vee','⋙ Vee'],['triangle-backcurve','◀ Curva'],['circle','● Círculo'],['tee','⊥ Tope'],['diamond','◆ Rombo'],['none','Ninguna']];
+function abrirPanelPuntasEdge(e){
+  if(!e||!e.length) return;
+  _panelLinea={tipo:'puntas-edge',id:e.id()};
+  var body=_plAbrir('Puntas de la línea');
+  function lado(pref,titulo){
+    var forma=e.style(pref+'-arrow-shape')||'none';
+    var hueco=e.style(pref+'-arrow-fill')==='hollow';
+    var t=document.createElement('div'); t.style.cssText='font:12px Inter,sans-serif;color:#c9a84c;margin:6px 0'; t.textContent=titulo; body.appendChild(t);
+    var fila=EDGE_FORMAS.map(function(f){ var b=_plBtn(f[1],function(){ e.style(pref+'-arrow-shape',f[0]); if(f[0]!=='none' && !e.style(pref+'-arrow-color')) {} snapshot(); abrirPanelPuntasEdge(e); },forma===f[0]); b.style.flex='1 1 30%'; b.style.fontSize='11px'; return b; });
+    var f1=_plFila(fila); f1.style.flexWrap='wrap'; body.appendChild(f1);
+    body.appendChild(_plFila([
+      _plBtn('Con relleno',function(){ e.style(pref+'-arrow-fill','filled'); snapshot(); abrirPanelPuntasEdge(e); },!hueco),
+      _plBtn('Sin relleno',function(){ e.style(pref+'-arrow-fill','hollow'); snapshot(); abrirPanelPuntasEdge(e); },hueco)
+    ]));
+    var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap';
+    PUNTA_COLORES.forEach(function(c){
+      var b=document.createElement('button'); b.style.cssText='width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid #555';
+      b.addEventListener('click',function(){ e.style(pref+'-arrow-color',c); snapshot(); }); sw.appendChild(b);
+    });
+    body.appendChild(sw);
+  }
+  lado('target','Punta en el destino');
+  lado('source','Punta en el origen');
+  body.appendChild(_plSlider('Tamaño de las puntas',0.5,3,0.1,parseFloat(e.style('arrow-scale'))||1.3,function(x){ return x.toFixed(1)+'×'; },function(x){ e.style('arrow-scale',x); },function(){ snapshot(); }));
+  body.appendChild(_plNota('La línea entre nodos admite una punta en cada extremo. Para varias puntas a lo largo de una línea o puntas movibles, usa un vector.'));
+}
+window.abrirPanelPuntasEdge=abrirPanelPuntasEdge;
+
+// ── Extremos del bucle: alargar o acortar cada punta por separado ──
+function abrirPanelLoopExt(lp){
+  if(!lp) return;
+  _panelLinea={tipo:'loopext'};
+  var body=_plAbrir('Extremos del bucle');
+  var sI,sF,sA;
+  function rd(){ redibujarLoop(lp); }
+  sA=_plSlider('Ambos extremos',-40,40,1,Math.round(((lp.eS||0)+(lp.eF||0))/2),function(x){ return (x>0?'+':'')+x+' px'; },
+    function(x){ lp.eS=x; lp.eF=x; sI.set(x); sF.set(x); rd(); },function(){ snapshot(); });
+  sI=_plSlider('Inicio',-40,40,1,Math.round(lp.eS||0),function(x){ return (x>0?'+':'')+x+' px'; },
+    function(x){ lp.eS=x; rd(); sA.set(Math.round((lp.eS+(lp.eF||0))/2)); },function(){ snapshot(); });
+  sF=_plSlider('Fin',-40,40,1,Math.round(lp.eF||0),function(x){ return (x>0?'+':'')+x+' px'; },
+    function(x){ lp.eF=x; rd(); sA.set(Math.round(((lp.eS||0)+lp.eF)/2)); },function(){ snapshot(); });
+  body.appendChild(sA); body.appendChild(sI); body.appendChild(sF);
+  body.appendChild(_plFila([
+    _plBtn('Justo en el borde',function(){ lp.eS=0; lp.eF=0; rd(); snapshot(); abrirPanelLoopExt(lp); },true),
+    _plBtn('Más adentro',function(){ lp.eS=14; lp.eF=14; rd(); snapshot(); abrirPanelLoopExt(lp); }),
+    _plBtn('Más afuera',function(){ lp.eS=-10; lp.eF=-10; rd(); snapshot(); abrirPanelLoopExt(lp); })
+  ]));
+  body.appendChild(_plNota('+ alarga la línea hacia el nodo; − la acorta y deja los extremos más separados. «Justo en el borde» hace que la punta toque el contorno del nodo.'));
+}
+window.abrirPanelLoopExt=abrirPanelLoopExt;
+window._loops=function(){ return loops; }; window._redibujarLoop=redibujarLoop;
 
 function crearVectorEl(x1,y1,x2,y2,dirIn,dashIn){
   var dir = dirIn !== undefined ? dirIn : edgeDir;
@@ -5171,7 +5560,7 @@ function crearVectorEl(x1,y1,x2,y2,dirIn,dashIn){
   var hit=document.createElementNS('http://www.w3.org/2000/svg','line');
   hit.setAttribute('x1',x1); hit.setAttribute('y1',y1);
   hit.setAttribute('x2',x2); hit.setAttribute('y2',y2);
-  hit.setAttribute('stroke','transparent'); hit.setAttribute('stroke-width','44');
+  hit.setAttribute('stroke','transparent'); hit.setAttribute('stroke-width','32');
   hit.style.pointerEvents='all'; hit.style.cursor='pointer';
 
   var obj={el:line,hit:hit,x1:x1,y1:y1,x2:x2,y2:y2,dir:dir,arrowT:1.0,arrowTs:[1.0]};
@@ -5188,8 +5577,7 @@ function crearVectorEl(x1,y1,x2,y2,dirIn,dashIn){
     line.setAttribute('marker-start', obj.dir==='bi' ? 'url(#ah-rev-s)' : 'none');
     actualizarArrowEls(obj);
     mostrarDotsVec(obj);
-    cy.$(':selected').unselect(); deselTxt(); if(typeof deselBarSVG==='function') deselBarSVG();
-    if(typeof deseleccionarLoop==='function') deseleccionarLoop();
+    _limpiarOtrasSel('vec');
     actualizarBarraContexto();
     showInd('Vector — 2× toca para curvar, botones para rotar');
   }
@@ -6206,7 +6594,7 @@ var ESP=(function(){
         color:e.data('ucolor')||null, width:e.data('uwidth')||null});
     });
     if(typeof loops!=='undefined'){
-      loops.forEach(function(lp){ if(ids[lp.nodeId]) data.loops.push({nodeId:lp.nodeId,angle:lp.angle,radius:lp.radius,overlap:lp.overlap,sw:lp.sw,color:lp.color||null,arrow:lp.arrow,label:lp.label||''}); });
+      loops.forEach(function(lp){ if(ids[lp.nodeId]) data.loops.push({nodeId:lp.nodeId,angle:lp.angle,radius:lp.radius,overlap:lp.overlap,eS:lp.eS||0,eF:lp.eF||0,sw:lp.sw,color:lp.color||null,arrow:lp.arrow,label:lp.label||''}); });
     }
     clip=data; pegados=0;
     var okLS=true;
@@ -6256,7 +6644,7 @@ var ESP=(function(){
       });
       (c.loops||[]).forEach(function(l){
         if(!idMap[l.nodeId] || typeof crearLoopDesdeData!=='function') return;
-        crearLoopDesdeData({id:nuevoId('loop_'),nodeId:idMap[l.nodeId],angle:l.angle,radius:l.radius,overlap:l.overlap,sw:l.sw,color:l.color,arrow:l.arrow,label:l.label});
+        crearLoopDesdeData({id:nuevoId('loop_'),nodeId:idMap[l.nodeId],angle:l.angle,radius:l.radius,overlap:l.overlap,eS:l.eS,eF:l.eF,sw:l.sw,color:l.color,arrow:l.arrow,label:l.label});
       });
       (c.t||[]).forEach(function(d){ d.x+=off; d.y+=off; var o=A().crearTexto(d); if(o){ if(d.g!=null) o.grupo=G(d.g); nuevos.push({k:'t',r:o}); } d.x-=off; d.y-=off; });
       (c.i||[]).forEach(function(d){ d.x+=off; d.y+=off; var o=A().crearImagen(d); if(o){ if(d.g!=null) o.grupo=G(d.g); nuevos.push({k:'i',r:o}); } d.x-=off; d.y-=off; });
@@ -6537,12 +6925,13 @@ window.ESP_A={
   crearImagen:function(d){
     return crearElementoImagen({id:'img_'+Date.now()+'_'+Math.floor(Math.random()*1000),dataURL:d.dataURL,x:d.x,y:d.y,w:d.w,h:d.h,modo:d.modo,rotation:d.rotation||0});
   },
-  serVector:function(v){ return {x1:v.x1,y1:v.y1,x2:v.x2,y2:v.y2,dir:v.dir||'uni',dash:v.dash||'',sw:v.el.getAttribute('stroke-width')||'2.5',color:v.color||null,cps:(v.cps||[]).map(function(c){ return {t:c.t,d:c.d}; }),arrowTs:(v.arrowTs||[v.arrowT||1]).slice()}; },
+  serVector:function(v){ return {x1:v.x1,y1:v.y1,x2:v.x2,y2:v.y2,dir:v.dir||'uni',dash:v.dash||'',sw:v.el.getAttribute('stroke-width')||'2.5',color:v.color||null,cps:(v.cps||[]).map(function(c){ return {t:c.t,d:c.d}; }),arrowTs:(v.arrowTs||[v.arrowT||1]).slice(),arrowSty:_extraVec(v).arrowSty,esc:!!v.esc}; },
   crearVector:function(d,off){
     var o=crearVectorEl(d.x1+off,d.y1+off,d.x2+off,d.y2+off,d.dir||'uni',d.dash||'');
     if(d.sw) o.el.setAttribute('stroke-width',d.sw);
     if(d.color) o.color=d.color;
     if(d.arrowTs){ o.arrowTs=d.arrowTs.slice(); o.arrowT=d.arrowTs[0]; }
+    _aplicarExtraVec(o,d);
     try{ actualizarArrowEls(o); }catch(e){}
     if(d.cps&&d.cps.length&&typeof crearDotVec==='function'){ d.cps.forEach(function(cp){ crearDotVec(o,{t:cp.t,d:cp.d}); }); ocultarDotsVec(o); }
     return o;
@@ -6622,7 +7011,7 @@ cy.on('tap','node',function(evt){
   if(vectorMode) return;
   var node=evt.target, now=Date.now();
   if(node.hasClass('barra')) return;
-  if(_modoAplicar){ deselTxt(); deselVec(); deselBarSVG(); if(typeof deseleccionarLoop==='function') deseleccionarLoop(); cy.$(':selected').not(node).unselect(); node.select(); actualizarBarraContexto(); return; }
+  if(_modoAplicar){ _limpiarOtrasSel('cy'); cy.$(':selected').not(node).unselect(); node.select(); actualizarBarraContexto(); return; }
 
   // Flujo clínico: en Capa Superior el grafo de la Capa Inferior es de solo
   // lectura — se puede seleccionar un nodo como referencia, pero no conectarlo
@@ -6634,8 +7023,7 @@ cy.on('tap','node',function(evt){
     return;
   }
 
-  deselTxt(); deselVec(); deselBarSVG();
-  if(typeof deseleccionarLoop==='function') deseleccionarLoop();
+  _limpiarOtrasSel('cy');
   if(sourceEdgeU){ var _o=sourceEdgeU; limpiarOrigenesU(); conectarElementos({tipo:'linea',ref:_o.ref,pos:_o.pos},{tipo:'nodo',ref:node}); return; }
   // Origen = punto de unión (desde «Unir desde» o «Conectar» en una unión) → este nodo es el destino
   if(sourceNode && sourceNode.hasClass('union') && sourceNode.id()!==node.id()){ var _o2=sourceNode; limpiarOrigenesU(); conectarElementos({tipo:'nodo',ref:_o2},{tipo:'nodo',ref:node}); return; }
@@ -6840,6 +7228,18 @@ cyDiv.addEventListener('touchmove',function(e){
   _pinchAngle0=angle;
 },{passive:false});
 
+// Si algún gesto dejó el desplazamiento o el zoom desactivados (dedo levantado fuera del
+// lienzo, gesto cancelado por el sistema, error en medio de un arrastre), el siguiente toque
+// los vuelve a activar. Un nodo que se agarra los desactiva de nuevo a propósito.
+function _rehabilitarVista(){
+  if(_canvasLocked || _pinchActive) return;
+  try{ cy.userPanningEnabled(true); cy.userZoomingEnabled(true); }catch(e){}
+}
+cyDiv.addEventListener('touchstart',function(e){ if(e.touches.length===1) _rehabilitarVista(); },{capture:true, passive:true});
+cyDiv.addEventListener('touchcancel',function(){
+  if(_pinchActive){ _pinchActive=false; _pinchDist0=null; _pinchAngle0=null; }
+  _rehabilitarVista();
+},{capture:true, passive:true});
 cyDiv.addEventListener('touchend',function(e){
   if(_pinchActive){
     _pinchActive=false; _pinchDist0=null; _pinchAngle0=null;
@@ -6890,7 +7290,9 @@ function insertarCaracter(c){
   var s=document.createElement('style');
   s.textContent=
     '.cp-dot{position:absolute;width:22px;height:22px;border-radius:50%;background:#faf8f4;border:2.5px solid #c9a84c;box-shadow:0 0 0 3px rgba(0,0,0,.25);transform:translate(-50%,-50%);touch-action:none;z-index:50;cursor:grab}'+
-    '.cp-dot.reubicando{background:#c9a84c;border-color:#fff}';
+    '.cp-dot.reubicando{background:#c9a84c;border-color:#fff}'+
+    '.ah-dot{position:absolute;width:20px;height:20px;background:#c9a84c;border:2px solid #1a1a1a;border-radius:3px;transform:translate(-50%,-50%) rotate(45deg);touch-action:none;z-index:51;cursor:grab;box-shadow:0 0 0 3px rgba(201,168,76,.28)}'+
+    '.ah-dot.sel{background:#fff;border-color:#c9a84c}';
   document.head.appendChild(s);
 })();
 
@@ -6898,52 +7300,6 @@ function cpFromTD(v,t,d){
   var bx=v.x1+(v.x2-v.x1)*t, by=v.y1+(v.y2-v.y1)*t;
   var dx=v.x2-v.x1, dy=v.y2-v.y1, len=Math.sqrt(dx*dx+dy*dy)||1;
   return {x:bx+(-dy/len)*d, y:by+(dx/len)*d};
-}
-
-function reconstruirPath(v){
-  var x1=v.x1,y1=v.y1,x2=v.x2,y2=v.y2;
-  var cps=v.cps||[];
-  var sw = parseFloat((v.el&&v.el.getAttribute('stroke-width'))||v.sw||2.5);
-  var trim = sw*6; // largo del marcador de flecha: recortamos el trazo principal
-                    // esa misma distancia para que nunca compita con el triángulo
-                    // (si se superponen, la línea —de ancho constante— sobresale
-                    // a los costados de la punta, que ahí es angosta).
-
-  // Tangente EXACTA en cada extremo (no aproximada) según haya o no puntos de control
-  var endTanX, endTanY, startTanX, startTanY;
-  if(cps.length===0){
-    var dx=x2-x1, dy=y2-y1, dl=Math.sqrt(dx*dx+dy*dy)||1;
-    endTanX=dx/dl; endTanY=dy/dl; startTanX=-dx/dl; startTanY=-dy/dl;
-  } else if(cps.length===1){
-    var c=cpFromTD(v,cps[0].t,cps[0].d);
-    var dxe=x2-c.x, dye=y2-c.y, dle=Math.sqrt(dxe*dxe+dye*dye)||1;
-    endTanX=dxe/dle; endTanY=dye/dle;
-    var dxs=c.x-x1, dys=c.y-y1, dls=Math.sqrt(dxs*dxs+dys*dys)||1;
-    startTanX=-dxs/dls; startTanY=-dys/dls;
-  } else {
-    var c0=cpFromTD(v,cps[0].t,cps[0].d), c1=cpFromTD(v,cps[1].t,cps[1].d);
-    var dxe=x2-c1.x, dye=y2-c1.y, dle=Math.sqrt(dxe*dxe+dye*dye)||1;
-    endTanX=dxe/dle; endTanY=dye/dle;
-    var dxs=c0.x-x1, dys=c0.y-y1, dls=Math.sqrt(dxs*dxs+dys*dys)||1;
-    startTanX=-dxs/dls; startTanY=-dys/dls;
-  }
-
-  var totalLen = Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))||1;
-  var safeTrim = Math.min(trim, totalLen*0.35); // nunca recortar más de un tercio del vector
-
-  var hayFlechaFinal = v.dir!=='none' && (!v.arrowTs || v.arrowTs.some(function(t){ return Math.abs(t-1)<0.05; }));
-  var hayFlechaInicial = v.dir==='bi';
-
-  if(hayFlechaFinal){ x2 = x2 - endTanX*safeTrim; y2 = y2 - endTanY*safeTrim; }
-  if(hayFlechaInicial){ x1 = x1 - startTanX*safeTrim; y1 = y1 - startTanY*safeTrim; }
-
-  if(!cps.length) return 'M'+x1+' '+y1+' L'+x2+' '+y2;
-  if(cps.length===1){
-    var c=cpFromTD(v,cps[0].t,cps[0].d);
-    return 'M'+x1+' '+y1+' Q'+c.x.toFixed(2)+' '+c.y.toFixed(2)+' '+x2+' '+y2;
-  }
-  var c0=cpFromTD(v,cps[0].t,cps[0].d), c1=cpFromTD(v,cps[1].t,cps[1].d);
-  return 'M'+x1+' '+y1+' C'+c0.x.toFixed(2)+' '+c0.y.toFixed(2)+' '+c1.x.toFixed(2)+' '+c1.y.toFixed(2)+' '+x2+' '+y2;
 }
 
 function asegurarPath(v){
@@ -6960,7 +7316,7 @@ function asegurarPath(v){
   path.style.pointerEvents='none';
   v.el.parentNode.replaceChild(path,v.el); v.el=path;
   var hp=document.createElementNS('http://www.w3.org/2000/svg','path');
-  hp.setAttribute('stroke','transparent'); hp.setAttribute('stroke-width','44'); hp.setAttribute('fill','none');
+  hp.setAttribute('stroke','transparent'); hp.setAttribute('stroke-width','32'); hp.setAttribute('fill','none');
   hp.style.pointerEvents='all'; hp.style.cursor='pointer';
   v.hit.parentNode.replaceChild(hp,v.hit); v.hit=hp;
   reattachVectorHit(v);
@@ -7348,8 +7704,7 @@ cy.on('tap','edge',function(evt){
   if(!_modoAplicar){ var _uu=buscarUnionCerca(evt.position,14); if(_uu){ tocarUnion(_uu); return; } }
   if(!_modoAplicar && intentarConectarConLinea(e,evt.position)) return;
   cy.$('node:selected').unselect();
-  deselTxt(); deselVec(); deselBarSVG();
-  if(typeof deseleccionarLoop==='function') deseleccionarLoop();
+  _limpiarOtrasSel('cy');
   if(sourceNode){ sourceNode.removeClass('source-selected'); sourceNode=null; }
 
   // Doble tap → crear punto de control (tiene prioridad sobre deselección)
@@ -7401,9 +7756,7 @@ function reattachVectorHit(v){
     if(selVec&&selVec!==v){ limpiarArrowEls(selVec); selVec.el.setAttribute('stroke', _tinta()); aplicarDirVector(selVec,selVec.dir); ocultarDotsVec(selVec); }
     selVec=v;
     mostrarDotsVec(v);
-    cy.$(':selected').unselect();
-    if(typeof deselTxt==='function') deselTxt();
-    if(typeof deselBarSVG==='function') deselBarSVG();
+    _limpiarOtrasSel('vec');
     actualizarArrowEls(v); // handles stroke color and arrow markers
     if(typeof actualizarBarraContexto==='function') actualizarBarraContexto();
     showInd('Vector — 2× toca para curvar, botones para rotar');
@@ -7445,8 +7798,8 @@ function reattachVectorHit(v){
   },{passive:true});
 }
 
-function ocultarDotsVec(v){ if(v.cpDots) v.cpDots.forEach(function(i){ i.dot.style.display='none'; }); }
-function mostrarDotsVec(v){ if(v.cpDots) v.cpDots.forEach(function(i){ i.dot.style.display=''; }); }
+function ocultarDotsVec(v){ if(v.cpDots) v.cpDots.forEach(function(i){ i.dot.style.display='none'; }); if(v.ahDots) v.ahDots.forEach(function(d){ d.style.display='none'; }); if(_panelLinea&&_panelLinea.tipo==='puntas') cerrarPanelLinea(); }
+function mostrarDotsVec(v){ if(v.cpDots) v.cpDots.forEach(function(i){ i.dot.style.display=''; }); try{ sincronizarAhDots(v); }catch(e){} }
 
 function cyCenter(){
   var pan=cy.pan(),zoom=cy.zoom();
@@ -7940,6 +8293,17 @@ function deselVec(){
     actualizarBarraContexto();
   }
 }
+// Regla única: solo un objeto seleccionado a la vez. Cada selección llama a esto primero,
+// indicando qué tipo va a quedar seleccionado (ese se respeta).
+function _limpiarOtrasSel(ex){
+  if(ex!=='txt') deselTxt();
+  if(ex!=='vec') deselVec();
+  if(ex!=='bar') deselBarSVG();
+  if(ex!=='loop' && typeof deseleccionarLoop==='function') deseleccionarLoop();
+  if(ex!=='img' && typeof selImg!=='undefined' && selImg && selImg.el){ selImg.el.classList.remove('sel-img'); selImg=null; }
+  if(ex!=='ana' && typeof selAnalitico!=='undefined' && selAnalitico){ try{ deselAnalitico(); }catch(e){} }
+  if(ex!=='cy') cy.$(':selected').unselect();
+}
 function deselAll(){
   deselTxt(); deselVec(); deselBarSVG();
   if(typeof deseleccionarLoop==='function') deseleccionarLoop();
@@ -7985,8 +8349,14 @@ function _remapOverlays(a,b){
     t.el.style.left=t.x+'px'; t.el.style.top=t.y+'px'; _escalaTexto(t);
   });
   vectors.forEach(function(v){
-    v.x1=mx(v.x1); v.y1=my(v.y1); v.x2=mx(v.x2); v.y2=my(v.y2);
-    if(v.cps) v.cps.forEach(function(c){ c.d*=k; });
+    if(v.esc){
+      v.x1=mx(v.x1); v.y1=my(v.y1); v.x2=mx(v.x2); v.y2=my(v.y2);
+      if(v.cps) v.cps.forEach(function(c){ c.d*=k; });
+    } else {
+      // Tamaño fijo: el vector sigue al lienzo (su centro se desplaza) pero no se agranda ni se achica
+      var mcx=(v.x1+v.x2)/2, mcy=(v.y1+v.y2)/2, ddx=mx(mcx)-mcx, ddy=my(mcy)-mcy;
+      v.x1+=ddx; v.x2+=ddx; v.y1+=ddy; v.y2+=ddy;
+    }
     try{
       if(v.el.tagName==='line'){
         if(v.hit){ v.hit.setAttribute('x1',v.x1); v.hit.setAttribute('y1',v.y1); v.hit.setAttribute('x2',v.x2); v.hit.setAttribute('y2',v.y2); }
@@ -8158,7 +8528,7 @@ function crearElementoImagen(obj){
       e.stopPropagation();
       setTimeout(actualizarBotonCandadoMob,0);
       // Deseleccionar otros
-      cy.$(':selected').unselect();
+      _limpiarOtrasSel('img');
       if(selImg && selImg!==obj) selImg.el.classList.remove('sel-img');
       selImg = obj;
       el.classList.add('sel-img');
@@ -8221,7 +8591,7 @@ function crearElementoImagen(obj){
     el.addEventListener('touchend', function(e){
       var n = Date.now();
       if(n-lastTap < 350){
-        cy.$(':selected').unselect();
+        _limpiarOtrasSel('img');
         if(selImg && selImg!==obj) selImg.el.classList.remove('sel-img');
         selImg = obj;
         el.classList.add('sel-img');
@@ -8273,7 +8643,7 @@ window.serImagenes = function(){
 
 window.serLoops = function(){
   return (typeof loops!=='undefined'?loops:[]).map(function(lp){
-    return {id:lp.id, nodeId:lp.nodeId, angle:lp.angle, radius:lp.radius, sw:lp.sw, color:lp.color, arrow:lp.arrow, label:lp.label||'', overlap: (lp.overlap!==undefined?lp.overlap:0.7), locked:!!lp.locked};
+    return {id:lp.id, nodeId:lp.nodeId, angle:lp.angle, radius:lp.radius, sw:lp.sw, color:lp.color, arrow:lp.arrow, label:lp.label||'', overlap: (lp.overlap!==undefined?lp.overlap:0.7), eS:lp.eS||0, eF:lp.eF||0, locked:!!lp.locked};
   });
 };
 window.crearElementoImagen = crearElementoImagen;
@@ -9536,7 +9906,7 @@ window.insertarSimboloTopologico = function(tipo){
     w: w, h: h, modo: 'elemento', rotation: 0
   });
   snapshot();
-  toast && toast('Símbolo insertado — movelo, rotalo y anotalo como quieras');
+  toast && toast('Símbolo insertado — muévelo, rótalo y anótalo como quieras');
 };
 
 function detectarPlataformaGrafo(grafo){
@@ -9735,7 +10105,8 @@ function usarPlantillaMobile(estado){
       var obj = crearVectorEl(_px(v.x1,v.y1).x, _px(v.x1,v.y1).y, _px(v.x2,v.y2).x, _px(v.x2,v.y2).y, v.dir||'uni', v.dash||'');
       if(v.sw) obj.el.setAttribute('stroke-width', v.sw);
       if(v.color) obj.color = v.color;
-      if(v.arrowTs){ obj.arrowTs=v.arrowTs; obj.arrowT=v.arrowTs[0]; if(typeof actualizarArrowEls==='function') actualizarArrowEls(obj); }
+      if(v.arrowTs){ obj.arrowTs=v.arrowTs.slice(); obj.arrowT=v.arrowTs[0]; }
+      _aplicarExtraVec(obj,v); if(typeof actualizarArrowEls==='function') actualizarArrowEls(obj);
       if(v.cps && v.cps.length && typeof crearDotVec==='function'){
         v.cps.forEach(function(cp){ crearDotVec(obj,{t:cp.t,d:cp.d*kk}); });
         if(typeof ocultarDotsVec==='function') ocultarDotsVec(obj);
