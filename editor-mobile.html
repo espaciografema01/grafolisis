@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Grafólisis</title>
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
@@ -20,6 +20,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:#faf8f4;font-family:
 #app{display:flex;flex-direction:column;height:100%;height:-webkit-fill-available}
 #cy-wrap{flex:1;position:relative;overflow:hidden;touch-action:none;border:1px solid #e2e0da;background-color:#faf8f4;background-image:linear-gradient(rgba(201,168,76,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.04) 1px,transparent 1px);background-size:24px 24px}
 #cy-wrap.bg-claro{background-image:none;background-color:#faf7f0}
+#cy-wrap.grid-iman{background-image:none!important}
 #cy-wrap.bg-oscuro{background-color:#211f1a;background-image:linear-gradient(rgba(232,223,200,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,0.05) 1px,transparent 1px)}
 #cy-wrap.bg-oscuro .txt-node{color:#e8dfc8}
 #cy{width:100%;height:100%}
@@ -51,6 +52,12 @@ html,body{height:100%;width:100%;overflow:hidden;background:#faf8f4;font-family:
 .herr-sec:first-child{margin-top:0}
 .pc-op{display:block;width:100%;text-align:left;background:#252525;border:1px solid #333;border-radius:var(--r-md);padding:14px;margin-bottom:10px;cursor:pointer;color:#ccc;font-family:'Inter',sans-serif}
 .pc-op:active{background:#2f2f2f}
+.mg-card{display:flex;align-items:center;gap:8px;background:#252525;border:1px solid #333;border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.mg-card.act{border-color:#c9a84c}
+.mg-info{flex:1;min-width:0}.mg-nom{color:#f0ead8;font-family:'IM Fell English',serif;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mg-meta{color:#888;font-family:Inter,sans-serif;font-size:10px;margin-top:2px}
+.mg-btn{background:#c9a84c;color:#1a1a1a;border:none;border-radius:var(--r-sm);padding:8px 12px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.mg-del{background:#2a2a2a;color:#e06060;border:1px solid #5a2020;padding:8px 10px}
 .pc-t{display:block;color:#c9a84c;font-size:14px;font-weight:600;margin-bottom:4px}
 .pc-d{display:block;font-size:11px;line-height:1.45;color:#999}
 #bar-row2{display:flex;align-items:center;padding:4px 8px 5px;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-height:52px}
@@ -419,10 +426,15 @@ body:not(.modo-aplicar) .txt-node.rell,.txt-node.rell.rell-vacia{border:1.5px da
 
 /* Pestaña 1: texto completo */
 #clin-texto{position:relative}
-#texto-corpus{position:absolute;inset:0;width:100%;height:100%;border:none;resize:none;outline:none;background:#faf8f4;color:#1a1a1a;font-family:'IM Fell English',serif;font-size:18px;line-height:1.6;padding:16px 16px 70px;-webkit-user-select:text;user-select:text;box-sizing:border-box}
+#texto-corpus{position:absolute;inset:0;width:100%;height:100%;border:none;resize:none;outline:none;background:#faf8f4;color:#1a1a1a;font-family:'IM Fell English',serif;font-size:18px;line-height:1.6;padding:54px 16px 70px;-webkit-user-select:text;user-select:text;box-sizing:border-box}
 #texto-corpus::placeholder{color:#a99;font-style:italic}
 .texto-fab{position:absolute;left:10px;right:10px;bottom:10px;display:none;align-items:center;justify-content:space-between;gap:8px;background:#1a1a1a;border:1px solid #c9a84c;border-radius:var(--r-md);padding:8px 8px 8px 16px;box-shadow:var(--sh-3);z-index:40}
 .texto-fab.show{display:flex}
+.texto-fab{flex-wrap:wrap}
+#texto-fab-count{flex:1 0 100%}
+#texto-fab button{flex:1 1 auto;padding:10px 10px}
+#texto-ctx #texto-ctx-txt{flex:1;white-space:normal;font-size:11px}
+body.kb-abierto #tab-bar{display:none}
 .texto-fab span{color:#c9a84c;font-family:'Inter',sans-serif;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .texto-fab button{background:#c9a84c;color:#1a1a1a;border:none;border-radius:var(--r-sm);padding:10px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;flex-shrink:0}
 
@@ -473,7 +485,7 @@ body:not(.modo-aplicar) .txt-node.rell,.txt-node.rell.rell-vacia{border:1.5px da
 /* Pestaña 1: resaltado de fragmentos ya enviados a Recortes */
 #texto-corpus-wrap{position:relative;flex:1;min-height:0;background:#faf8f4}
 #texto-corpus-wrap #texto-corpus{position:relative;z-index:2;background:transparent;color:transparent;caret-color:#1a1a1a}
-#texto-corpus-highlight{position:absolute;inset:0;z-index:1;padding:16px 16px 70px;font-family:'IM Fell English',serif;font-size:18px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;pointer-events:none;color:#1a1a1a}
+#texto-corpus-highlight{position:absolute;inset:0;z-index:1;padding:54px 16px 70px;font-family:'IM Fell English',serif;font-size:18px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;pointer-events:none;color:#1a1a1a}
 #texto-corpus-highlight mark.rc-highlight{background:rgba(201,168,76,.38);color:#1a1a1a;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 
 /* Pestaña 2: buscador de recortes */
@@ -655,10 +667,13 @@ const _db   = firebase.firestore();
           <div id="texto-corpus-wrap">
             <div id="texto-corpus-highlight" aria-hidden="true"></div>
             <textarea id="texto-corpus" placeholder="Pega o transcribe aquí el relato completo de la sesión / el sueño…" autocomplete="off" autocorrect="off" spellcheck="false" oninput="onCorpusInput()"></textarea>
+            <button id="btn-vista-texto" onclick="abrirVistaTexto()" title="Vista del texto: vínculos y resaltados" style="position:absolute;top:10px;right:56px;z-index:5;background:rgba(26,26,26,.85);color:#c9a84c;border:1px solid #c9a84c55;border-radius:50%;width:38px;height:38px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
             <button id="btn-stats-texto" onclick="abrirEstadisticasTexto()" title="Estadísticas del relato"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></button>
           </div>
+          <div id="texto-ctx" class="texto-fab"><span id="texto-ctx-txt"></span><span id="texto-ctx-btns" style="display:flex;gap:6px"></span></div>
           <div id="texto-fab" class="texto-fab">
             <span id="texto-fab-count">0 caracteres seleccionados</span>
+            <button onclick="abrirResaltar()" title="Marca el texto seleccionado con un color" style="background:transparent;color:#c9a84c;border:1px solid #c9a84c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> Resaltar</button>
             <button onclick="crearNodoDesdeSeleccion()" title="Crea un nodo en el grafo con el texto seleccionado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Crear nodo</button>
             <button onclick="asignarSeleccionACasilla()" title="Pone la selección en una casilla del grafo" style="background:transparent;color:#c9a84c;border:1px solid #c9a84c">▭ A casilla</button>
             <button id="btn-enviar-recortes" onclick="enviarSeleccionARecortes()" style="display:none;background:transparent;color:#c9a84c;border:1px solid #c9a84c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg> Recortes</button>
@@ -691,7 +706,7 @@ const _db   = firebase.firestore();
             </div>
           </div>
           <!-- Chip de título flotante: fuera de cy-wrap para no moverse con el zoom -->
-          <div id="grafo-titulo-mini" onclick="window.renombrarGrafoActual && renombrarGrafoActual()" style="position:absolute;top:8px;left:10px;background:rgba(245,240,232,.85);color:#666;font-family:'Inter',sans-serif;font-size:10px;padding:4px 9px;border-radius:var(--r-pill);border:1px solid #ddd9d0;letter-spacing:.3px;cursor:pointer;z-index:55;max-width:50%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;box-shadow:var(--sh-2)">Borrador</div>
+          <div id="grafo-titulo-mini" onclick="abrirMisGrafos()" style="position:absolute;top:8px;left:10px;background:rgba(245,240,232,.85);color:#666;font-family:'Inter',sans-serif;font-size:10px;padding:4px 9px;border-radius:var(--r-pill);border:1px solid #ddd9d0;letter-spacing:.3px;cursor:pointer;z-index:55;max-width:50%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;box-shadow:var(--sh-2)">Borrador</div>
           <div class="modo-switch" id="modo-switch" title="Diseñar: se crea y se mueve todo · Aplicar: la estructura queda fija y sólo se escribe encima" style="position:absolute;top:6px;right:10px;z-index:56"><button id="btn-modo-disenar" class="active" onclick="setModoAplicar(false)">Diseñar</button><button id="btn-modo-aplicar" onclick="setModoAplicar(true)">Aplicar</button></div>
           <div id="bottom-bar">
             <div id="bar-row1">
@@ -1083,6 +1098,7 @@ const _db   = firebase.firestore();
   <div id="side-content">
     <div class="s-sec">
       <div class="s-title">Archivo</div>
+      <button class="s-btn full" onclick="cerrarPanel();abrirMisGrafos()">Mis grafos y borradores</button>
       <button class="s-btn full" onclick="guardarJSON();cerrarPanel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Guardar JSON</button>
       <button class="s-btn full" onclick="abrirImportar();cerrarPanel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Importar</button>
       <button class="s-btn full" onclick="exportarTexto();cerrarPanel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg> Exportar</button>
@@ -1420,6 +1436,41 @@ const _db   = firebase.firestore();
   </div>
 </div>
 
+<!-- MODAL: Resaltar -->
+<div id="resaltar-modal" class="bsheet-overlay">
+  <div class="bsheet-box">
+    <div class="bsheet-title">Resaltar con color</div>
+    <div id="resaltar-prev" style="background:rgba(201,168,76,.12);border-left:3px solid #c9a84c;padding:8px 10px;margin:0 0 12px;font-size:13px;max-height:80px;overflow:auto;border-radius:4px;white-space:pre-wrap"></div>
+    <div id="resaltar-colores" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <button class="s-btn full" onclick="aplicarResaltado(null)">Quitar resaltado de la selección</button>
+    <button class="bsheet-close" onclick="document.getElementById('resaltar-modal').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+<!-- MODAL: Vista del texto -->
+<div id="vista-texto-modal" class="bsheet-overlay">
+  <div class="bsheet-box" style="max-height:88vh;overflow-y:auto">
+    <div class="bsheet-title">Vista del texto</div>
+    <div id="vista-texto-cuerpo"></div>
+    <button class="bsheet-close" onclick="document.getElementById('vista-texto-modal').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL: Mis grafos -->
+<div id="misgrafos-modal" class="bsheet-overlay">
+  <div class="bsheet-box" style="max-height:86vh;overflow-y:auto">
+    <div class="bsheet-title" id="misgrafos-titulo">Mis grafos</div>
+    <div id="misgrafos-sub" style="color:#888;font-size:11px;text-align:center;margin:-4px 0 10px"></div>
+    <div id="misgrafos-acciones" style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="s-btn" onclick="cerrarMisGrafos();nuevoGrafo()">＋ Nuevo</button>
+      <button class="s-btn" onclick="guardarAhora()">Guardar ahora</button>
+      <button class="s-btn" onclick="cerrarMisGrafos();renombrarGrafoActual()">✎ Renombrar</button>
+    </div>
+    <div id="misgrafos-lista" style="margin-bottom:10px"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-family:Inter,sans-serif;font-size:12px;color:#aaa;margin:6px 2px 12px"><input type="checkbox" id="misgrafos-preguntar" onchange="misGrafosPreguntar(this.checked)"> Preguntar cuál abrir al iniciar la app</label>
+    <button class="bsheet-close" id="misgrafos-cerrar" onclick="cerrarMisGrafos()">Cerrar</button>
+  </div>
+</div>
+
 <!-- MODAL: Publicar y compartir -->
 <div id="pubcomp-modal" class="bsheet-overlay">
   <div class="bsheet-box">
@@ -1754,6 +1805,8 @@ var vectorMode=false, vecStart=null, vecDraft=null, vectors=[], selVec=null;
 // ── ESTADO — FLUJO CLÍNICO (4 pestañas) ────────
 var clinModo = 'grafo';           // 'texto' | 'recortes' | 'inferior' | 'superior'
 var corpusTexto = '';             // Pestaña 1: transcripción completa
+var resaltados = [];             // Pestaña 1: [{s,e,c,t}] marcas de color sobre el relato
+var vinculos = [];               // Pestaña 1: [{s,e,t,k:'n'|'t',ref}] fragmentos que se hicieron nodo/casilla
 var recortes = [];                // Pestaña 2: [{id, texto, ts, nodoIds:[]}]
 var vCount = 1;                   // contador para nodos vacíos (V1, V2…)
 var iCount = 1;                   // contador para nodos teóricos/interpretativos (I1, I2…)
@@ -1913,7 +1966,7 @@ function initTextoCorpusListeners(){
     }
   }
   ['select','mouseup','touchend','keyup','input'].forEach(function(ev){
-    textoCorpusEl.addEventListener(ev, function(){ setTimeout(chequearSeleccion,0); }, {passive:true});
+    textoCorpusEl.addEventListener(ev, function(){ setTimeout(function(){ chequearSeleccion(); try{ _ctxTexto(); }catch(e){} },0); }, {passive:true});
   });
   document.addEventListener('selectionchange', function(){
     if(document.activeElement===textoCorpusEl) chequearSeleccion();
@@ -1926,43 +1979,189 @@ function initTextoCorpusListeners(){
   });
 }
 initTextoCorpusListeners();
+// los vínculos desaparecen del texto si su nodo se borra
+(function(){ var t=null; cy.on('remove',function(){ clearTimeout(t); t=setTimeout(function(){ try{ renderTextoHighlight(); }catch(e){} },120); }); })();
+// Teclado: la pantalla se ajusta al área visible para que los botones no queden tapados
+(function(){
+  var vv=window.visualViewport, app=document.getElementById('app'); if(!vv||!app) return;
+  function aj(){
+    var ed=document.activeElement, escribe=ed&&/^(INPUT|TEXTAREA)$/.test(ed.tagName)||(ed&&ed.isContentEditable);
+    var tapa=(window.innerHeight-vv.height)>120;       // teclado superpuesto (no redimensionó el layout)
+    document.body.classList.toggle('kb-abierto', !!(escribe && (tapa || (window.screen&&vv.height<screen.height*0.6))));
+    if(escribe && tapa){ app.style.height=vv.height+'px'; try{ window.scrollTo(0,0); }catch(e){} }
+    else app.style.height='';
+  }
+  vv.addEventListener('resize',aj); vv.addEventListener('scroll',aj);
+  document.addEventListener('focusin',function(){ setTimeout(aj,250); }); document.addEventListener('focusout',function(){ setTimeout(aj,250); });
+})();
 
 // Pinta en la Pestaña 1 qué fragmentos del relato ya fueron enviados a
 // Recortes (Pestaña 2), para ver de un vistazo qué falta trabajar todavía.
 // Sólo resalta un recorte si su rango guardado TODAVÍA coincide exactamente
 // con el texto actual — si el corpus se editó después, el resaltado
 // simplemente desaparece en vez de marcar la parte equivocada.
+function _txtPref(k,def){ try{ var v=localStorage.getItem(k); return v===null?def:v; }catch(e){ return def; } }
+function _vincVivo(v){
+  if(v.k==='n') return cy.getElementById(v.ref).length>0;
+  return textos.some(function(t){ return t.id===v.ref; });
+}
 function renderTextoHighlight(){
   var el = document.getElementById('texto-corpus-highlight');
   if(!el) return;
   var text = corpusTexto || '';
   if(!text){ el.innerHTML=''; return; }
-  var rangos = recortes
-    .filter(function(r){ return typeof r.origStart==='number' && typeof r.origEnd==='number' && r.origEnd>r.origStart && r.origEnd<=text.length && text.slice(r.origStart,r.origEnd)===r.texto; })
-    .map(function(r){ return {start:r.origStart, end:r.origEnd}; })
-    .sort(function(a,b){ return a.start-b.start; });
-  var merged=[];
-  rangos.forEach(function(r){
-    if(merged.length && r.start<=merged[merged.length-1].end) merged[merged.length-1].end = Math.max(merged[merged.length-1].end, r.end);
-    else merged.push({start:r.start, end:r.end});
+  var marks=[];
+  recortes.forEach(function(r){
+    if(typeof r.origStart==='number' && typeof r.origEnd==='number' && r.origEnd>r.origStart && r.origEnd<=text.length && text.slice(r.origStart,r.origEnd)===r.texto) marks.push({s:r.origStart,e:r.origEnd,rc:1});
   });
-  var html='', last=0;
-  merged.forEach(function(r){
-    html += escClin(text.slice(last,r.start));
-    html += '<mark class="rc-highlight">'+escClin(text.slice(r.start,r.end))+'</mark>';
-    last = r.end;
+  if(_txtPref('txtVerResalt','1')==='1') resaltados.forEach(function(r){
+    if(r.e>r.s && r.e<=text.length && text.slice(r.s,r.e)===r.t) marks.push({s:r.s,e:r.e,bg:r.c});
   });
-  html += escClin(text.slice(last));
+  var vcol=_txtPref('txtVincColor','#1e6fd9');
+  if(_txtPref('txtVerVinc','1')==='1') vinculos.forEach(function(v){
+    if(v.e>v.s && v.e<=text.length && text.slice(v.s,v.e)===v.t && _vincVivo(v)) marks.push({s:v.s,e:v.e,link:vcol});
+  });
+  var pts={0:1}; pts[text.length]=1;
+  marks.forEach(function(m){ pts[m.s]=1; pts[m.e]=1; });
+  var P=Object.keys(pts).map(Number).sort(function(a,b){ return a-b; });
+  var html='';
+  for(var i=0;i<P.length-1;i++){
+    var a=P[i], b=P[i+1], seg=text.slice(a,b), cls='', st='';
+    marks.forEach(function(m){
+      if(m.s<=a && m.e>=b){
+        if(m.rc) cls='rc-highlight';
+        if(m.bg) st+='background:'+m.bg+'b3;border-radius:2px;';
+        if(m.link) st+='color:'+m.link+';text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;';
+      }
+    });
+    html += (cls||st) ? '<mark class="'+cls+'" style="background-color:transparent;'+(cls?'':'')+st+'">'+escClin(seg)+'</mark>' : escClin(seg);
+  }
   el.innerHTML = html;
 }
 window.renderTextoHighlight = renderTextoHighlight;
 
+function _desplazarRangos(viejo,nuevo){
+  if(!resaltados.length && !vinculos.length) return;
+  var p=0, mx=Math.min(viejo.length,nuevo.length);
+  while(p<mx && viejo.charCodeAt(p)===nuevo.charCodeAt(p)) p++;
+  var q=0; while(q<mx-p && viejo.charCodeAt(viejo.length-1-q)===nuevo.charCodeAt(nuevo.length-1-q)) q++;
+  var fin=viejo.length-q, delta=nuevo.length-viejo.length;
+  function aj(r){
+    if(r.e<=p) return true;
+    if(r.s>=fin){ r.s+=delta; r.e+=delta; }
+    else if(r.s<=p && r.e>=fin){ r.e+=delta; }
+    else return false;
+    if(r.e<=r.s) return false;
+    r.t=nuevo.slice(r.s,r.e); return true;
+  }
+  resaltados=resaltados.filter(aj); vinculos=vinculos.filter(aj);
+}
 function onCorpusInput(){
-  corpusTexto = document.getElementById('texto-corpus').value;
+  var _nuevo=document.getElementById('texto-corpus').value;
+  try{ _desplazarRangos(corpusTexto||'',_nuevo); }catch(e){}
+  corpusTexto = _nuevo;
   renderTextoHighlight();
   programarAutoguardado();
 }
 window.onCorpusInput = onCorpusInput;
+
+var RESALTA_COLORES=['#fff176','#ffab91','#a5d6a7','#81d4fa','#ce93d8','#ffcc80','#f48fb1','#b0bec5'];
+var _selResalt=null;
+function abrirResaltar(){
+  if(!textoCorpusEl) textoCorpusEl=document.getElementById('texto-corpus');
+  var s=textoCorpusEl.selectionStart, e=textoCorpusEl.selectionEnd;
+  if(e<=s){ showInd('Selecciona texto primero'); return; }
+  _selResalt={s:s,e:e};
+  document.getElementById('resaltar-prev').textContent=textoCorpusEl.value.slice(s,e).slice(0,200);
+  var cont=document.getElementById('resaltar-colores'); cont.innerHTML='';
+  RESALTA_COLORES.forEach(function(c){
+    var b=document.createElement('button'); b.type='button'; b.style.cssText='width:40px;height:40px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0;background:'+c;
+    b.onclick=function(){ aplicarResaltado(c); }; cont.appendChild(b);
+  });
+  var ci=document.createElement('input'); ci.type='color'; ci.value='#fff176'; ci.title='Otro color'; ci.style.cssText='width:44px;height:40px;border:none;background:none;padding:0';
+  ci.onchange=function(){ aplicarResaltado(ci.value); }; cont.appendChild(ci);
+  document.getElementById('resaltar-modal').classList.add('open');
+}
+function aplicarResaltado(c){
+  document.getElementById('resaltar-modal').classList.remove('open');
+  if(!_selResalt) return;
+  var s=_selResalt.s, e=_selResalt.e, txt=corpusTexto||'', nl=[];
+  resaltados.forEach(function(r){
+    if(r.e<=s || r.s>=e){ nl.push(r); return; }
+    if(r.s<s) nl.push({s:r.s,e:s,c:r.c,t:txt.slice(r.s,s)});
+    if(r.e>e) nl.push({s:e,e:r.e,c:r.c,t:txt.slice(e,r.e)});
+  });
+  if(c) nl.push({s:s,e:e,c:c,t:txt.slice(s,e)});
+  resaltados=nl; _selResalt=null;
+  if(c && _txtPref('txtVerResalt','1')!=='1'){ try{ localStorage.setItem('txtVerResalt','1'); }catch(_){} }
+  renderTextoHighlight(); programarAutoguardado();
+  document.getElementById('texto-fab').classList.remove('show');
+  showInd(c?'Resaltado ✓':'Resaltado quitado');
+}
+function registrarVinculo(s,e,k,ref){
+  var txt=corpusTexto||'', raw=txt.slice(s,e), lead=raw.length-raw.replace(/^\s+/,'').length, frag=raw.trim();
+  if(!frag) return;
+  s+=lead; e=s+frag.length;
+  vinculos=vinculos.filter(function(v){ return !(v.s===s && v.e===e && v.k===k && v.ref===ref); });
+  vinculos.push({s:s,e:e,t:txt.slice(s,e),k:k,ref:ref});
+  renderTextoHighlight(); programarAutoguardado();
+}
+function irAVinculo(v){
+  cambiarSubTab('grafo'); try{ cy.resize(); }catch(e){}
+  if(v.k==='n'){ var n=cy.getElementById(v.ref); if(n.length){ cy.$(':selected').unselect(); n.select(); try{ cy.animate({center:{eles:n}},{duration:300}); }catch(e){} } }
+  else showInd('Está en una casilla del lienzo');
+}
+function _ctxTexto(){
+  var ctx=document.getElementById('texto-ctx'); if(!ctx||!textoCorpusEl) return;
+  var s=textoCorpusEl.selectionStart, e=textoCorpusEl.selectionEnd;
+  if(e>s){ ctx.classList.remove('show'); return; }
+  var pos=s, txt=corpusTexto||'', cual=null;
+  if(_txtPref('txtVerVinc','1')==='1') vinculos.forEach(function(v){ if(!cual && v.s<=pos && pos<=v.e && txt.slice(v.s,v.e)===v.t && _vincVivo(v)) cual={tipo:'v',r:v}; });
+  if(!cual && _txtPref('txtVerResalt','1')==='1') resaltados.forEach(function(r){ if(!cual && r.s<=pos && pos<=r.e && txt.slice(r.s,r.e)===r.t) cual={tipo:'r',r:r}; });
+  if(!cual){ ctx.classList.remove('show'); return; }
+  var tx=document.getElementById('texto-ctx-txt'), bt=document.getElementById('texto-ctx-btns'); bt.innerHTML='';
+  function B(t,fn,pri){ var b=document.createElement('button'); b.textContent=t; if(!pri) b.style.cssText='background:transparent;color:#c9a84c;border:1px solid #c9a84c'; b.onclick=fn; bt.appendChild(b); }
+  if(cual.tipo==='v'){
+    var v=cual.r; tx.textContent=(v.k==='n'?'Vinculado a un nodo del grafo':'Puesto en una casilla del grafo');
+    B('Ir al grafo',function(){ ctx.classList.remove('show'); irAVinculo(v); },true);
+    B('Quitar vínculo',function(){ vinculos=vinculos.filter(function(x){ return x!==v; }); renderTextoHighlight(); programarAutoguardado(); ctx.classList.remove('show'); });
+  } else {
+    var r=cual.r; tx.textContent='Resaltado';
+    B('Cambiar color',function(){ _selResalt={s:r.s,e:r.e}; ctx.classList.remove('show'); document.getElementById('resaltar-prev').textContent=r.t.slice(0,200); abrirResaltarColores(); },true);
+    B('Quitar',function(){ _selResalt={s:r.s,e:r.e}; aplicarResaltado(null); ctx.classList.remove('show'); });
+  }
+  ctx.classList.add('show');
+}
+function abrirResaltarColores(){
+  var cont=document.getElementById('resaltar-colores'); cont.innerHTML='';
+  RESALTA_COLORES.forEach(function(c){ var b=document.createElement('button'); b.type='button'; b.style.cssText='width:40px;height:40px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0;background:'+c; b.onclick=function(){ aplicarResaltado(c); }; cont.appendChild(b); });
+  document.getElementById('resaltar-modal').classList.add('open');
+}
+function abrirVistaTexto(){
+  var cuerpo=document.getElementById('vista-texto-cuerpo'); cuerpo.innerHTML='';
+  function fila(txt,clave,def){
+    var l=document.createElement('label'); l.style.cssText='display:flex;align-items:center;gap:10px;font-family:Inter,sans-serif;font-size:13px;color:#ddd;margin:8px 2px';
+    var c=document.createElement('input'); c.type='checkbox'; c.checked=_txtPref(clave,def)==='1';
+    c.onchange=function(){ try{ localStorage.setItem(clave,c.checked?'1':'0'); }catch(e){} renderTextoHighlight(); _ctxTexto(); };
+    l.appendChild(c); l.appendChild(document.createTextNode(txt)); cuerpo.appendChild(l);
+  }
+  fila('Mostrar vínculos con el grafo (lo que se hizo nodo o casilla)','txtVerVinc','1');
+  var t=document.createElement('div'); t.style.cssText='font:11px Inter,sans-serif;color:#888;margin:10px 2px 6px'; t.textContent='Color de los vínculos'; cuerpo.appendChild(t);
+  cuerpo.appendChild(_plPaleta({actual:_txtPref('txtVincColor','#1e6fd9'), onPick:function(c,fin){ try{ localStorage.setItem('txtVincColor',c); }catch(e){} renderTextoHighlight(); if(fin) abrirVistaTexto(); }}));
+  fila('Mostrar resaltados de color','txtVerResalt','1');
+  var lim=document.createElement('button'); lim.className='s-btn full'; lim.textContent='Texto limpio: ocultar vínculos y resaltados';
+  lim.onclick=function(){ try{ localStorage.setItem('txtVerVinc','0'); localStorage.setItem('txtVerResalt','0'); }catch(e){} renderTextoHighlight(); _ctxTexto(); abrirVistaTexto(); };
+  cuerpo.appendChild(lim);
+  var nr=document.createElement('button'); nr.className='s-btn full'; nr.textContent='Mostrar todo';
+  nr.onclick=function(){ try{ localStorage.setItem('txtVerVinc','1'); localStorage.setItem('txtVerResalt','1'); }catch(e){} renderTextoHighlight(); abrirVistaTexto(); };
+  cuerpo.appendChild(nr);
+  var qr=document.createElement('button'); qr.className='s-btn full danger'; qr.textContent='Quitar todos los resaltados ('+resaltados.length+')';
+  qr.onclick=function(){ confirmarUI('¿Quitar todos los resaltados?','Los vínculos con el grafo no se tocan.',function(){ resaltados=[]; renderTextoHighlight(); programarAutoguardado(); abrirVistaTexto(); },null); };
+  cuerpo.appendChild(qr);
+  var n=document.createElement('div'); n.style.cssText='font:11px Inter,sans-serif;color:#777;line-height:1.5;margin:8px 2px'; n.textContent='Los vínculos y resaltados son solo para tu lectura: no se publican ni se exportan. Tocando un fragmento vinculado puedes ir directo a su nodo.'; cuerpo.appendChild(n);
+  document.getElementById('vista-texto-modal').classList.add('open');
+}
+window.abrirResaltar=abrirResaltar; window.aplicarResaltado=aplicarResaltado; window.abrirVistaTexto=abrirVistaTexto;
 
 function crearNodoDesdeSeleccion(){
   if(bloqueadoAplicarMob()) return;
@@ -1974,7 +2173,8 @@ function crearNodoDesdeSeleccion(){
   document.getElementById('texto-fab').classList.remove('show');
   cambiarSubTab('grafo');
   try{ cy.resize(); }catch(e){}
-  _crearNodoDesdeRecorte(frag, 'literal', null);
+  var _nodoV=_crearNodoDesdeRecorte(frag, 'literal', null);
+  try{ registrarVinculo(s,e,'n',_nodoV.id()); }catch(_e){}
   showInd('Nodo creado ✓');
   snapshot();
 }
@@ -2999,6 +3199,8 @@ function snapshotEstadoActual(){
     modoAplicar: _modoAplicar,
     // Flujo clínico: transcripción, recortes y capa de interpretación
     corpusTexto: corpusTexto,
+    resaltados: resaltados,
+    vinculos: vinculos,
     recortes: recortes,
     analiticos: serAnaliticos()
   };
@@ -3260,8 +3462,58 @@ function renombrarGrafoActual(){
 
 function actualizarTituloGrafoActual(){
   var el = document.getElementById('grafo-titulo-mini');
-  if(el) el.textContent = _grafoActualNombre;
+  if(el) el.textContent = _grafoActualNombre+' ▾';
 }
+
+// ── Mis grafos: abrir, crear, guardar y renombrar desde la pestaña Grafo ──
+function _trel(ts){
+  var d=Math.max(0,Date.now()-(ts||0)), m=Math.round(d/60000);
+  if(m<1) return 'ahora mismo'; if(m<60) return 'hace '+m+' min';
+  var h=Math.round(m/60); if(h<24) return 'hace '+h+' h';
+  var dd=Math.round(h/24); return dd===1?'ayer':('hace '+dd+' días');
+}
+function _esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function abrirMisGrafos(modoInicio){
+  var m=document.getElementById('misgrafos-modal'); if(!m) return;
+  var actual=_grafoActualId||'borrador';
+  var idx=listarGrafosGuardados().slice().sort(function(a,b){ return (b.modificado||0)-(a.modificado||0); });
+  document.getElementById('misgrafos-titulo').textContent = modoInicio ? '¿Qué grafo quieres abrir?' : 'Mis grafos';
+  var lim = (window.GrafoPlan && !GrafoPlan.esSuscriptor()) ? ' · plan gratuito: '+idx.length+' de 3' : '';
+  document.getElementById('misgrafos-sub').textContent = idx.length+(idx.length===1?' grafo guardado':' grafos guardados')+lim;
+  var cont=document.getElementById('misgrafos-lista'); cont.innerHTML='';
+  if(!idx.length) cont.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:14px">Aún no hay grafos guardados. Lo que dibujes se guarda solo.</div>';
+  idx.forEach(function(g,i){
+    var es=(g.id===actual);
+    var c=document.createElement('div'); c.className='mg-card'+(es?' act':'');
+    c.innerHTML='<div class="mg-info"><div class="mg-nom">'+_esc(g.nombre||'Sin título')+'</div><div class="mg-meta">'+(es?'Abierto ahora · ':(i===0&&modoInicio?'Último en uso · ':''))+_trel(g.modificado)+'</div></div>';
+    var ab=document.createElement('button'); ab.className='mg-btn'; ab.textContent=es?'Seguir':'Abrir';
+    ab.onclick=function(){ cerrarMisGrafos(); if(!es) abrirGrafoGuardado(g.id); };
+    var bo=document.createElement('button'); bo.className='mg-btn mg-del'; bo.textContent='✕'; bo.title='Borrar';
+    bo.onclick=function(){ confirmarUI('¿Borrar «'+(g.nombre||'Sin título')+'»?','Se eliminará de este dispositivo y no se puede deshacer.',function(){ eliminarGrafoGuardado(g.id); abrirMisGrafos(modoInicio); },null); };
+    c.appendChild(ab); c.appendChild(bo); cont.appendChild(c);
+  });
+  var pre=document.getElementById('misgrafos-preguntar'); if(pre) pre.checked=!_noPreguntarGrafos();
+  document.getElementById('misgrafos-acciones').style.display = modoInicio ? 'none' : 'flex';
+  document.getElementById('misgrafos-cerrar').textContent = modoInicio ? 'Seguir con el último' : 'Cerrar';
+  m.classList.add('open');
+}
+function cerrarMisGrafos(){ var m=document.getElementById('misgrafos-modal'); if(m) m.classList.remove('open'); }
+function _noPreguntarGrafos(){ try{ return localStorage.getItem('grafolisisNoPreguntar')==='1'; }catch(e){ return false; } }
+function misGrafosPreguntar(on){ try{ localStorage.setItem('grafolisisNoPreguntar', on?'0':'1'); }catch(e){} }
+function guardarAhora(){
+  if(_autosaveTimer){ clearTimeout(_autosaveTimer); _autosaveTimer=null; }
+  autoguardar(); try{ _versAuto && 0; }catch(e){}
+  showInd('Guardado ✓  «'+_grafoActualNombre+'»');
+  abrirMisGrafos();
+}
+function _preguntarAlIniciar(){
+  try{
+    if(_noPreguntarGrafos() || /#pub=/.test(location.hash)) return;
+    if(listarGrafosGuardados().length<2) return;
+    abrirMisGrafos(true);
+  }catch(e){}
+}
+window.abrirMisGrafos=abrirMisGrafos; window.cerrarMisGrafos=cerrarMisGrafos; window.misGrafosPreguntar=misGrafosPreguntar; window.guardarAhora=guardarAhora;
 
 // ── Modal de texto inline (reemplaza prompt del navegador) ──
 var _textInlineCallback = null;
@@ -3435,6 +3687,7 @@ function _restoreSnapInner(s, soloGrafo){
   // ciclo de vida, independiente del historial de deshacer del lienzo.
   if(!soloGrafo){
     corpusTexto = s.corpusTexto || '';
+    resaltados = s.resaltados || []; vinculos = s.vinculos || [];
     var taCorpus=document.getElementById('texto-corpus');
     if(taCorpus) taCorpus.value = corpusTexto;
 
@@ -3635,7 +3888,7 @@ function duplicarSeleccionado(){
       var s=e.source().id(), t=e.target().id();
       if(idMap[s] && idMap[t]){
         var ne = cy.add({group:'edges', data:{id:'e'+Date.now()+Math.floor(Math.random()*100000), source:idMap[s], target:idMap[t], label:e.data('label')||''}, classes:e.className()});
-        ne.style({'line-color':e.style('line-color'),'target-arrow-color':e.style('target-arrow-color')});
+        ne.style({'line-color':_colorLineaEdge(e),'target-arrow-color':_colorLineaEdge(e),'source-arrow-color':_colorLineaEdge(e)}); if(e.data('ucolor')) ne.data('ucolor',e.data('ucolor'));
       }
     });
     sel.unselect();
@@ -4560,7 +4813,7 @@ function aplicarColorCustom(){
     });
   } else if(_colorTarget.tipo==='edge' && _colorTarget.target){
     var _se=cy.$('edge:selected'); if(!_se.length) _se=_colorTarget.target;
-    _se.forEach(function(e){ e.style({'line-color':c,'target-arrow-color':c,'source-arrow-color':c}); });
+    _se.forEach(function(e){ e.style({'line-color':c,'target-arrow-color':c,'source-arrow-color':c}); e.data('ucolor',c); });
   } else if(_colorTarget.tipo==='vector' && _colorTarget.target){
     _colorTarget.target.color = c;
     if(typeof actualizarArrowEls === 'function') actualizarArrowEls(_colorTarget.target);
@@ -4590,7 +4843,7 @@ function resetColor(){
     });
   } else if(_colorTarget.tipo==='edge' && _colorTarget.target){
     var _se2=cy.$('edge:selected'); if(!_se2.length) _se2=_colorTarget.target;
-    _se2.forEach(function(e){ e.removeStyle('line-color target-arrow-color source-arrow-color'); });
+    _se2.forEach(function(e){ e.removeStyle('line-color target-arrow-color source-arrow-color'); e.removeData('ucolor'); });
   } else if(_colorTarget.tipo==='vector' && _colorTarget.target){
     delete _colorTarget.target.color;
     if(typeof actualizarArrowEls === 'function') actualizarArrowEls(_colorTarget.target);
@@ -5842,6 +6095,41 @@ function _aplicarExtraVec(o,d){
 }
 
 // ── Panel «Puntas de flecha» ──
+
+// Paleta completa para puntas: incluye el color de la línea, los colores de uso reciente, toda la paleta del editor y un selector libre.
+var PUNTA_EXTRA=['#ffffff','#faf8f4','#d9d4c7','#b0b0b0','#555555','#000000','#c0392b','#e67e22','#f1c40f','#2e7d32','#00897b','#1565c0','#6a1b9a','#ad1457'];
+function _plPaleta(o){
+  var wrap=document.createElement('div'); wrap.style.cssText='margin-bottom:10px';
+  var lista=[], vis={};
+  function add(c){ if(!c||typeof c!=='string'||c[0]!=='#') return; c=c.toLowerCase(); if(vis[c]) return; vis[c]=1; lista.push(c); }
+  if(o.linea) add(o.linea);
+  try{ obtenerColoresRecientes().forEach(add); }catch(e){}
+  COLORES_PRESET.forEach(add); PUNTA_EXTRA.forEach(add);
+  var act=(o.actual&&o.actual[0]==='#')?o.actual.toLowerCase():null;
+  if(o.linea||o.igual){
+    var top=document.createElement('div'); top.style.cssText='display:flex;gap:6px;margin-bottom:8px';
+    if(o.igual && o.linea) top.appendChild(_plBtn('◍ Igual que la línea',function(){ o.onPick(o.linea,true); },act===String(o.linea).toLowerCase()));
+    if(top.firstChild) wrap.appendChild(top);
+  }
+  var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:7px;align-items:center;flex-wrap:wrap';
+  lista.forEach(function(c){
+    var b=document.createElement('button'); b.type='button';
+    b.style.cssText='width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;background:'+c+';border:'+(act===c?'3px solid #c9a84c':'2px solid #555');
+    if(o.linea&&c===String(o.linea).toLowerCase()) b.title='Color de la línea';
+    b.addEventListener('click',function(){ o.onPick(c,true); }); sw.appendChild(b);
+  });
+  var ci=document.createElement('input'); ci.type='color'; ci.value=act||(o.linea&&o.linea[0]==='#'?o.linea:'#c9a84c'); ci.title='Otro color…'; ci.style.cssText='width:36px;height:30px;border:none;background:none;padding:0';
+  ci.addEventListener('input',function(){ o.onPick(ci.value,false); }); ci.addEventListener('change',function(){ try{ guardarColorReciente(ci.value); }catch(e){} o.onPick(ci.value,true); });
+  sw.appendChild(ci); wrap.appendChild(sw);
+  return wrap;
+}
+function _colorLineaEdge(e){
+  var u=e.data('ucolor'); if(u) return u;
+  if(e.hasClass('rel-metonimia')) return '#8a5a2a'; if(e.hasClass('rel-corte')) return '#7a2222'; if(e.hasClass('rel-sustitucion')) return '#264a6a';
+  var osc=document.getElementById('cy-wrap')&&document.getElementById('cy-wrap').classList.contains('bg-oscuro');
+  if(e.hasClass('dashed')) return osc?'#b0a98f':'#888';
+  return osc?'#a89f88':(e.hasClass('rel-secuencia')?'#1a1a1a':'#333');
+}
 var PUNTA_COLORES=['#ffffff','#faf8f4','#c9a84c','#c0392b','#2e7d32','#1565c0','#6a1b9a','#000000'];
 function abrirPanelPuntas(v){
   if(!v) return;
@@ -5878,14 +6166,7 @@ function renderPanelPuntas(){
       _plBtn('Color de la línea',function(){ st.f=null; ya(); listo(); },st.f===null),
       _plBtn('Sin relleno',function(){ st.f='none'; ya(); listo(); },st.f==='none')
     ]));
-    var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap';
-    PUNTA_COLORES.forEach(function(c){
-      var b=document.createElement('button'); b.style.cssText='width:30px;height:30px;border-radius:50%;cursor:pointer;background:'+c+';border:'+(st.f===c?'3px solid #c9a84c':'2px solid #555');
-      b.addEventListener('click',function(){ st.f=c; ya(); listo(); }); sw.appendChild(b);
-    });
-    var ci=document.createElement('input'); ci.type='color'; ci.value=(st.f&&st.f[0]==='#')?st.f:'#c9a84c'; ci.style.cssText='width:36px;height:30px;border:none;background:none;padding:0';
-    ci.addEventListener('input',function(){ st.f=ci.value; ya(); }); ci.addEventListener('change',function(){ listo(); });
-    sw.appendChild(ci); body.appendChild(sw);
+    body.appendChild(_plPaleta({actual:st.f, linea:(v.color||'#c9a84c'), onPick:function(c,fin){ st.f=c; ya(); if(fin) listo(); }}));
   } else { body.appendChild(_plNota('La punta « > » es abierta: se dibuja solo con el color de la línea.')); }
   body.appendChild(_plSlider('Tamaño',0.5,3,0.1,st.s,function(x){ return x.toFixed(1)+'×'; },function(x){ st.s=x; ya(); },function(){ snapshot(); }));
   var posSl=_plSlider('Posición en la línea (0% inicio · 100% final)',0,100,0.5,Math.round(v.arrowTs[k]*1000)/10,function(x){ return x.toFixed(1)+'%'; },function(x){ v.arrowTs[k]=x/100; if(k===0) v.arrowT=x/100; ya(); },function(){ snapshot(); });
@@ -5914,12 +6195,8 @@ function abrirPanelPuntasEdge(e){
       _plBtn('Con relleno',function(){ e.style(pref+'-arrow-fill','filled'); snapshot(); abrirPanelPuntasEdge(e); },!hueco),
       _plBtn('Sin relleno',function(){ e.style(pref+'-arrow-fill','hollow'); snapshot(); abrirPanelPuntasEdge(e); },hueco)
     ]));
-    var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap';
-    PUNTA_COLORES.forEach(function(c){
-      var b=document.createElement('button'); b.style.cssText='width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid #555';
-      b.addEventListener('click',function(){ e.style(pref+'-arrow-color',c); snapshot(); }); sw.appendChild(b);
-    });
-    body.appendChild(sw);
+    var _cA=document.createElement('div'); _cA.style.cssText='font:11px Inter,sans-serif;color:#888;margin:4px 0'; _cA.textContent='Color de esta punta'; body.appendChild(_cA);
+    body.appendChild(_plPaleta({actual:e.style(pref+'-arrow-color'), linea:_colorLineaEdge(e), igual:true, onPick:function(c,fin){ e.style(pref+'-arrow-color',c); if(fin) snapshot(); }}));
   }
   lado('target','Punta en el destino');
   lado('source','Punta en el origen');
@@ -5938,9 +6215,7 @@ function abrirPanelPuntasEdge(e){
     function listo(){ ya(); snapshot(); abrirPanelPuntasEdge(e); }
     var ft=_plFila(PUNTAS_TIPOS.map(function(t){ var b=_plBtn(t[1]+' '+t[2],function(){ st.k=t[0]; listo(); },st.k===t[0]); b.style.flex='1 1 30%'; b.style.fontSize='11px'; return b; })); ft.style.flexWrap='wrap'; body.appendChild(ft);
     if(st.k!=='chev') body.appendChild(_plFila([_plBtn('Color de la línea',function(){ st.f=null; listo(); },st.f===null),_plBtn('Sin relleno',function(){ st.f='none'; listo(); },st.f==='none')]));
-    var sw=document.createElement('div'); sw.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap';
-    PUNTA_COLORES.forEach(function(c){ var b=document.createElement('button'); b.style.cssText='width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:'+(st.f===c?'3px solid #c9a84c':'2px solid #555'); b.addEventListener('click',function(){ st.f=c; listo(); }); sw.appendChild(b); });
-    body.appendChild(sw);
+    body.appendChild(_plPaleta({actual:st.f, linea:_colorLineaEdge(e), onPick:function(c,fin){ st.f=c; ya(); if(fin) listo(); }}));
     body.appendChild(_plSlider('Tamaño',0.5,3,0.1,st.s,function(x){ return x.toFixed(1)+'×'; },function(x){ st.s=x; ya(); },function(){ snapshot(); }));
     body.appendChild(_plSlider('Posición en la línea (0% origen · 100% destino)',0,100,0.5,Math.round(st.t*1000)/10,function(x){ return x.toFixed(1)+'%'; },function(x){ st.t=x/100; ya(); },function(){ snapshot(); }));
     body.appendChild(_plFila([
@@ -6145,19 +6420,23 @@ function _asignarACasilla(c){
   if(c.k==='n'){ _sinSnap(function(){ c.r.data('valor',nuevo); _pintarNodoRell(c.r); }); }
   else { c.r.valor=nuevo; _pintarTxt(c.r); }
   snapshot(); cerrarCasillaModal();
+  if(_rangoCasilla){ try{ registrarVinculo(_rangoCasilla.s,_rangoCasilla.e,c.k==='n'?'n':'t',c.k==='n'?c.r.id():c.r.id); }catch(_e){} _rangoCasilla=null; }
   showInd('Puesto en «'+((c.k==='n'?c.r.data('guia'):c.r.content)||'casilla')+'» ✓');
 }
+var _rangoCasilla=null;
 function asignarSeleccionACasilla(){
   if(!textoCorpusEl) textoCorpusEl=document.getElementById('texto-corpus');
   var s=textoCorpusEl.selectionStart, e=textoCorpusEl.selectionEnd;
-  abrirCasillaModal(e>s?textoCorpusEl.value.slice(s,e):'');
+  _rangoCasilla=null;
+  if(abrirCasillaModal(e>s?textoCorpusEl.value.slice(s,e):'') && e>s) _rangoCasilla={s:s,e:e};
 }
 function asignarSeleccionRecorteACasilla(){
+  _rangoCasilla=null;
   var el=document.getElementById('recorte-modal-preview'); if(!el) return;
   var s=el.selectionStart, e=el.selectionEnd;
   abrirCasillaModal(e>s?el.value.slice(s,e):'');
 }
-function asignarRecorteACasilla(){ var r=recorteActual(); if(r) abrirCasillaModal(r.texto); }
+function asignarRecorteACasilla(){ _rangoCasilla=null; var r=recorteActual(); if(r) abrirCasillaModal(r.texto); }
 window.asignarSeleccionACasilla=asignarSeleccionACasilla;
 window.asignarSeleccionRecorteACasilla=asignarSeleccionRecorteACasilla;
 window.asignarRecorteACasilla=asignarRecorteACasilla;
@@ -6415,6 +6694,11 @@ function conectarElementos(o,d){
     showInd('No se puede conectar un elemento consigo mismo'); return null;
   }
   var ed=addEdge(a.id(),b.id());
+  try{   // la nueva línea hereda el color de la línea de la que sale (o a la que llega)
+    var _hosts=[a,b].filter(function(n){ return n&&n.hasClass('union'); }).map(function(n){ return cy.getElementById(n.data('hostEdge')); }).filter(function(h){ return h.length; });
+    var _hs=_hosts[0]?{ref:_hosts[0]}:null;
+    if(_hs&&_hs.ref.data('ucolor')){ var _cc=_hs.ref.data('ucolor'); ed.style({'line-color':_cc,'target-arrow-color':_cc,'source-arrow-color':_cc}); ed.data('ucolor',_cc); }
+  }catch(_e){}
   sincronizarUniones();
   try{ cy.$(':selected').unselect(); }catch(_){}
   try{ cerrarPanelLinea(); }catch(_){}
@@ -6710,10 +6994,11 @@ var ESP=(function(){
   function pintarGrid(){
     var c=cont(); if(!c) return;
     var gi=gridInfo();
+    var _cw=document.getElementById('cy-wrap'); if(_cw) _cw.classList.toggle('grid-iman',!!gi);   // con la cuadrícula con imán activa se oculta la del fondo (evita el doble cuadriculado)
     if(!gi){ if(gridEl) gridEl.style.display='none'; return; }
     if(!gridEl||!gridEl.parentNode){ gridEl=document.createElement('div'); gridEl.id='esp-grid'; c.appendChild(gridEl); }
     var osc=!!document.querySelector('#cy.bg-oscuro,#cy-wrap.bg-oscuro,.bg-oscuro');
-    var col=osc?'rgba(255,255,255,.10)':'rgba(0,0,0,.10)';
+    var col=osc?'rgba(255,255,255,.14)':'rgba(0,0,0,.13)';
     gridEl.style.cssText='position:absolute;inset:0;z-index:1;pointer-events:none;'+
       'background-image:linear-gradient(to right,'+col+' 1px,transparent 1px),linear-gradient(to bottom,'+col+' 1px,transparent 1px);'+
       'background-size:'+gi.s+'px '+gi.s+'px;background-position:'+gi.px+'px '+gi.py+'px';
@@ -8705,7 +8990,7 @@ function limpiarSilencioso(){
   // globales, se conservan entre casos clínicos).
   vCount=1;
   iCount=1;
-  corpusTexto='';
+  corpusTexto=''; resaltados=[]; vinculos=[];
   var taCorpus=document.getElementById('texto-corpus');
   if(taCorpus) taCorpus.value='';
   recortes=[];
@@ -9125,6 +9410,7 @@ window.snapshotEstadoActual = snapshotEstadoActual;
 
 // Restaurar último grafo en uso al iniciar
 setTimeout(intentarRestaurarUltimo, 200);
+setTimeout(_preguntarAlIniciar, 1100);
 
 // Flujo clínico: una vez restaurado el grafo, reanudar en la sub-pestaña
 // donde el analista se había quedado (o en "Texto" la primera vez).
@@ -11035,6 +11321,8 @@ function capturarGrafoActual(){
     // prima de trabajo y no deben salir de este dispositivo al publicar.
     if(estado && typeof estado==='object'){
       delete estado.corpusTexto;
+      delete estado.resaltados;
+      delete estado.vinculos;
       delete estado.recortes;
     }
     return limpiarUndefinedProfundo(estado);
