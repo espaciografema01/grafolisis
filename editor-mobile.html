@@ -510,10 +510,10 @@ body:not(.modo-aplicar) .txt-node.rell,.txt-node.rell.rell-vacia{border:1.5px da
 body.plan-free #cy-wrap #grafema-watermark-layer{display:flex!important}
 body.plan-pro #cy-wrap #grafema-watermark-layer{display:none!important}
 body.plan-free #grafema-badge{display:none!important}
-#grafema-watermark-layer{flex-direction:column;line-height:1}
-#grafema-watermark-layer .wm-app{font-family:'IM Fell English',serif;font-style:italic;font-size:21vw;font-weight:400;color:rgba(168,134,58,.17);letter-spacing:1px;transform:rotate(-18deg);white-space:nowrap}
-#grafema-watermark-layer .wm-dev{font-family:'Inter',sans-serif;font-size:7vw;font-weight:600;color:rgba(168,134,58,.17);letter-spacing:2px;transform:rotate(-18deg);margin-top:2vw;white-space:nowrap}
-#cy-wrap.bg-oscuro #grafema-watermark-layer .wm-app,#cy-wrap.bg-oscuro #grafema-watermark-layer .wm-dev{color:rgba(201,168,76,.16)}
+#grafema-watermark-layer{flex-direction:column;line-height:1;justify-content:flex-start!important;padding-top:max(0px,calc(40vh - 11vw))}   /* anclada arriba con medida fija: no se mueve cuando aparece la barra contextual */
+#grafema-watermark-layer .wm-app{font-family:'IM Fell English',serif;font-style:italic;font-size:15vw;font-weight:400;color:rgba(168,134,58,.10);letter-spacing:1px;transform:rotate(-18deg);white-space:nowrap}
+#grafema-watermark-layer .wm-dev{font-family:'Inter',sans-serif;font-size:5vw;font-weight:600;color:rgba(168,134,58,.10);letter-spacing:2px;transform:rotate(-18deg);margin-top:2vw;white-space:nowrap}
+#cy-wrap.bg-oscuro #grafema-watermark-layer .wm-app,#cy-wrap.bg-oscuro #grafema-watermark-layer .wm-dev{color:rgba(201,168,76,.10)}
 body.plan-free .feed-thumb::after,body.plan-free .detail-thumb::after,body.plan-free .my-pub-thumb::after{content:'Grafólisis';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IM Fell English',serif;font-style:italic;color:rgba(168,134,58,.2);transform:rotate(-18deg);pointer-events:none;white-space:nowrap}
 body.plan-free .feed-thumb::after{font-size:15vw}
 body.plan-free .detail-thumb{position:relative}
