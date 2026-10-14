@@ -618,6 +618,7 @@ body.plan-free .my-pub-thumb::after{font-size:9vw}
 
 #fig-pane{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;background:#17150f;color:#e8dfc8;font-family:'Inter',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
 #fig-pane.open{display:flex}
+#fig-pane select{background:#0d0c09;color:#e8dfc8;border:1px solid #3a3526;border-radius:999px;padding:5px 10px;font-size:12px;min-height:30px;font-family:'Inter',sans-serif;max-width:190px}
 #fig-chip{position:absolute;left:10px;top:46px;z-index:56;background:rgba(26,26,26,.88);color:#c9a84c;border:1px solid #c9a84c55;border-radius:999px;padding:5px 11px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;box-shadow:var(--sh-2)}
 #fig-pane .fg-row{display:flex;align-items:center;gap:5px;padding:4px 7px;flex-wrap:nowrap;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 #fig-pane .fg-row::-webkit-scrollbar{display:none}
@@ -768,8 +769,8 @@ const _db   = firebase.firestore();
           <button id="fig-chip" onclick="abrirFiguras()" title="Abrir la figura animada" style="display:none">◎ Figura</button>
 <div id="fig-pane">
   <div class="fg-row">
-    <div class="fg-seg" id="fg-figs"><button data-f="toro" class="on" onclick="GrafoFiguras.figura('toro')">Toro</button><button data-f="enlazados" onclick="GrafoFiguras.figura('enlazados')">Dos toros enlazados</button></div>
-    <div class="fg-seg" id="fg-which" style="display:none"><button data-w="A" class="on" onclick="GrafoFiguras.activo('A')">Toro A</button><button data-w="B" onclick="GrafoFiguras.activo('B')">Toro B</button></div>
+    <select id="fg-figsel" onchange="GrafoFiguras.figura(this.value)" aria-label="Figura"><option value="toro">Toro</option><option value="enlazados">Dos toros enlazados</option><option value="mobius">Banda de Möbius</option><option value="klein">Botella de Klein</option><option value="crosscap">Cross-cap</option><option value="borromeo">Anillos borromeos</option></select>
+    <div class="fg-seg" id="fg-which" style="display:none"><button data-w="A" class="on" onclick="GrafoFiguras.activo('A')">Toro A</button><button data-w="B" onclick="GrafoFiguras.activo('B')">Toro B</button><button data-w="C" onclick="GrafoFiguras.activo('C')">C</button></div>
     <button class="fg-x" onclick="GrafoFiguras.cerrar()">✕ Cerrar</button>
   </div>
   <div class="fg-row" id="fg-tools">
@@ -777,21 +778,27 @@ const _db   = firebase.firestore();
     <input type="text" id="fg-label" value="S1" maxlength="8" aria-label="Nombre de la letra">
     <span id="fg-sws" style="display:inline-flex;gap:4px"></span>
     <button id="fg-fin" onclick="GrafoFiguras.terminar()" style="display:none">Terminar</button>
+    <button onclick="GrafoFiguras.usarLetras()" title="Crear un trayecto con todas tus letras, en el orden en que las pusiste">Letras → trayecto</button>
     <button onclick="GrafoFiguras.diagonal()" title="Diagonal o espiral">Diagonal / espiral</button>
     <button onclick="GrafoFiguras.nombres()">Ejes</button>
     <button id="fg-cruz" onclick="GrafoFiguras.alternarCruzar()" title="Cómo se unen dos puntos del trayecto">Cruzar bordes ✓</button>
     <button onclick="GrafoFiguras.deshacer()" title="Deshacer">↶</button>
     <button onclick="GrafoFiguras.traerDelGrafo()">Traer nodos del grafo</button>
   </div>
+  <div class="fg-row" id="fg-style" style="display:none"><span style="font-size:11px;color:#9d9378">Color</span><span id="fg-tcols" style="display:inline-flex;gap:4px"></span><button id="fg-cuad" onclick="GrafoFiguras.estilo('cuad')">Cuadrícula ✓</button><button id="fg-trans" onclick="GrafoFiguras.estilo('trans')">Translúcido ✗</button><button id="fg-gro" onclick="GrafoFiguras.estilo('gro')">Grosor ×1</button></div>
   <div id="fig-flatwrap"><canvas id="fig-flat"></canvas><div id="fig-hint"></div></div>
   <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div></div>
   <div class="fg-row">
-    <div class="fg-seg" id="fg-modo"><button data-m="seq" class="on" onclick="GrafoFiguras.modo('seq')">Por etapas</button><button data-m="esp" onclick="GrafoFiguras.modo('esp')">En espiral</button></div>
+    <div class="fg-seg" id="fg-modo"><button data-m="seq" class="on" onclick="GrafoFiguras.modo('seq')">Por etapas</button><button data-m="esp" onclick="GrafoFiguras.modo('esp')">Barrido</button><button data-m="coil" onclick="GrafoFiguras.modo('coil')">Espiral</button></div>
+    <span id="fg-vgrp" class="fg-seg" style="display:none;align-items:center"><button onclick="GrafoFiguras.vueltas(-1)" title="Quitar una vuelta">−</button><button id="fg-vn" onclick="GrafoFiguras.vueltas(0)" title="Volver a automático">auto</button><button onclick="GrafoFiguras.vueltas(1)" title="Añadir una vuelta">+</button></span>
     <button id="fg-play" class="on" onclick="GrafoFiguras.armar()">▶ Armar</button>
     <input type="range" id="fg-scrub" min="0" max="1000" value="1000" aria-label="Avance de la construcción">
     <button onclick="GrafoFiguras.paso(-1)" title="Letra anterior">⏮</button>
     <button id="fg-rec" onclick="GrafoFiguras.recorrer()">Recorrer</button>
     <button onclick="GrafoFiguras.paso(1)" title="Letra siguiente">⏭</button>
+    <button id="fg-stbtn" onclick="GrafoFiguras.estilo('abrir')">Estilo</button>
+    <button id="fg-rep" onclick="GrafoFiguras.repetir()" title="Repetir la secuencia de letras hasta cerrar el toro">Repetir ✓</button>
+    <button id="fg-enc" onclick="GrafoFiguras.encima()" title="Mostrar letras y trayecto por encima de la superficie">Encima ✓</button>
     <button id="fg-auto" onclick="GrafoFiguras.autogiro()">Giro</button>
     <button onclick="GrafoFiguras.vista()">Vista</button>
     <button onclick="GrafoFiguras.alGrafo()">Insertar en el grafo</button>
@@ -12800,8 +12807,9 @@ try{ _auth.onAuthStateChanged(function(u){ conectarUsuario(u?u.uid:null); }); }c
 'use strict';
 var TAU=Math.PI*2, r=1, R=2.4, LG=TAU*R, SH=TAU*r;
 var COLS=['#c9a84c','#e0556a','#3fae6a','#5a8aa8','#e8dfc8','#b07ad8'];
-var ST={fig:'toro',act:'A',A:{L:[],T:[]},B:{L:[],T:[]},cruz:true,modo:'seq',nomU:'directriz',nomV:'generatriz'};
-var UI={open:false,tool:'letra',p:1,play:false,dur:7,q:0,qTo:null,qPlay:false,cam:{yaw:.5,e:.75},manual:false,auto:false,zoom:1,
+var ST={fig:'toro',act:'A',A:{L:[],T:[]},B:{L:[],T:[]},C:{L:[],T:[]},cruz:true,modo:'seq',nomU:'directriz',nomV:'generatriz',repetir:true,encima:true,vueltas:null,tcol:{A:[212,42],B:[30,62],C:[150,38]},cuad:true,trans:false,gro:1};
+var PRESETS=[[212,42],[30,62],[150,38],[340,50],[270,40],[46,60],[40,5]];
+var UI={styleOpen:false,pTo:null,open:false,tool:'letra',p:1,play:false,dur:7,q:0,qTo:null,qPlay:false,cam:{yaw:.5,e:.75},manual:false,auto:false,zoom:1,
   col:COLS[0],trazo:null,sel:null,undo:[],dirty:true,last:0,selT:null};
 var $=function(id){return document.getElementById(id);};
 var cvF,cvS,cxF,cxS,wF=0,hF=0,wS=0,hS=0,dpr=1,idc=1,raf=0,ro=null;
@@ -12810,9 +12818,79 @@ function ease(x){x=clamp(x,0,1);return x*x*(3-2*x);}
 function act(){return ST[ST.act];}
 function nid(p){return p+(idc++)+Math.random().toString(36).slice(2,5);}
 
+/* ── catálogo de figuras ── */
+var FIGS={toro:{n:1,tor:true,tm:true},enlazados:{n:2,tor:true,tm:true},borromeo:{n:3,tor:true},mobius:{n:1},klein:{n:1},crosscap:{n:1}};
+var NOTAS={mobius:'Banda de Möbius: los bordes rojos se pegan con media torsión (una cara, un borde)',
+  klein:'Botella de Klein: rojos con torsión, verdes normales (en 3D se atraviesa a sí misma)',
+  crosscap:'Cross-cap: el borde rojo se pega consigo mismo, punto con su opuesto',
+  borromeo:'Anillos borromeos: ninguno se enlaza con otro, pero juntos no se pueden separar',
+  enlazados:'Dos toros: uno pasa por el agujero del otro'};
+function FD(){ return FIGS[ST.fig]||FIGS.toro; }
+function isTM(){ return !!FD().tm; }
+function ringIds(){ return ['A','B','C'].slice(0,FD().n); }
+function ringIdx(w){ return w==='A'?0:w==='B'?1:2; }
+function winP(w){
+  var p=UI.p, f=ST.fig;
+  if(f==='enlazados') return w==='A'?clamp(p/.5,0,1):clamp((p-.5)/.5,0,1);
+  if(f==='borromeo') return clamp((p-ringIdx(w)*.33)/.34,0,1);
+  return p;
+}
+function pOfT(w,t){
+  var f=ST.fig; if(f==='enlazados') return w==='A'?t*.5:.5+t*.5;
+  if(f==='borromeo') return ringIdx(w)*.33+t*.34; return t;
+}
+var FW=9, FH=3.4;
+function geomFinal(w,u,v){
+  var f=ST.fig;
+  if(f==='mobius'){ var s=(v-.5)*1.7, rr=2.3+s*Math.cos(Math.PI*u); return [rr*Math.cos(TAU*u),rr*Math.sin(TAU*u),s*Math.sin(Math.PI*u)]; }
+  if(f==='klein'){ var th=TAU*u, pp=TAU*v, c2=Math.cos(th/2), s2=Math.sin(th/2), r2=2.4+c2*Math.sin(pp)-s2*Math.sin(2*pp); return [r2*Math.cos(th),r2*Math.sin(th),s2*Math.sin(pp)+c2*Math.sin(2*pp)]; }
+  if(f==='crosscap'){ var t3=TAU*u, p3=Math.PI/2*v, a=Math.sin(p3)*Math.cos(t3), b=Math.sin(p3)*Math.sin(t3), c=Math.cos(p3); return [3.6*a*c,3.6*b*c,3.6*(a*a-b*b)/2]; }
+  var i=ringIdx(w), t=TAU*u, ph=TAU*v, A=2.7, Bq=1.65, rt=.26, C, T, B;
+  if(i===0){ C=[A*Math.cos(t),Bq*Math.sin(t),0]; T=[-A*Math.sin(t),Bq*Math.cos(t),0]; B=[0,0,1]; }
+  else if(i===1){ C=[0,A*Math.cos(t),Bq*Math.sin(t)]; T=[0,-A*Math.sin(t),Bq*Math.cos(t)]; B=[1,0,0]; }
+  else { C=[Bq*Math.sin(t),0,A*Math.cos(t)]; T=[Bq*Math.cos(t),0,-A*Math.sin(t)]; B=[0,1,0]; }
+  var tl=Math.hypot(T[0],T[1],T[2]); T=[T[0]/tl,T[1]/tl,T[2]/tl];
+  var N=[B[1]*T[2]-B[2]*T[1],B[2]*T[0]-B[0]*T[2],B[0]*T[1]-B[1]*T[0]], cp=Math.cos(ph), sp=Math.sin(ph);
+  return [C[0]+rt*(cp*N[0]+sp*B[0]),C[1]+rt*(cp*N[1]+sp*B[1]),C[2]+rt*(cp*N[2]+sp*B[2])];
+}
+function surfAny(w,u,v,q){
+  if(isTM()) return surf(w,u,v,q);
+  var F=geomFinal(w,u,v), m=q.m===undefined?1:q.m; if(m>=.9999) return F;
+  var z0=ringIdx(w)*2.5, fl=[(u-.5)*FW,-(v-.5)*FH,z0];
+  return [fl[0]+(F[0]-fl[0])*m,fl[1]+(F[1]-fl[1])*m,fl[2]+(F[2]-fl[2])*m];
+}
+function prmGen(p){
+  var out={}, seq=ST.modo==='seq';
+  ringIds().forEach(function(w,i){ var Pw=winP(w); out[w]={m:seq?ease(Pw):1,alpha:i===0?1:(seq?clamp(Pw*25,0,1):1)}; });
+  return out;
+}
+/* ── identificaciones: cómo se pegan los bordes del rectángulo en cada figura ── */
+function lifts(u,v,cu,cv){
+  var f=ST.fig, out=[], k, m;
+  if(f==='mobius'){ for(k=cu-2;k<=cu+2;k++) out.push([u+k,(k&1)?1-v:v]); }
+  else if(f==='klein'){ for(k=cu-2;k<=cu+2;k++){ var vk=(k&1)?1-v:v; for(m=cv-2;m<=cv+2;m++) out.push([u+k,vk+m]); } }
+  else if(f==='crosscap'){ for(k=cu-1;k<=cu+1;k++) out.push([u+k,v]); }
+  else { for(k=cu-1;k<=cu+1;k++) for(m=cv-1;m<=cv+1;m++) out.push([u+k,v+m]); }
+  return out;
+}
+function cellOf(x,sg){
+  var rd=Math.round(x); if(Math.abs(x-rd)<1e-9) return sg>0?rd-1:rd;
+  return Math.floor(x);
+}
+function fold(U,V,sU,sV){
+  var f=ST.fig, cu=cellOf(U,sU||0), cv=cellOf(V,sV||0), uu=U-cu, vv=V-cv;
+  if(f==='mobius'){ cv=0; vv=clamp(V,0,1); if(cu&1) vv=1-vv; }
+  else if(f==='klein'){ if(cu&1) vv=1-vv; }
+  else if(f==='crosscap'){ cv=0; vv=clamp(V,0,1); }
+  return [uu,vv,cu,cv];
+}
+
+
 /* ── geometría: rectángulo (u,v) → mundo, según el avance de la construcción ── */
 function prm(p){
+  if(!isTM()) return prmGen(p);
   var esp=ST.modo==='esp';
+  if(ST.modo==='coil') return {A:{s1:1,s2:1,slide:0},B:ST.fig==='enlazados'?{s1:1,s2:1,slide:0,alpha:1}:null};
   if(ST.fig==='toro') return esp?{A:{s1:p,s2:ease(p),slide:0,d:.6},B:null}:{A:{s1:ease(p/.5),s2:ease((p-.5)/.5),slide:0},B:null};
   if(esp){
     var sl2=ease((p-.58)/.12), a=clamp(p/.4,0,1);
@@ -12843,9 +12921,12 @@ function pathAbs(w,T){
   T.pts.forEach(function(pt){
     var c=ptUV(w,pt), u=c[0], v=c[1];
     if(!pa){ pa=[u,v]; pm=[u,v]; out.push([u,v]); return; }
-    var du=u-pm[0], dv=v-pm[1];
-    if(T.cruz){ du-=Math.round(du); dv-=Math.round(dv); }
-    pa=[pa[0]+du,pa[1]+dv]; pm=[u,v]; out.push([pa[0],pa[1]]);
+    if(T.cruz){
+      var best=null, bd=1e18;
+      lifts(u,v,Math.round(pa[0]-u),Math.round(pa[1]-v)).forEach(function(L_){ var d=Math.hypot((L_[0]-pa[0])*LG,(L_[1]-pa[1])*SH); if(d<bd){ bd=d; best=L_; } });
+      pa=[best[0],best[1]];
+    } else { pa=[pa[0]+(u-pm[0]),pa[1]+(v-pm[1])]; }
+    pm=[u,v]; out.push([pa[0],pa[1]]);
   });
   return out;
 }
@@ -12862,36 +12943,41 @@ function posAt(path,cum,f){
 }
 function trays(w){
   var Wd=ST[w]; if(Wd.T.length) return Wd.T;
-  if(Wd.L.length>1) return [{id:'auto',virt:true,c:'#c9a84c',cruz:ST.cruz,pts:Wd.L.map(function(l){return {ref:l.id,u:l.u,v:l.v};})}];
+  if(ST.modo!=='coil'&&Wd.L.length>1) return [{id:'auto',virt:true,c:'#c9a84c',cruz:ST.cruz,pts:Wd.L.map(function(l){return {ref:l.id,u:l.u,v:l.v};})}];
   return [];
 }
 function selT(){ var t=trays(ST.act); return t.filter(function(x){return x.id===UI.selT;})[0]||t[t.length-1]||null; }
 function wrap01(x){ return x-Math.floor(x); }
 
 /* ── estado: guardar / cargar / deshacer ── */
-function copia(){ return JSON.stringify({A:ST.A,B:ST.B}); }
+function copia(){ return JSON.stringify({A:ST.A,B:ST.B,C:ST.C}); }
 function pushUndo(){ UI.undo.push(copia()); if(UI.undo.length>60) UI.undo.shift(); }
 function cambio(){ UI.dirty=true; loop(); try{ if(typeof snapshot==='function') snapshot(); }catch(e){} }
 function ser(){
-  var n=ST.A.L.length+ST.A.T.length+ST.B.L.length+ST.B.T.length; if(!n&&(ST.nomU!=='directriz'||ST.nomV!=='generatriz')) n=1;
+  var n=0; ['A','B','C'].forEach(function(w){ n+=ST[w].L.length+ST[w].T.length; });
+  if(!n&&(ST.nomU!=='directriz'||ST.nomV!=='generatriz'||ST.fig!=='toro')) n=1;
   if(!n) return null;
-  return JSON.parse(JSON.stringify({fig:ST.fig,act:ST.act,cruz:ST.cruz,modo:ST.modo,nomU:ST.nomU,nomV:ST.nomV,A:ST.A,B:ST.B}));
+  return JSON.parse(JSON.stringify({fig:ST.fig,act:ST.act,cruz:ST.cruz,modo:ST.modo,nomU:ST.nomU,nomV:ST.nomV,repetir:ST.repetir,encima:ST.encima,vueltas:ST.vueltas,tcol:ST.tcol,cuad:ST.cuad,trans:ST.trans,gro:ST.gro,A:ST.A,B:ST.B,C:ST.C}));
 }
 function cargar(o){
-  UI.undo=[]; UI.sel=null; UI.selT=null; UI.trazo=null; UI.q=0; UI.qTo=null; UI.qPlay=false;
-  if(!o){ ST.A={L:[],T:[]}; ST.B={L:[],T:[]}; ST.fig='toro'; ST.act='A'; ST.cruz=true; ST.modo='seq'; ST.nomU='directriz'; ST.nomV='generatriz'; }
-  else { ST.fig=o.fig==='enlazados'?'enlazados':'toro'; ST.act=o.act==='B'?'B':'A'; ST.cruz=o.cruz!==false;
-    ST.A=o.A||{L:[],T:[]}; ST.B=o.B||{L:[],T:[]}; ST.modo=o.modo==='esp'?'esp':'seq'; ST.nomU=o.nomU||'directriz'; ST.nomV=o.nomV||'generatriz'; }
-  if(ST.fig==='toro') ST.act='A';
+  UI.undo=[]; UI.sel=null; UI.selT=null; UI.trazo=null; UI.q=0; UI.qTo=null; UI.qPlay=false; UI.pTo=null;
+  o=o||{};
+  ST.fig=FIGS[o.fig]?o.fig:'toro'; ST.act=(o.act==='B'||o.act==='C')?o.act:'A'; ST.cruz=o.cruz!==false;
+  ST.A=o.A||{L:[],T:[]}; ST.B=o.B||{L:[],T:[]}; ST.C=o.C||{L:[],T:[]};
+  ST.modo=(o.modo==='esp'||o.modo==='coil')?o.modo:'seq'; ST.repetir=o.repetir!==false; ST.encima=o.encima!==false;
+  ST.nomU=o.nomU||'directriz'; ST.nomV=o.nomV||'generatriz'; ST.vueltas=(typeof o.vueltas==='number')?o.vueltas:null;
+  ST.tcol=o.tcol||{A:[212,42],B:[30,62],C:[150,38]}; ST.cuad=o.cuad!==false; ST.trans=!!o.trans; ST.gro=o.gro||1;
+  if(ringIds().indexOf(ST.act)<0) ST.act='A';
+  if(ST.modo==='coil'&&!FD().tor) ST.modo='esp';
   syncUI(); UI.dirty=true;
 }
-
 /* ── interfaz ── */
 function syncUI(){
-  var g=$('fg-figs'); if(!g) return;
-  [].forEach.call(g.querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.f===ST.fig); });
-  $('fg-which').style.display=ST.fig==='enlazados'?'inline-flex':'none';
-  [].forEach.call($('fg-which').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.w===ST.act); });
+  var g=$('fg-figsel'); if(!g) return;
+  g.value=ST.fig;
+  var n=FD().n, wh=$('fg-which'); wh.style.display=n>1?'inline-flex':'none';
+  [].forEach.call(wh.querySelectorAll('button'),function(b){ var w=b.dataset.w; b.style.display=ringIdx(w)<n?'':'none'; b.classList.toggle('on',w===ST.act);
+    b.textContent=ST.fig==='borromeo'?'Anillo '+(ringIdx(w)+1):'Toro '+w; });
   [].forEach.call($('fg-tool').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.t===UI.tool); });
   $('fg-fin').style.display=(UI.tool==='trazo'&&UI.trazo&&UI.trazo.pts.length>=2)?'':'none';
   $('fg-cruz').textContent='Cruzar bordes '+(ST.cruz?'✓':'✗');
@@ -12899,23 +12985,52 @@ function syncUI(){
   $('fg-rec').classList.toggle('on',UI.qPlay);
   $('fg-auto').classList.toggle('on',UI.auto);
   $('fg-scrub').value=Math.round(UI.p*1000);
-  var h=$('fig-hint');
-  h.textContent=UI.tool==='letra'?'Toca para poner una letra · arrastra · mantén = renombrar'
-    :UI.tool==='trazo'?'Toca letras en el orden del recorrido y pulsa «Terminar»':'Toca una letra o un trayecto para borrarlo';
+  var coil=ST.modo==='coil', h=$('fig-hint');
+  h.textContent=UI.tool==='trazo'?'Toca letras en orden (puedes repetir) y pulsa «Terminar»'
+    :UI.tool==='borrar'?'Toca una letra o un trayecto para borrarlo'
+    :coil?'Espiral: crea el recorrido con «Trayecto» o «Letras → trayecto»'
+    :'Toca para poner una letra · arrastra · mantén = renombrar';
   [].forEach.call($('fg-sws').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.c===UI.col); });
-  [].forEach.call($('fg-modo').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.m===ST.modo); });
+  [].forEach.call($('fg-modo').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.m===ST.modo); if(b.dataset.m==='coil') b.style.display=FD().tor?'':'none'; });
+  var rb=$('fg-rep'); if(rb) rb.textContent='Repetir '+(ST.repetir?'✓':'✗'); var eb=$('fg-enc'); if(eb) eb.textContent='Encima '+(ST.encima?'✓':'✗');
+  var vg=$('fg-vgrp'); if(vg){ vg.style.display=coil?'inline-flex':'none'; if(coil){ var cd=coilData(ST.act); $('fg-vn').textContent=ST.vueltas?ST.vueltas:('auto ≈'+Math.round(cd.Vtot)); } }
+  $('fg-style').style.display=UI.styleOpen?'flex':'none'; $('fg-stbtn').classList.toggle('on',UI.styleOpen);
+  var tc=ST.tcol[ST.act]; [].forEach.call($('fg-tcols').querySelectorAll('button'),function(b){ var pr=PRESETS[+b.dataset.i]; b.classList.toggle('on',pr[0]===tc[0]&&pr[1]===tc[1]); });
+  $('fg-cuad').textContent='Cuadrícula '+(ST.cuad?'✓':'✗'); $('fg-trans').textContent='Translúcido '+(ST.trans?'✓':'✗'); $('fg-gro').textContent='Grosor ×'+ST.gro;
   UI.dirty=true; loop(); refChip();
 }
-function figura(f){ ST.fig=f; if(f==='toro') ST.act='A'; UI.p=1; UI.play=false; syncUI(); UI.dirty=true; cambio(); }
-function activo(w){ ST.act=w; UI.sel=null; UI.selT=null; UI.trazo=null; if(w==='B'&&UI.p<.7) UI.p=1; UI.q=0; syncUI(); UI.dirty=true; }
+function figura(f){ if(!FIGS[f]) return; ST.fig=f; if(ringIds().indexOf(ST.act)<0) ST.act='A'; if(ST.modo==='coil'&&!FD().tor) ST.modo='esp'; UI.selT=null; UI.sel=null; UI.trazo=null; UI.q=0; UI.p=1; UI.play=false; syncUI(); UI.dirty=true; cambio(); }
+function activo(w){ ST.act=w; UI.sel=null; UI.selT=null; UI.trazo=null; if(w!=='A'&&UI.p<.7) UI.p=1; UI.q=0; syncUI(); UI.dirty=true; }
 function herr(t){ UI.tool=t; UI.trazo=null; UI.sel=null; syncUI(); UI.dirty=true; }
 function alternarCruzar(){ ST.cruz=!ST.cruz; syncUI(); UI.dirty=true; if(typeof showInd==='function') showInd(ST.cruz?'Los trayectos cruzan los bordes por el camino corto':'Los trayectos van en línea recta dentro del plano'); }
 function deshacer(){
   if(UI.trazo&&UI.trazo.pts.length){ UI.trazo.pts.pop(); if(!UI.trazo.pts.length) UI.trazo=null; syncUI(); UI.dirty=true; return; }
-  var s=UI.undo.pop(); if(!s) return;
-  var o=JSON.parse(s); ST.A=o.A; ST.B=o.B; UI.sel=null; UI.selT=null; UI.dirty=true; cambio();
+  var s_=UI.undo.pop(); if(!s_) return;
+  var o=JSON.parse(s_); ST.A=o.A; ST.B=o.B; ST.C=o.C||{L:[],T:[]}; UI.sel=null; UI.selT=null; UI.dirty=true; cambio();
 }
-function modo(m){ ST.modo=m; UI.p=1; UI.play=false; syncUI(); cambio(); }
+function vueltas(d){
+  var cd=coilData(ST.act);
+  if(d===0){ ST.vueltas=null; }
+  else { var cur=ST.vueltas||Math.max(1,Math.round(cd.Vtot)); ST.vueltas=clamp(cur+d,1,60); }
+  UI.p=Math.max(UI.p,.999); syncUI(); cambio();
+}
+function usarLetras(){
+  var a=act(); if(a.L.length<2){ if(typeof showInd==='function') showInd('Pon al menos dos letras'); return; }
+  pushUndo(); var T={id:nid('t'),c:UI.col,cruz:ST.cruz,pts:a.L.map(function(l){return {ref:l.id,u:l.u,v:l.v};})};
+  a.T.push(T); UI.selT=T.id; UI.q=0; syncUI(); cambio();
+  if(typeof showInd==='function') showInd('Trayecto creado con tus letras en orden. Las letras nuevas ya no lo cambian');
+}
+function estilo(k,i){
+  if(k==='abrir'){ UI.styleOpen=!UI.styleOpen; }
+  else if(k==='color'){ ST.tcol[ST.act]=PRESETS[i].slice(); }
+  else if(k==='cuad'){ ST.cuad=!ST.cuad; }
+  else if(k==='trans'){ ST.trans=!ST.trans; }
+  else if(k==='gro'){ ST.gro=ST.gro>=2.3?1:(ST.gro<1.6?1.6:2.3); }
+  syncUI(); if(k!=='abrir') cambio();
+}
+function repetir(){ ST.repetir=!ST.repetir; syncUI(); cambio(); if(typeof showInd==='function') showInd(ST.repetir?'La secuencia de letras se repite hasta cerrar el toro':'La espiral usa sólo tu secuencia de letras'); }
+function encima(){ ST.encima=!ST.encima; syncUI(); cambio(); }
+function modo(m){ if(m==='coil'&&!FD().tor) m='esp'; ST.modo=m; UI.p=1; UI.play=false; syncUI(); cambio(); }
 function nombres(cual){
   var a=cual!=='v'?prompt('Nombre del eje horizontal (largo):',ST.nomU):null;
   if(a!==null&&a.trim()) ST.nomU=a.trim().slice(0,24);
@@ -12942,17 +13057,25 @@ function terminar(){
 function armar(){
   if(UI.play){ UI.play=false; syncUI(); return; }
   if(UI.p>=.999) UI.p=0;
-  UI.dur=(ST.fig==='toro'?7:11)+(ST.modo==='esp'?1:0); UI.play=true; UI.last=0; syncUI(); loop();
+  var base={toro:7,enlazados:11,borromeo:12,mobius:6,klein:7,crosscap:6}[ST.fig]||7;
+  UI.dur=base+(ST.modo==='esp'?1:0)+(ST.modo==='coil'?(FD().n>1?8:6):0); UI.play=true; UI.last=0; syncUI(); loop();
 }
 function recorrer(){
-  var T=selT(); if(!T||T.pts.length<2){ if(typeof showInd==='function') showInd('Dibuja primero un trayecto con «Trayecto»'); return; }
+  if(ST.modo==='coil'){ armar(); return; }
+  var T=selT(); if(!T||(!T.abs&&T.pts.length<2)){ if(typeof showInd==='function') showInd('Pon al menos dos letras o dibuja un trayecto'); return; }
   if(UI.qPlay){ UI.qPlay=false; syncUI(); return; }
   if(UI.p<.95) UI.p=1;
   if(UI.q>=.999) UI.q=0;
   UI.qTo=1; UI.qPlay=true; UI.last=0; syncUI(); loop();
 }
 function paso(d){
-  var T=selT(); if(!T||T.pts.length<2) return;
+  if(ST.modo==='coil'){
+    var cd=coilData(ST.act), fr=cd.info.map(function(n){return pOfT(ST.act,n.t);}), cur=UI.p, tg=null, ii;
+    if(d>0){ for(ii=0;ii<fr.length;ii++) if(fr[ii]>cur+1e-3){ tg=fr[ii]; break; } if(tg===null) tg=1; }
+    else { for(ii=fr.length-1;ii>=0;ii--) if(fr[ii]<cur-1e-3){ tg=fr[ii]; break; } if(tg===null) tg=0; }
+    UI.pTo=tg; UI.play=false; UI.last=0; syncUI(); loop(); return;
+  }
+  var T=selT(); if(!T||(!T.abs&&T.pts.length<2)) return;
   var path=pathAbs(ST.act,T), cum=cumLen(path), tot=cum[cum.length-1]||1;
   var fr=cum.map(function(c){return c/tot;}), i, tgt=null;
   if(d>0){ for(i=0;i<fr.length;i++) if(fr[i]>UI.q+1e-3){ tgt=fr[i]; break; } if(tgt===null) tgt=fr[fr.length-1]; }
@@ -12963,10 +13086,12 @@ function paso(d){
 function autogiro(){ UI.auto=!UI.auto; if(UI.auto){ if(!UI.manual){ UI.cam=camAuto(); UI.manual=true; } UI.last=0; loop(); } syncUI(); }
 function vista(){ UI.manual=false; UI.auto=false; UI.zoom=1; UI.cam={yaw:.5,e:.75}; syncUI(); UI.dirty=true; }
 function camAuto(){
-  var p=UI.p, s=ease(p/.45);
+  if(ST.modo==='coil') return {yaw:.5,e:.85};
+  var p=UI.p;
+  if(!isTM()) return {yaw:.6*ease(p/.3), e:1.2-.45*ease(p/.5)};
+  var s=ease(p/.45);
   return {yaw:.5*ease(p/.3), e:1.25-.5*s};
 }
-
 /* ── letras del grafo ── */
 function traerDelGrafo(){
   if(typeof cy==='undefined'||!cy) return;
@@ -12996,25 +13121,41 @@ function arrow(c,x,y,dx,dy,col,n){
     c.beginPath(); c.moveTo(ox+dx*6,oy+dy*6); c.lineTo(ox-dx*4-dy*4,oy-dy*4+dx*4); c.lineTo(ox-dx*4+dy*4,oy-dy*4-dx*4); c.closePath(); c.fill(); }
 }
 function trazoWrapped(c,path,R_){
-  // Dibuja el trayecto desenrollado sobre el plano, cortando el trazo cuando cruza un borde.
+  // Dibuja el trayecto desenrollado sobre el plano; corta el trazo al cruzar un borde (según cómo se pega cada figura).
   var pts=[], i, j;
   for(i=0;i<path.length-1;i++){
-    var n=Math.max(2,Math.ceil(Math.hypot((path[i+1][0]-path[i][0])*LG,(path[i+1][1]-path[i][1])*SH)/.35));
-    for(j=(i?1:0);j<=n;j++){ var s=j/n; pts.push([path[i][0]+(path[i+1][0]-path[i][0])*s, path[i][1]+(path[i+1][1]-path[i][1])*s]); }
+    var n=Math.max(2,Math.ceil(Math.hypot((path[i+1][0]-path[i][0])*LG,(path[i+1][1]-path[i][1])*SH)/.08));
+    for(j=(i?1:0);j<=n;j++){ var s_=j/n; pts.push([path[i][0]+(path[i+1][0]-path[i][0])*s_, path[i][1]+(path[i+1][1]-path[i][1])*s_]); }
   }
   if(pts.length===1) pts.push(pts[0]);
-  c.beginPath(); var prev=null, start=true;
-  var pr_=null;
-  pts.forEach(function(p){
-    var u=wrap01(p[0]), v=wrap01(p[1]);
-    if(pr_){ if(u<1e-7&&p[0]>pr_[0]&&prev&&prev[0]>.5) u=1; if(v<1e-7&&p[1]>pr_[1]&&prev&&prev[1]>.5) v=1; }
-    var q=f2px(u,v,R_);
-    if(prev&&(Math.abs(u-prev[0])>.5||Math.abs(v-prev[1])>.5)) start=true;
-    if(start){ c.moveTo(q[0],q[1]); start=false; } else c.lineTo(q[0],q[1]);
-    prev=[u,v]; pr_=p;
+  c.beginPath(); var prev=null, lastQ=null, prevQ=null;
+  pts.forEach(function(p,k){
+    var sU=k>0?Math.sign(p[0]-pts[k-1][0]):-Math.sign((pts[1]||p)[0]-p[0]), sV=k>0?Math.sign(p[1]-pts[k-1][1]):-Math.sign((pts[1]||p)[1]-p[1]);
+    var fd=fold(p[0],p[1],sU,sV), q=f2px(fd[0],fd[1],R_), cell=fd[2]+','+fd[3];
+    if(cell!==prev){ c.moveTo(q[0],q[1]); prevQ=null; } else { c.lineTo(q[0],q[1]); prevQ=lastQ; }
+    prev=cell; lastQ=q;
   });
   c.stroke();
-  return pts;
+  return {last:lastQ,prev:prevQ};
+}
+function drawEdges(c,R_){
+  var f=ST.fig, G='#3fae6a', Rr='#e0556a', W_='#cfc6a8', x0=R_.x, y0=R_.y, x1=R_.x+R_.w, y1=R_.y+R_.h, mx=R_.x+R_.w/2, my=R_.y+R_.h/2;
+  function ln(ax,ay,bx,by,col,dash){ c.strokeStyle=col; c.lineWidth=2.4; c.setLineDash(dash||[]); c.beginPath(); c.moveTo(ax,ay); c.lineTo(bx,by); c.stroke(); c.setLineDash([]); }
+  if(f==='mobius'){
+    ln(x0,y0,x1,y0,W_); ln(x0,y1,x1,y1,W_); ln(x0,y0,x0,y1,Rr); ln(x1,y0,x1,y1,Rr);
+    arrow(c,x0,my+4,0,1,Rr,2); arrow(c,x1,my-4,0,-1,Rr,2);
+  } else if(f==='klein'){
+    ln(x0,y0,x1,y0,G); ln(x0,y1,x1,y1,G); ln(x0,y0,x0,y1,Rr); ln(x1,y0,x1,y1,Rr);
+    arrow(c,mx+4,y0,1,0,G,1); arrow(c,mx+4,y1,1,0,G,1); arrow(c,x0,my+4,0,1,Rr,2); arrow(c,x1,my-4,0,-1,Rr,2);
+  } else if(f==='crosscap'){
+    ln(x0,y0,x1,y0,'#7d7660',[3,4]); ln(x0,y1,x1,y1,Rr); ln(x0,y0,x0,y1,G); ln(x1,y0,x1,y1,G);
+    arrow(c,x0,my+4,0,1,G,1); arrow(c,x1,my+4,0,1,G,1);
+    arrow(c,x0+R_.w*.25+4,y1,1,0,Rr,2); arrow(c,x0+R_.w*.75+4,y1,1,0,Rr,2);
+    c.fillStyle='#7d7660'; c.font='9px Inter,sans-serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillText('polo',mx,y0-2);
+  } else {
+    ln(x0,y0,x1,y0,G); ln(x0,y1,x1,y1,G); ln(x0,y0,x0,y1,Rr); ln(x1,y0,x1,y1,Rr);
+    arrow(c,mx+4,y0,1,0,G,1); arrow(c,mx+4,y1,1,0,G,1); arrow(c,x0,my+4,0,1,Rr,2); arrow(c,x1,my+4,0,1,Rr,2);
+  }
 }
 function drawFlat(){
   var c=cxF; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,wF,hF);
@@ -13024,29 +13165,23 @@ function drawFlat(){
   for(i=1;i<8;i++){ var gx=R_.x+R_.w*i/8; c.moveTo(gx,R_.y); c.lineTo(gx,R_.y+R_.h); }
   for(i=1;i<3;i++){ var gy=R_.y+R_.h*i/3; c.moveTo(R_.x,gy); c.lineTo(R_.x+R_.w,gy); }
   c.stroke();
-  // bordes identificados: verde (arriba/abajo, se pegan al enrollar) y rojo (izquierda/derecha, se pegan al cerrar el toro)
-  c.lineWidth=2.4; c.strokeStyle='#3fae6a'; c.beginPath(); c.moveTo(R_.x,R_.y); c.lineTo(R_.x+R_.w,R_.y); c.moveTo(R_.x,R_.y+R_.h); c.lineTo(R_.x+R_.w,R_.y+R_.h); c.stroke();
-  c.strokeStyle='#e0556a'; c.beginPath(); c.moveTo(R_.x,R_.y); c.lineTo(R_.x,R_.y+R_.h); c.moveTo(R_.x+R_.w,R_.y); c.lineTo(R_.x+R_.w,R_.y+R_.h); c.stroke();
-  arrow(c,R_.x+R_.w/2+4,R_.y,1,0,'#3fae6a',1); arrow(c,R_.x+R_.w/2+4,R_.y+R_.h,1,0,'#3fae6a',1);
-  arrow(c,R_.x,R_.y+R_.h/2+4,0,1,'#e0556a',2); arrow(c,R_.x+R_.w,R_.y+R_.h/2+4,0,1,'#e0556a',2);
+  drawEdges(c,R_);
   c.fillStyle='#9d9378'; c.font='10px Inter,sans-serif'; c.textAlign='center'; c.textBaseline='top';
   c.fillText(ST.nomU+'  →',R_.x+R_.w/2,R_.y+R_.h+3);
   c.save(); c.translate(R_.x-12,R_.y+R_.h/2); c.rotate(-Math.PI/2); c.textBaseline='bottom'; c.fillText(ST.nomV,0,0); c.restore();
-  // trayectos
+  var g=ST.gro||1;
   trays(ST.act).forEach(function(T){
     var path=pathAbs(ST.act,T), sel=(selT()===T||T.virt);
-    c.lineWidth=sel?3:2; c.strokeStyle=T.c; c.globalAlpha=sel?1:.8;
-    var pts=trazoWrapped(c,path,R_);
+    c.lineWidth=(sel?3:2)*Math.min(g,1.6); c.strokeStyle=T.c; c.globalAlpha=sel?1:.8;
+    var o=trazoWrapped(c,path,R_);
     c.globalAlpha=1;
-    if(pts.length>1){ var e=pts[pts.length-1], b=pts[pts.length-2], eu=wrap01(e[0]), ev=wrap01(e[1]); if(eu<1e-7&&e[0]>b[0]) eu=1; if(ev<1e-7&&e[1]>b[1]) ev=1; var q=f2px(eu,ev,R_), q0=f2px(wrap01(b[0]),wrap01(b[1]),R_);
-      var dx=q[0]-q0[0], dy=q[1]-q0[1], d=Math.hypot(dx,dy)||1; if(d<40) arrow(c,q[0],q[1],dx/d,dy/d,T.c,1); }
+    if(o.last&&o.prev){ var dx=o.last[0]-o.prev[0], dy=o.last[1]-o.prev[1], d=Math.hypot(dx,dy)||1; arrow(c,o.last[0],o.last[1],dx/d,dy/d,T.c,1); }
   });
   if(UI.trazo&&UI.trazo.pts.length){
     var tp={cruz:ST.cruz,pts:UI.trazo.pts}, pth=pathAbs(ST.act,tp);
     c.setLineDash([5,4]); c.lineWidth=2; c.strokeStyle=UI.col; trazoWrapped(c,pth,R_); c.setLineDash([]);
     UI.trazo.pts.forEach(function(pt){ var uv=ptUV(ST.act,pt), q=f2px(uv[0],uv[1],R_); c.fillStyle=UI.col; c.beginPath(); c.arc(q[0],q[1],3.5,0,TAU); c.fill(); });
   }
-  // letras
   c.font='600 13px Inter,sans-serif'; c.textAlign='center'; c.textBaseline='middle';
   a.L.forEach(function(l){
     var q=f2px(l.u,l.v,R_), sel=UI.sel&&UI.sel.k==='L'&&UI.sel.id===l.id;
@@ -13054,28 +13189,76 @@ function drawFlat(){
     if(sel){ c.strokeStyle='#fff'; c.lineWidth=1.5; c.beginPath(); c.arc(q[0],q[1],9,0,TAU); c.stroke(); }
     c.lineWidth=3; c.strokeStyle='#17150f'; c.strokeText(l.l,q[0],q[1]-13); c.fillStyle=l.c; c.fillText(l.l,q[0],q[1]-13);
   });
+  var coil=ST.modo==='coil'&&FD().tor;
+  if(coil){
+    var cd=coilData(ST.act); c.lineWidth=1.8; c.strokeStyle='#ffd76a'; c.globalAlpha=.9; trazoWrapped(c,cd.abs,R_); c.globalAlpha=1;
+    var Pn=winP(ST.act); if(Pn>0&&Pn<1){ var ix=Math.round(Pn*cd.M), fd=fold(cd.u0+cd.Us[ix],cd.v0+cd.Vs[ix]), m2=f2px(fd[0],fd[1],R_); c.fillStyle='#fff'; c.beginPath(); c.arc(m2[0],m2[1],5,0,TAU); c.fill(); }
+  }
   var T=selT();
-  if(T&&UI.q>0){ var pa=pathAbs(ST.act,T), pp=posAt(pa,cumLen(pa),UI.q); if(pp){ var m=f2px(wrap01(pp[0]),wrap01(pp[1]),R_); c.fillStyle='#fff'; c.beginPath(); c.arc(m[0],m[1],5,0,TAU); c.fill(); } }
+  if(!coil&&T&&UI.q>0){ var pa=pathAbs(ST.act,T), pp=posAt(pa,cumLen(pa),UI.q); if(pp){ var f2=fold(pp[0],pp[1]), m=f2px(f2[0],f2[1],R_); c.fillStyle='#fff'; c.beginPath(); c.arc(m[0],m[1],5,0,TAU); c.fill(); } }
 }
-
 /* ── lienzo 3D: pintor con cuadriláteros ordenados por profundidad ── */
-var NU=64, NV=24;
+var NU=80, NV=30;
+/* ── modo «Espiral»: una hélice que avanza por la directriz dando vueltas por la generatriz.
+   La superficie ya construida (detrás de la hélice) es cilindro y toro a la vez. ── */
+var COIL={};
+function mod1(x){ return x-Math.floor(x); }
+function coilNodesRaw(w){
+  var Wd=ST[w], ts=Wd.T.filter(function(x){return !x.abs;}), T=ts.filter(function(x){return x.id===UI.selT;})[0]||ts[ts.length-1]||null;
+  var pts=T?T.pts:[];
+  return pts.map(function(pt){ var uv=ptUV(w,pt), l=pt.ref?Wd.L.filter(function(x){return x.id===pt.ref;})[0]:null; return {u:uv[0],v:uv[1],l:l?l.l:'',c:l?l.c:'#c9a84c',ref:l?l.id:null}; });
+}
+function coilData(w){
+  var nodes=coilNodesRaw(w), rep=ST.repetir!==false, nv_=ST.vueltas||0, key=JSON.stringify([nodes,rep,NU,NV,nv_]);
+  if(COIL[w]&&COIL[w].key===key) return COIL[w];
+  if(nodes.length<2) nodes=[{u:0,v:0,l:'',c:'#c9a84c'},{u:1/16,v:.5,l:'',c:'#c9a84c'}];
+  if(nodes.length===2&&!nodes[0].l&&!nodes[1].l&&!nodes[0].ref) {}
+  var k=nodes.length, inc=[], i, sumdu=0;
+  for(i=1;i<k;i++){ var du=mod1(nodes[i].u-nodes[i-1].u), dv=mod1(nodes[i].v-nodes[i-1].v); if(du<.003) du=.02; if(dv<.003) dv=1; if(nv_) du=dv/nv_; inc.push([du,dv]); sumdu+=du; }
+  var cdu=mod1(nodes[0].u-nodes[k-1].u), cdv=mod1(nodes[0].v-nodes[k-1].v);
+  if(cdu>.5||cdu<.003) cdu=sumdu/(k-1); if(cdv<.003) cdv=1; if(nv_) cdu=cdv/nv_;
+  inc.push([cdu,cdv]);
+  var u0=nodes[0].u, v0=nodes[0].v, U=0, V=0, abs=[[u0,v0]], info=[{U:0,V:0,l:nodes[0].l,c:nodes[0].c}], maxN=rep?700:k-1;
+  for(var n=1;n<=maxN;n++){
+    var d=inc[(n-1)%k], du2=d[0], dv2=d[1];
+    if(U+du2>=1-1e-9){ var t=(1-U)/du2; U=1; V+=dv2*t; abs.push([u0+U,v0+V]); info.push({U:U,V:V,l:'',c:'#c9a84c'}); break; }
+    U+=du2; V+=dv2; abs.push([u0+U,v0+V]); info.push({U:U,V:V,l:nodes[n%k].l,c:nodes[n%k].c});
+  }
+  // muestras finas, uniformes en longitud sobre el plano
+  var M=900, cum=[0], j;
+  for(j=1;j<info.length;j++) cum.push(cum[j-1]+Math.hypot((info[j].U-info[j-1].U)*LG,(info[j].V-info[j-1].V)*SH));
+  var tot=cum[cum.length-1]||1, Us=new Float32Array(M+1), Vs=new Float32Array(M+1), s=1;
+  for(i=0;i<=M;i++){ var dd=i/M*tot; while(s<cum.length-1&&cum[s]<dd) s++; var f=(dd-cum[s-1])/Math.max(1e-9,cum[s]-cum[s-1]); Us[i]=info[s-1].U+(info[s].U-info[s-1].U)*f; Vs[i]=info[s-1].V+(info[s].V-info[s-1].V)*f; }
+  info.forEach(function(nd,q){ nd.t=cum[q]/tot; });
+  var c={key:key,u0:u0,v0:v0,abs:abs,info:info,Us:Us,Vs:Vs,M:M,Utot:U,Vtot:V,refs:{},tg:null};
+  nodes.forEach(function(nd){ if(nd.ref) c.refs[nd.ref]=1; });
+  function tau(u,v){
+    var up=mod1(u-u0+1e-9), vp=mod1(v-v0+1e-9)-1e-9; if(vp<0) vp=0;
+    if(up>U+1e-6) return 2;
+    for(var kk=0;vp+kk<=V+1e-9;kk++){
+      var tg=vp+kk, lo=0, hi=M+1; while(lo<hi){ var mid=(lo+hi)>>1; if(Vs[mid]>=tg) hi=mid; else lo=mid+1; }
+      if(lo>M) break; if(Us[lo]>=up-1e-6) return lo/M;
+    }
+    return 2;
+  }
+  c.tau=tau;
+  var tg=new Float32Array((NU+1)*(NV+1)); for(i=0;i<=NU;i++) for(j=0;j<=NV;j++) tg[i*(NV+1)+j]=tau(i/NU,j/NV);
+  c.tg=tg; COIL[w]=c; return c;
+}
+function coilP(w){ return winP(w); }
 function drawFig(){
   var c=cxS; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,wS,hS);
-  var pr=prm(UI.p), cam=UI.manual?UI.cam:camAuto();
-  var ws=['A']; if(pr.B&&pr.B.alpha>0) ws.push('B');
-  // malla mundial
-  var grids={}, mn=[1e9,1e9,1e9], mx=[-1e9,-1e9,-1e9], w, i, j, k;
+  var coil=ST.modo==='coil'&&FD().tor, reveal=ST.modo==='esp'&&!isTM(), pr=prm(UI.p), cam=UI.manual?UI.cam:camAuto();
+  var ws=ringIds().filter(function(w){ return pr[w]&&(pr[w].alpha===undefined||pr[w].alpha>0); });
+  var grids={}, mn=[1e9,1e9,1e9], mx=[-1e9,-1e9,-1e9], i, j, k;
   ws.forEach(function(w){
     var g=new Array((NU+1)*(NV+1)), q=pr[w];
-    for(i=0;i<=NU;i++) for(j=0;j<=NV;j++){ var P=surf(w,i/NU,j/NV,q); g[i*(NV+1)+j]=P; for(k=0;k<3;k++){ if(P[k]<mn[k])mn[k]=P[k]; if(P[k]>mx[k])mx[k]=P[k]; } }
+    for(i=0;i<=NU;i++) for(j=0;j<=NV;j++){ var P=surfAny(w,i/NU,j/NV,q); g[i*(NV+1)+j]=P; for(k=0;k<3;k++){ if(P[k]<mn[k])mn[k]=P[k]; if(P[k]>mx[k])mx[k]=P[k]; } }
     grids[w]=g;
   });
   var cen=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2], rad=0;
   ws.forEach(function(w){ grids[w].forEach(function(P){ var d=Math.hypot(P[0]-cen[0],P[1]-cen[1],P[2]-cen[2]); if(d>rad)rad=d; }); });
-  // para que la cámara no "respire" mientras el toro se forma, el radio de encuadre es fijo
-  var fix=ST.fig==='toro'?R+r+.4:Math.max(R+r,LG/2*(pr.B&&pr.B.slide>0?1:0)+R)+1.8;
-  rad=Math.max(rad,ST.fig==='toro'?Math.min(fix,LG/2):Math.min(fix,LG/2));
+  if(isTM()) rad=Math.max(rad,Math.min(ST.fig==='toro'?R+r+.4:R+r+1.8,LG/2));
   var cy_=Math.cos(cam.yaw), sy_=Math.sin(cam.yaw), ce=Math.cos(cam.e), se=Math.sin(cam.e);
   var S=.5*Math.min(wS,hS)/rad*.92*UI.zoom, D=5*rad;
   function V(P){
@@ -13084,63 +13267,90 @@ function drawFig(){
     var yv=y1*se+z*ce, zv=-y1*ce+z*se, f=S/(1-zv/D);
     return [wS/2+x1*f, hS/2-yv*f, zv];
   }
-  var items=[], BIAS=.28;
+  var items=[], BIAS=.28, TOP=ST.encima!==false?1e6:0, G=ST.gro||1;
+  function dfac(z){ return .45+.55*clamp((z+rad)/(2*rad),0,1); }
   ws.forEach(function(w){
-    var g=grids[w], vv=g.map(V), al=(w==='B'&&pr.B)?pr.B.alpha:1, hue=w==='A'?212:30, sat=w==='A'?42:62;
+    var g=grids[w], vv=g.map(V), al=(pr[w].alpha===undefined)?1:pr[w].alpha, tc=ST.tcol[w]||[212,42], hue=tc[0], sat=tc[1];
+    var cd=coil?coilData(w):null, Pw=winP(w);
+    function sup(u,v){ return V(surfAny(w,u,v,pr[w])); }
+    function supF(U,Vv){ var fd=fold(U,Vv); return sup(fd[0],fd[1]); }
     for(i=0;i<NU;i++) for(j=0;j<NV;j++){
       var a=vv[i*(NV+1)+j], b=vv[(i+1)*(NV+1)+j], d=vv[(i+1)*(NV+1)+j+1], e=vv[i*(NV+1)+j+1];
       var ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], wx=e[0]-a[0],wy=e[1]-a[1],wz=e[2]-a[2];
       var nx=uy*wz-uz*wy, ny=uz*wx-ux*wz, nz=ux*wy-uy*wx, nl=Math.hypot(nx,ny,nz)||1;
-      var L=24+34*Math.abs(nz/nl)+(((i>>2)+(j>>1))&1?4:-2);
-      items.push({z:(a[2]+b[2]+d[2]+e[2])/4,t:0,q:[a,b,d,e],col:'hsl('+hue+','+sat+'%,'+L.toFixed(1)+'%)',al:al});
+      var L=24+34*Math.abs(nz/nl)+(ST.cuad!==false?(((i>>2)+(j>>1))&1?4:-2):0), qa=al;
+      if(coil){ var ti=cd.tg, tq=Math.max(ti[i*(NV+1)+j],ti[(i+1)*(NV+1)+j],ti[(i+1)*(NV+1)+j+1],ti[i*(NV+1)+j+1]); if(tq>Pw+1e-6) qa=al*.07; }
+      else if(reveal&&(i+1)/NU>Pw+1e-6) qa=al*.07;
+      if(ST.trans) qa*=.5;
+      items.push({z:(a[2]+b[2]+d[2]+e[2])/4,t:0,q:[a,b,d,e],col:'hsl('+hue+','+sat+'%,'+L.toFixed(1)+'%)',al:qa});
     }
     function linea(fn,n,col,wd){
       var prev=null;
-      for(var s=0;s<=n;s++){ var uv=fn(s/n), P=V(surf(w,uv[0],uv[1],pr[w]));
-        if(prev) items.push({z:(P[2]+prev[2])/2+BIAS,t:1,a:prev,b:P,col:col,w:wd,al:al});
+      for(var s=0;s<=n;s++){ var uv=fn(s/n), P=sup(uv[0],uv[1]);
+        if(prev) items.push({z:(P[2]+prev[2])/2+BIAS+TOP,t:1,a:prev,b:P,col:col,w:wd,al:al*dfac(P[2])*(coil?.5:1)});
         prev=P; }
     }
-    linea(function(s){return [0,s];},24,'#e0556a',2.4); linea(function(s){return [1,s];},24,'#e0556a',2.4);
-    linea(function(s){return [s,0];},64,'#3fae6a',2.4); linea(function(s){return [s,1];},64,'#3fae6a',2.4);
-    var Wd=ST[w];
-    trays(w).forEach(function(T){
-      var path=pathAbs(w,T), sel=(w===ST.act&&selT()===T), prev=null;
-      for(var s=0;s<path.length-1;s++){
-        var n=Math.max(3,Math.ceil(Math.hypot((path[s+1][0]-path[s][0])*LG,(path[s+1][1]-path[s][1])*SH)/.3));
-        for(var m=(s?1:0);m<=n;m++){ var f=m/n, P=V(surf(w,wrap01(path[s][0]+(path[s+1][0]-path[s][0])*f),wrap01(path[s][1]+(path[s+1][1]-path[s][1])*f),pr[w]));
-          if(prev) items.push({z:(P[2]+prev[2])/2+BIAS,t:1,a:prev,b:P,col:T.c,w:sel?3.6:2.6,al:al});
-          prev=P; }
+    if(!coil){
+      var f=ST.fig, RD='#e0556a', GR='#3fae6a', WH='#cfc6a8';
+      if(f==='crosscap'){ linea(function(s){return [0,s];},24,GR,2.4); linea(function(s){return [s,1];},64,RD,2.4); }
+      else {
+        var c1=(f==='mobius')?WH:GR;
+        linea(function(s){return [0,s];},24,RD,2.4); linea(function(s){return [1,s];},24,RD,2.4);
+        linea(function(s){return [s,0];},64,c1,2.4); linea(function(s){return [s,1];},64,c1,2.4);
       }
-    });
-    Wd.L.forEach(function(l){
-      var P=V(surf(w,l.u,l.v,pr[w])); items.push({z:P[2]+BIAS,t:3,p:P,l:l.l,col:l.c,al:al});
-    });
-    if(w===ST.act){
-      var T=selT();
-      if(T&&UI.q>0){ var pa=pathAbs(w,T), cum=cumLen(pa), pp=posAt(pa,cum,UI.q);
-        if(pp){ var P=V(surf(w,wrap01(pp[0]),wrap01(pp[1]),pr[w])); items.push({z:P[2]+BIAS*1.5,t:2,p:P,al:al}); } }
+      trays(w).forEach(function(T){
+        var path=pathAbs(w,T), sel=(w===ST.act&&selT()===T), prev=null;
+        for(var s=0;s<path.length-1;s++){
+          var n=Math.max(3,Math.ceil(Math.hypot((path[s+1][0]-path[s][0])*LG,(path[s+1][1]-path[s][1])*SH)/.3));
+          for(var m=(s?1:0);m<=n;m++){ var ff=m/n, P=supF(path[s][0]+(path[s+1][0]-path[s][0])*ff,path[s][1]+(path[s+1][1]-path[s][1])*ff);
+            if(prev) items.push({z:(P[2]+prev[2])/2+BIAS+TOP,t:1,a:prev,b:P,col:T.c,w:(sel?3.6:2.6)*G,al:al*dfac(P[2])});
+            prev=P; }
+        }
+      });
+      ST[w].L.forEach(function(l){ var P=sup(l.u,l.v); items.push({z:P[2]+BIAS+TOP,t:3,p:P,l:l.l,col:l.c,al:al*(.75+.25*dfac(P[2]))}); });
+      if(w===ST.act){ var T=selT();
+        if(T&&UI.q>0){ var pa=pathAbs(w,T), cum=cumLen(pa), pp=posAt(pa,cum,UI.q);
+          if(pp){ var P=supF(pp[0],pp[1]); items.push({z:P[2]+BIAS*1.5+TOP,t:2,p:P,al:al}); } } }
+    } else {
+      var idx=Math.round(Pw*cd.M), prev2=null, st=3;
+      for(var q2=0;q2<=cd.M;q2+=st){
+        var qq=Math.min(q2,cd.M), P=supF(cd.u0+cd.Us[qq],cd.v0+cd.Vs[qq]), done=qq<=idx;
+        if(prev2) items.push({z:(P[2]+prev2[2])/2+BIAS+TOP,t:1,a:prev2,b:P,col:done?'#ffd76a':'#c9a84c',w:(done?3.2:1.4)*G,al:al*(done?dfac(P[2]):.28)});
+        prev2=P;
+      }
+      cd.info.forEach(function(nd){
+        if(!nd.l||nd.t>Pw+1e-6) return;
+        var P=supF(cd.u0+nd.U,cd.v0+nd.V); items.push({z:P[2]+BIAS+TOP,t:3,p:P,l:nd.l,col:nd.c,al:al*(.75+.25*dfac(P[2]))});
+      });
+      ST[w].L.forEach(function(l){ if(cd.refs[l.id]) return; if(cd.tau(l.u,l.v)>Pw+1e-6) return; var P=sup(l.u,l.v); items.push({z:P[2]+BIAS+TOP,t:3,p:P,l:l.l,col:l.c,al:al}); });
+      if(Pw>0&&Pw<1){ var P3=supF(cd.u0+cd.Us[idx],cd.v0+cd.Vs[idx]); items.push({z:P3[2]+BIAS*1.5+TOP,t:2,p:P3,al:al}); }
     }
   });
   items.sort(function(a,b){return a.z-b.z;});
   c.lineCap='round'; c.lineJoin='round';
   items.forEach(function(it){
-    c.globalAlpha=it.al;
+    c.globalAlpha=Math.max(0,Math.min(1,it.al));
     if(it.t===0){ var q=it.q; c.beginPath(); c.moveTo(q[0][0],q[0][1]); c.lineTo(q[1][0],q[1][1]); c.lineTo(q[2][0],q[2][1]); c.lineTo(q[3][0],q[3][1]); c.closePath(); c.fillStyle=it.col; c.fill(); c.strokeStyle=it.col; c.lineWidth=.7; c.stroke(); }
     else if(it.t===1){ c.beginPath(); c.moveTo(it.a[0],it.a[1]); c.lineTo(it.b[0],it.b[1]); c.strokeStyle=it.col; c.lineWidth=it.w; c.stroke(); }
     else if(it.t===2){ c.beginPath(); c.arc(it.p[0],it.p[1],6,0,TAU); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#17150f'; c.lineWidth=1.5; c.stroke(); }
     else { c.fillStyle=it.col; c.beginPath(); c.arc(it.p[0],it.p[1],3.2,0,TAU); c.fill(); c.font='700 14px Inter,sans-serif'; c.textAlign='center'; c.textBaseline='bottom'; c.lineWidth=3.5; c.strokeStyle='#0d0c09'; c.strokeText(it.l,it.p[0],it.p[1]-5); c.fillText(it.l,it.p[0],it.p[1]-5); }
   });
   c.globalAlpha=1;
-  // leyenda
-  var cap=$('fig-cap'), T2=selT(), txt='';
-  if(UI.p<.999){
-    var esp=ST.modo==='esp', t1=ST.fig==='toro'?(esp?1:.5):(esp?.4:.2), p=UI.p;
-    if(ST.fig==='toro') txt=esp?'El rectángulo se enrolla en espiral mientras se curva en toro':(p<.5?'Se enrolla el rectángulo… los bordes verdes se unen':'El cilindro se curva… los bordes rojos se unen');
-    else if(esp) txt=p<.4?'El rectángulo se enrolla en espiral mientras se curva en toro':(p<.58?'Otro rectángulo se enrolla sobre el primero…':(p<.7?'El cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'));
+  var cap=$('fig-cap'), T2=selT(), txt='', p=UI.p, f2=ST.fig;
+  if(coil){
+    if(p<.999){ var wa=ringIds().filter(function(w_){ var q_=winP(w_); return q_>0&&q_<1; })[0]||'A', cdA=coilData(wa), Pn=winP(wa);
+      txt='La espiral construye cilindro y '+(f2==='borromeo'?'anillo':'toro')+' a la vez · vuelta '+(cdA.Vs[Math.round(Pn*cdA.M)]).toFixed(1)+' de '+cdA.Vtot.toFixed(1); }
+  }
+  else if(p<.999){
+    var esp=ST.modo==='esp';
+    if(!isTM()) txt=esp?'Se construye por barrido a lo largo de la directriz':'El rectángulo se pliega y sus bordes se pegan';
+    else if(f2==='toro') txt=esp?'El rectángulo se enrolla en barrido mientras se curva en toro':(p<.5?'Se enrolla el rectángulo… los bordes verdes se unen':'El cilindro se curva… los bordes rojos se unen');
+    else if(esp) txt=p<.4?'El rectángulo se enrolla en barrido mientras se curva en toro':(p<.58?'Otro rectángulo se enrolla sobre el primero…':(p<.7?'El cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'));
     else txt=p<.2?'Se enrolla el rectángulo… los bordes verdes se unen':(p<.4?'El cilindro se curva… los bordes rojos se unen':(p<.66?'Otro cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'));
   }
-  else if(T2&&UI.q>0){ var pa2=pathAbs(ST.act,T2), pp2=posAt(pa2,cumLen(pa2),UI.q), p0=pa2[0];
-    if(pp2){ txt=(T2.virt?'Tus letras en orden · ':'')+ST.nomU+' '+(pp2[0]-p0[0]).toFixed(2)+' vueltas · '+ST.nomV+' '+(pp2[1]-p0[1]).toFixed(2)+' vueltas · cruces de borde: '+(Math.abs(Math.floor(pp2[0]))+Math.abs(Math.floor(pp2[1]))); } }
+  else if(!coil&&T2&&UI.q>0){ var pa2=pathAbs(ST.act,T2), pp2=posAt(pa2,cumLen(pa2),UI.q), p0=pa2[0];
+    if(pp2){ txt=(T2.virt?'Tus letras en orden · ':'')+ST.nomU+' '+(pp2[0]-p0[0]).toFixed(2)+' vueltas · '+ST.nomV+' '+(pp2[1]-p0[1]).toFixed(2)+' vueltas'; } }
+  else txt=NOTAS[f2]||'';
   if(cap.textContent!==txt) cap.textContent=txt;
 }
 
@@ -13152,6 +13362,7 @@ function loop(){
     var dt=UI.last?Math.min(.05,(t-UI.last)/1000):0; UI.last=t;
     var busy=false;
     if(UI.play){ UI.p=Math.min(1,UI.p+dt/UI.dur); if(UI.p>=1){ UI.play=false; syncUI(); } else busy=true; $('fg-scrub').value=Math.round(UI.p*1000); UI.dirty=true; }
+    if(UI.pTo!==null&&UI.pTo!==undefined){ var spd=dt*.18; if(Math.abs(UI.pTo-UI.p)<=spd){ UI.p=UI.pTo; UI.pTo=null; } else { UI.p+=Math.sign(UI.pTo-UI.p)*spd; busy=true; } $('fg-scrub').value=Math.round(UI.p*1000); UI.dirty=true; }
     if(UI.qTo!==null){
       var T=selT();
       if(!T){ UI.qTo=null; UI.qPlay=false; }
@@ -13299,6 +13510,7 @@ function init(){
     b.onclick=function(){ UI.col=col; var a=act(); if(UI.sel&&UI.sel.k==='L'){ var l=a.L.filter(function(x){return x.id===UI.sel.id;})[0]; if(l){ pushUndo(); l.c=col; cambio(); } }
       else { var T=selT(); if(T&&UI.tool==='letra'&&UI.selT){ pushUndo(); T.c=col; cambio(); } } syncUI(); UI.dirty=true; loop(); };
     sw.appendChild(b); });
+  var tcs=$('fg-tcols'); PRESETS.forEach(function(pr,ix){ var b=document.createElement('button'); b.className='fg-sw'; b.dataset.i=ix; b.style.background='hsl('+pr[0]+','+Math.max(pr[1],15)+'%,'+(pr[1]<10?'55':'45')+'%)'; b.setAttribute('aria-label','Color del toro'); b.onclick=function(){ GrafoFiguras.estilo('color',ix); }; tcs.appendChild(b); });
   if(window.ResizeObserver){ ro=new ResizeObserver(resize); ro.observe($('fig-flatwrap')); ro.observe($('fig-3dwrap')); }
   window.addEventListener('resize',resize);
 }
@@ -13310,7 +13522,7 @@ function abrir(){
 }
 function cerrar(){ var p=$('fig-pane'); if(p) p.classList.remove('open'); UI.open=false; UI.play=false; UI.qPlay=false; UI.auto=false; cambio(); refChip(); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-window.GrafoFiguras={abrir:abrir,cerrar:cerrar,figura:figura,activo:activo,herr:herr,terminar:terminar,modo:modo,nombres:nombres,diagonal:diagonal,alGrafo:alGrafo,alternarCruzar:alternarCruzar,deshacer:deshacer,
+window.GrafoFiguras={abrir:abrir,cerrar:cerrar,figura:figura,activo:activo,herr:herr,terminar:terminar,modo:modo,vueltas:vueltas,usarLetras:usarLetras,estilo:estilo,repetir:repetir,encima:encima,nombres:nombres,diagonal:diagonal,alGrafo:alGrafo,alternarCruzar:alternarCruzar,deshacer:deshacer,
   traerDelGrafo:traerDelGrafo,armar:armar,recorrer:recorrer,paso:paso,autogiro:autogiro,vista:vista,imagen:imagen,ser:ser,cargar:cargar,
   vacio:function(){ return !ser(); },abierto:function(){return UI.open;},_st:ST,_ui:UI,_surf:surf,_prm:prm,_draw:draw};
 window.abrirFiguras=abrir;
