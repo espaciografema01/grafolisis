@@ -618,6 +618,7 @@ body.plan-free .my-pub-thumb::after{font-size:9vw}
 
 #fig-pane{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;background:#17150f;color:#e8dfc8;font-family:'Inter',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
 #fig-pane.open{display:flex}
+#fig-chip{position:absolute;left:10px;top:46px;z-index:56;background:rgba(26,26,26,.88);color:#c9a84c;border:1px solid #c9a84c55;border-radius:999px;padding:5px 11px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;box-shadow:var(--sh-2)}
 #fig-pane .fg-row{display:flex;align-items:center;gap:5px;padding:4px 7px;flex-wrap:nowrap;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 #fig-pane .fg-row::-webkit-scrollbar{display:none}
 #fig-pane .fg-row>*{flex-shrink:0}
@@ -764,7 +765,8 @@ const _db   = firebase.firestore();
               <input type="range" id="fader-sup" min="0" max="100" value="100" oninput="actualizarFaderSup(this.value)">
               <span class="fader-pct" id="fader-pct">100%</span>
             </div>
-          <div id="fig-pane">
+          <button id="fig-chip" onclick="abrirFiguras()" title="Abrir la figura animada" style="display:none">◎ Figura</button>
+<div id="fig-pane">
   <div class="fg-row">
     <div class="fg-seg" id="fg-figs"><button data-f="toro" class="on" onclick="GrafoFiguras.figura('toro')">Toro</button><button data-f="enlazados" onclick="GrafoFiguras.figura('enlazados')">Dos toros enlazados</button></div>
     <div class="fg-seg" id="fg-which" style="display:none"><button data-w="A" class="on" onclick="GrafoFiguras.activo('A')">Toro A</button><button data-w="B" onclick="GrafoFiguras.activo('B')">Toro B</button></div>
@@ -775,6 +777,8 @@ const _db   = firebase.firestore();
     <input type="text" id="fg-label" value="S1" maxlength="8" aria-label="Nombre de la letra">
     <span id="fg-sws" style="display:inline-flex;gap:4px"></span>
     <button id="fg-fin" onclick="GrafoFiguras.terminar()" style="display:none">Terminar</button>
+    <button onclick="GrafoFiguras.diagonal()" title="Diagonal o espiral">Diagonal / espiral</button>
+    <button onclick="GrafoFiguras.nombres()">Ejes</button>
     <button id="fg-cruz" onclick="GrafoFiguras.alternarCruzar()" title="Cómo se unen dos puntos del trayecto">Cruzar bordes ✓</button>
     <button onclick="GrafoFiguras.deshacer()" title="Deshacer">↶</button>
     <button onclick="GrafoFiguras.traerDelGrafo()">Traer nodos del grafo</button>
@@ -782,6 +786,7 @@ const _db   = firebase.firestore();
   <div id="fig-flatwrap"><canvas id="fig-flat"></canvas><div id="fig-hint"></div></div>
   <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div></div>
   <div class="fg-row">
+    <div class="fg-seg" id="fg-modo"><button data-m="seq" class="on" onclick="GrafoFiguras.modo('seq')">Por etapas</button><button data-m="esp" onclick="GrafoFiguras.modo('esp')">En espiral</button></div>
     <button id="fg-play" class="on" onclick="GrafoFiguras.armar()">▶ Armar</button>
     <input type="range" id="fg-scrub" min="0" max="1000" value="1000" aria-label="Avance de la construcción">
     <button onclick="GrafoFiguras.paso(-1)" title="Letra anterior">⏮</button>
@@ -789,7 +794,8 @@ const _db   = firebase.firestore();
     <button onclick="GrafoFiguras.paso(1)" title="Letra siguiente">⏭</button>
     <button id="fg-auto" onclick="GrafoFiguras.autogiro()">Giro</button>
     <button onclick="GrafoFiguras.vista()">Vista</button>
-    <button onclick="GrafoFiguras.imagen()">Imagen</button>
+    <button onclick="GrafoFiguras.alGrafo()">Insertar en el grafo</button>
+    <button onclick="GrafoFiguras.imagen()">Compartir</button>
   </div>
 </div>
 </div>
@@ -9692,6 +9698,7 @@ function insertarImagen(dataURL, modo){
   img.src = dataURL;
 }
 
+window.insertarImagen = insertarImagen;
 function crearElementoImagen(obj){
   var wrap = document.getElementById('cy-wrap');
   var el = document.createElement('img');
@@ -12793,7 +12800,7 @@ try{ _auth.onAuthStateChanged(function(u){ conectarUsuario(u?u.uid:null); }); }c
 'use strict';
 var TAU=Math.PI*2, r=1, R=2.4, LG=TAU*R, SH=TAU*r;
 var COLS=['#c9a84c','#e0556a','#3fae6a','#5a8aa8','#e8dfc8','#b07ad8'];
-var ST={fig:'toro',act:'A',A:{L:[],T:[]},B:{L:[],T:[]},cruz:true};
+var ST={fig:'toro',act:'A',A:{L:[],T:[]},B:{L:[],T:[]},cruz:true,modo:'seq',nomU:'directriz',nomV:'generatriz'};
 var UI={open:false,tool:'letra',p:1,play:false,dur:7,q:0,qTo:null,qPlay:false,cam:{yaw:.5,e:.75},manual:false,auto:false,zoom:1,
   col:COLS[0],trazo:null,sel:null,undo:[],dirty:true,last:0,selT:null};
 var $=function(id){return document.getElementById(id);};
@@ -12805,15 +12812,21 @@ function nid(p){return p+(idc++)+Math.random().toString(36).slice(2,5);}
 
 /* ── geometría: rectángulo (u,v) → mundo, según el avance de la construcción ── */
 function prm(p){
-  if(ST.fig==='toro') return {A:{s1:ease(p/.5),s2:ease((p-.5)/.5),slide:0},B:null};
+  var esp=ST.modo==='esp';
+  if(ST.fig==='toro') return esp?{A:{s1:p,s2:ease(p),slide:0,d:.6},B:null}:{A:{s1:ease(p/.5),s2:ease((p-.5)/.5),slide:0},B:null};
+  if(esp){
+    var sl2=ease((p-.58)/.12), a=clamp(p/.4,0,1);
+    return {A:{s1:a,s2:ease(a),slide:0,d:.6},
+            B:{s1:clamp((p-.4)/.18,0,1),s2:ease((p-.7)/.26),slide:(1-sl2)*(LG/2+1.5*r),alpha:clamp((p-.4)/.03,0,1),d:.6}};
+  }
   var sl=ease((p-.52)/.14);
   return {A:{s1:ease(p/.2),s2:ease((p-.2)/.2),slide:0},
           B:{s1:ease((p-.4)/.12),s2:ease((p-.66)/.3),slide:(1-sl)*(LG/2+1.5*r),alpha:clamp((p-.4)/.03,0,1)}};
 }
 function surf(w,u,v,q){
-  var xr=(u-.5)*LG, yr=(v-.5)*SH, k1=q.s1/r, a1, a2;
+  var xr=(u-.5)*LG, yr=(v-.5)*SH, s1=q.d?ease(q.s1*(1+q.d)-u*q.d):q.s1, k1=s1/r, a1, a2;
   if(k1<1e-5){a1=yr;a2=0;} else {a1=Math.sin(k1*yr)/k1;a2=(1-Math.cos(k1*yr))/k1;}
-  a2-=r*q.s1;
+  a2-=r*s1;
   var k2=q.s2/R, X, P;
   if(k2<1e-5){X=xr;P=a1;} else {var ph=k2*xr, rr=1/k2+a1; X=rr*Math.sin(ph); P=rr*Math.cos(ph)-1/k2;}
   return w==='A' ? [X,-P-R*q.s2,a2] : [-P,a2,X+q.slide];
@@ -12825,6 +12838,7 @@ function ptUV(w,pt){
   return [pt.u,pt.v];
 }
 function pathAbs(w,T){
+  if(T.abs) return T.abs;
   var out=[],pm=null,pa=null;
   T.pts.forEach(function(pt){
     var c=ptUV(w,pt), u=c[0], v=c[1];
@@ -12846,7 +12860,12 @@ function posAt(path,cum,f){
   var s=(d-cum[i-1])/Math.max(1e-9,cum[i]-cum[i-1]);
   return [path[i-1][0]+(path[i][0]-path[i-1][0])*s, path[i-1][1]+(path[i][1]-path[i-1][1])*s];
 }
-function selT(){ var a=act(); return a.T.filter(function(t){return t.id===UI.selT;})[0]||a.T[a.T.length-1]||null; }
+function trays(w){
+  var Wd=ST[w]; if(Wd.T.length) return Wd.T;
+  if(Wd.L.length>1) return [{id:'auto',virt:true,c:'#c9a84c',cruz:ST.cruz,pts:Wd.L.map(function(l){return {ref:l.id,u:l.u,v:l.v};})}];
+  return [];
+}
+function selT(){ var t=trays(ST.act); return t.filter(function(x){return x.id===UI.selT;})[0]||t[t.length-1]||null; }
 function wrap01(x){ return x-Math.floor(x); }
 
 /* ── estado: guardar / cargar / deshacer ── */
@@ -12854,15 +12873,15 @@ function copia(){ return JSON.stringify({A:ST.A,B:ST.B}); }
 function pushUndo(){ UI.undo.push(copia()); if(UI.undo.length>60) UI.undo.shift(); }
 function cambio(){ UI.dirty=true; loop(); try{ if(typeof snapshot==='function') snapshot(); }catch(e){} }
 function ser(){
-  var n=ST.A.L.length+ST.A.T.length+ST.B.L.length+ST.B.T.length;
+  var n=ST.A.L.length+ST.A.T.length+ST.B.L.length+ST.B.T.length; if(!n&&(ST.nomU!=='directriz'||ST.nomV!=='generatriz')) n=1;
   if(!n) return null;
-  return JSON.parse(JSON.stringify({fig:ST.fig,act:ST.act,cruz:ST.cruz,A:ST.A,B:ST.B}));
+  return JSON.parse(JSON.stringify({fig:ST.fig,act:ST.act,cruz:ST.cruz,modo:ST.modo,nomU:ST.nomU,nomV:ST.nomV,A:ST.A,B:ST.B}));
 }
 function cargar(o){
   UI.undo=[]; UI.sel=null; UI.selT=null; UI.trazo=null; UI.q=0; UI.qTo=null; UI.qPlay=false;
-  if(!o){ ST.A={L:[],T:[]}; ST.B={L:[],T:[]}; ST.fig='toro'; ST.act='A'; ST.cruz=true; }
+  if(!o){ ST.A={L:[],T:[]}; ST.B={L:[],T:[]}; ST.fig='toro'; ST.act='A'; ST.cruz=true; ST.modo='seq'; ST.nomU='directriz'; ST.nomV='generatriz'; }
   else { ST.fig=o.fig==='enlazados'?'enlazados':'toro'; ST.act=o.act==='B'?'B':'A'; ST.cruz=o.cruz!==false;
-    ST.A=o.A||{L:[],T:[]}; ST.B=o.B||{L:[],T:[]}; }
+    ST.A=o.A||{L:[],T:[]}; ST.B=o.B||{L:[],T:[]}; ST.modo=o.modo==='esp'?'esp':'seq'; ST.nomU=o.nomU||'directriz'; ST.nomV=o.nomV||'generatriz'; }
   if(ST.fig==='toro') ST.act='A';
   syncUI(); UI.dirty=true;
 }
@@ -12882,8 +12901,10 @@ function syncUI(){
   $('fg-scrub').value=Math.round(UI.p*1000);
   var h=$('fig-hint');
   h.textContent=UI.tool==='letra'?'Toca para poner una letra · arrastra · mantén = renombrar'
-    :UI.tool==='trazo'?'Toca letras o puntos en orden; luego «Terminar»':'Toca una letra o un trayecto para borrarlo';
+    :UI.tool==='trazo'?'Toca letras en el orden del recorrido y pulsa «Terminar»':'Toca una letra o un trayecto para borrarlo';
   [].forEach.call($('fg-sws').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.c===UI.col); });
+  [].forEach.call($('fg-modo').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.m===ST.modo); });
+  UI.dirty=true; loop(); refChip();
 }
 function figura(f){ ST.fig=f; if(f==='toro') ST.act='A'; UI.p=1; UI.play=false; syncUI(); UI.dirty=true; cambio(); }
 function activo(w){ ST.act=w; UI.sel=null; UI.selT=null; UI.trazo=null; if(w==='B'&&UI.p<.7) UI.p=1; UI.q=0; syncUI(); UI.dirty=true; }
@@ -12894,6 +12915,24 @@ function deshacer(){
   var s=UI.undo.pop(); if(!s) return;
   var o=JSON.parse(s); ST.A=o.A; ST.B=o.B; UI.sel=null; UI.selT=null; UI.dirty=true; cambio();
 }
+function modo(m){ ST.modo=m; UI.p=1; UI.play=false; syncUI(); cambio(); }
+function nombres(cual){
+  var a=cual!=='v'?prompt('Nombre del eje horizontal (largo):',ST.nomU):null;
+  if(a!==null&&a.trim()) ST.nomU=a.trim().slice(0,24);
+  if(cual!=='u'){ var b=prompt('Nombre del eje vertical (corto):',ST.nomV); if(b!==null&&b.trim()) ST.nomV=b.trim().slice(0,24); }
+  syncUI(); cambio();
+}
+function diagonal(){
+  var r_=prompt('Vueltas por «'+ST.nomU+'» y por «'+ST.nomV+'».\n1,1 = diagonal · 1,-1 = otra diagonal · 3,1 = espiral de 3 vueltas','1,1');
+  if(r_===null) return;
+  var m=r_.split(/[ ,;]+/).map(parseFloat); if(m.length<2||isNaN(m[0])||isNaN(m[1])||(!m[0]&&!m[1])){ if(typeof showInd==='function') showInd('Escribe dos números, por ejemplo 1,1'); return; }
+  var p_=clamp(m[0],-12,12), q_=clamp(m[1],-12,12), u0=0, v0=0, a=act();
+  if(UI.sel&&UI.sel.k==='L'){ var l=a.L.filter(function(x){return x.id===UI.sel.id;})[0]; if(l){ u0=l.u; v0=l.v; } }
+  var n=Math.max(1,Math.ceil(Math.max(Math.abs(p_),Math.abs(q_)))), ab=[];
+  for(var i=0;i<=n;i++) ab.push([u0+p_*i/n, v0+q_*i/n]);
+  pushUndo(); var T={id:nid('t'),c:UI.col,cruz:true,pts:[],abs:ab}; a.T.push(T); UI.selT=T.id; UI.q=0; cambio();
+  if(typeof showInd==='function') showInd('Recorrido creado: toca «Recorrer» para verlo');
+}
 function terminar(){
   var t=UI.trazo; if(!t||t.pts.length<2){ return; }
   pushUndo();
@@ -12903,7 +12942,7 @@ function terminar(){
 function armar(){
   if(UI.play){ UI.play=false; syncUI(); return; }
   if(UI.p>=.999) UI.p=0;
-  UI.dur=ST.fig==='toro'?7:11; UI.play=true; UI.last=0; syncUI(); loop();
+  UI.dur=(ST.fig==='toro'?7:11)+(ST.modo==='esp'?1:0); UI.play=true; UI.last=0; syncUI(); loop();
 }
 function recorrer(){
   var T=selT(); if(!T||T.pts.length<2){ if(typeof showInd==='function') showInd('Dibuja primero un trayecto con «Trayecto»'); return; }
@@ -12965,11 +13004,14 @@ function trazoWrapped(c,path,R_){
   }
   if(pts.length===1) pts.push(pts[0]);
   c.beginPath(); var prev=null, start=true;
+  var pr_=null;
   pts.forEach(function(p){
-    var u=wrap01(p[0]), v=wrap01(p[1]); if(Math.abs(p[0]-Math.round(p[0]))<1e-9&&p[0]===path[path.length-1][0]&&p[0]>0) u=u; var q=f2px(u,v,R_);
+    var u=wrap01(p[0]), v=wrap01(p[1]);
+    if(pr_){ if(u<1e-7&&p[0]>pr_[0]&&prev&&prev[0]>.5) u=1; if(v<1e-7&&p[1]>pr_[1]&&prev&&prev[1]>.5) v=1; }
+    var q=f2px(u,v,R_);
     if(prev&&(Math.abs(u-prev[0])>.5||Math.abs(v-prev[1])>.5)) start=true;
     if(start){ c.moveTo(q[0],q[1]); start=false; } else c.lineTo(q[0],q[1]);
-    prev=[u,v];
+    prev=[u,v]; pr_=p;
   });
   c.stroke();
   return pts;
@@ -12988,15 +13030,15 @@ function drawFlat(){
   arrow(c,R_.x+R_.w/2+4,R_.y,1,0,'#3fae6a',1); arrow(c,R_.x+R_.w/2+4,R_.y+R_.h,1,0,'#3fae6a',1);
   arrow(c,R_.x,R_.y+R_.h/2+4,0,1,'#e0556a',2); arrow(c,R_.x+R_.w,R_.y+R_.h/2+4,0,1,'#e0556a',2);
   c.fillStyle='#9d9378'; c.font='10px Inter,sans-serif'; c.textAlign='center'; c.textBaseline='top';
-  c.fillText('directriz  →',R_.x+R_.w/2,R_.y+R_.h+3);
-  c.save(); c.translate(R_.x-12,R_.y+R_.h/2); c.rotate(-Math.PI/2); c.textBaseline='bottom'; c.fillText('generatriz',0,0); c.restore();
+  c.fillText(ST.nomU+'  →',R_.x+R_.w/2,R_.y+R_.h+3);
+  c.save(); c.translate(R_.x-12,R_.y+R_.h/2); c.rotate(-Math.PI/2); c.textBaseline='bottom'; c.fillText(ST.nomV,0,0); c.restore();
   // trayectos
-  a.T.forEach(function(T){
-    var path=pathAbs(ST.act,T), sel=(selT()===T);
+  trays(ST.act).forEach(function(T){
+    var path=pathAbs(ST.act,T), sel=(selT()===T||T.virt);
     c.lineWidth=sel?3:2; c.strokeStyle=T.c; c.globalAlpha=sel?1:.8;
     var pts=trazoWrapped(c,path,R_);
     c.globalAlpha=1;
-    if(pts.length>1){ var e=pts[pts.length-1], b=pts[pts.length-2], q=f2px(wrap01(e[0]),wrap01(e[1]),R_), q0=f2px(wrap01(b[0]),wrap01(b[1]),R_);
+    if(pts.length>1){ var e=pts[pts.length-1], b=pts[pts.length-2], eu=wrap01(e[0]), ev=wrap01(e[1]); if(eu<1e-7&&e[0]>b[0]) eu=1; if(ev<1e-7&&e[1]>b[1]) ev=1; var q=f2px(eu,ev,R_), q0=f2px(wrap01(b[0]),wrap01(b[1]),R_);
       var dx=q[0]-q0[0], dy=q[1]-q0[1], d=Math.hypot(dx,dy)||1; if(d<40) arrow(c,q[0],q[1],dx/d,dy/d,T.c,1); }
   });
   if(UI.trazo&&UI.trazo.pts.length){
@@ -13061,7 +13103,7 @@ function drawFig(){
     linea(function(s){return [0,s];},24,'#e0556a',2.4); linea(function(s){return [1,s];},24,'#e0556a',2.4);
     linea(function(s){return [s,0];},64,'#3fae6a',2.4); linea(function(s){return [s,1];},64,'#3fae6a',2.4);
     var Wd=ST[w];
-    Wd.T.forEach(function(T){
+    trays(w).forEach(function(T){
       var path=pathAbs(w,T), sel=(w===ST.act&&selT()===T), prev=null;
       for(var s=0;s<path.length-1;s++){
         var n=Math.max(3,Math.ceil(Math.hypot((path[s+1][0]-path[s][0])*LG,(path[s+1][1]-path[s][1])*SH)/.3));
@@ -13091,9 +13133,14 @@ function drawFig(){
   c.globalAlpha=1;
   // leyenda
   var cap=$('fig-cap'), T2=selT(), txt='';
-  if(UI.p<.999) txt=(UI.p<(ST.fig==='toro'?.5:.2)?'Se enrolla el rectángulo… los bordes verdes se unen':(ST.fig==='toro'?'El cilindro se curva… los bordes rojos se unen':(UI.p<.4?'El cilindro se curva… los bordes rojos se unen':(UI.p<.66?'Otro cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'))));
+  if(UI.p<.999){
+    var esp=ST.modo==='esp', t1=ST.fig==='toro'?(esp?1:.5):(esp?.4:.2), p=UI.p;
+    if(ST.fig==='toro') txt=esp?'El rectángulo se enrolla en espiral mientras se curva en toro':(p<.5?'Se enrolla el rectángulo… los bordes verdes se unen':'El cilindro se curva… los bordes rojos se unen');
+    else if(esp) txt=p<.4?'El rectángulo se enrolla en espiral mientras se curva en toro':(p<.58?'Otro rectángulo se enrolla sobre el primero…':(p<.7?'El cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'));
+    else txt=p<.2?'Se enrolla el rectángulo… los bordes verdes se unen':(p<.4?'El cilindro se curva… los bordes rojos se unen':(p<.66?'Otro cilindro entra por el agujero del primero':'Se curva y se cierra pasando por el agujero'));
+  }
   else if(T2&&UI.q>0){ var pa2=pathAbs(ST.act,T2), pp2=posAt(pa2,cumLen(pa2),UI.q), p0=pa2[0];
-    if(pp2){ txt='Directriz '+(pp2[0]-p0[0]).toFixed(2)+' vueltas · generatriz '+(pp2[1]-p0[1]).toFixed(2)+' vueltas · cruces de borde: '+(Math.abs(Math.floor(pp2[0]))+Math.abs(Math.floor(pp2[1]))); } }
+    if(pp2){ txt=(T2.virt?'Tus letras en orden · ':'')+ST.nomU+' '+(pp2[0]-p0[0]).toFixed(2)+' vueltas · '+ST.nomV+' '+(pp2[1]-p0[1]).toFixed(2)+' vueltas · cruces de borde: '+(Math.abs(Math.floor(pp2[0]))+Math.abs(Math.floor(pp2[1]))); } }
   if(cap.textContent!==txt) cap.textContent=txt;
 }
 
@@ -13146,6 +13193,8 @@ function onFlatDown(e){
   if(e.button>0) return; e.preventDefault();
   var xy=evXY(e,cvF), R_=rectF(), l=hitLetter(xy), a=act();
   var u=(xy[0]-R_.x)/R_.w, v=(xy[1]-R_.y)/R_.h, dentro=u>=-.02&&u<=1.02&&v>=-.04&&v<=1.04;
+  if(!l&&xy[1]>R_.y+R_.h&&xy[1]<R_.y+R_.h+20&&Math.abs(xy[0]-(R_.x+R_.w/2))<70){ nombres('u'); return; }
+  if(!l&&xy[0]<R_.x-3&&Math.abs(xy[1]-(R_.y+R_.h/2))<60){ nombres('v'); return; }
   if(UI.tool==='borrar'){
     if(l){ pushUndo(); a.L=a.L.filter(function(x){return x!==l;}); a.T.forEach(function(T){ T.pts.forEach(function(p){ if(p.ref===l.id){ p.u=l.u; p.v=l.v; delete p.ref; } }); }); cambio(); }
     else { var T=hitTray(xy); if(T){ pushUndo(); a.T=a.T.filter(function(x){return x!==T;}); if(UI.selT===T.id) UI.selT=null; UI.q=0; cambio(); } }
@@ -13214,11 +13263,24 @@ function resize(){
   cvF.width=wF*dpr; cvF.height=hF*dpr; cvS.width=wS*dpr; cvS.height=hS*dpr;
   UI.dirty=true; loop();
 }
-function imagen(){
-  var o=document.createElement('canvas'); o.width=cvS.width; o.height=cvS.height+Math.round(28*dpr);
-  var c=o.getContext('2d'); c.fillStyle='#17150f'; c.fillRect(0,0,o.width,o.height); c.drawImage(cvS,0,0);
+function compone(conPlano){
+  var W=cvS.width, hp=conPlano?Math.round(cvF.height*W/cvF.width):0;
+  var o=document.createElement('canvas'); o.width=W; o.height=hp+cvS.height+Math.round(28*dpr);
+  var c=o.getContext('2d'); c.fillStyle='#17150f'; c.fillRect(0,0,o.width,o.height);
+  if(conPlano) c.drawImage(cvF,0,0,W,hp);
+  c.drawImage(cvS,0,hp);
   c.fillStyle='#9d9378'; c.font=(11*dpr)+'px Inter,sans-serif'; c.textAlign='right'; c.textBaseline='middle';
-  c.fillText('Elaborado en Grafólisis · Espacio [G]rafema',o.width-10*dpr,cvS.height+14*dpr);
+  c.fillText('Elaborado en Grafólisis · Espacio [G]rafema',o.width-10*dpr,hp+cvS.height+14*dpr);
+  return o;
+}
+function alGrafo(){
+  draw(); var o=compone(true), k=Math.min(1,760/o.width), o2=document.createElement('canvas');
+  o2.width=Math.round(o.width*k); o2.height=Math.round(o.height*k); o2.getContext('2d').drawImage(o,0,0,o2.width,o2.height);
+  var url=o2.toDataURL('image/jpeg',.9); cerrar();
+  setTimeout(function(){ if(typeof insertarImagen==='function') insertarImagen(url,'elemento'); if(typeof showInd==='function') showInd('Figura insertada: muévela y ajústala. La figura animada sigue en «◎ Figura»'); },80);
+}
+function imagen(){
+  var o=compone(false), c=o.getContext('2d');
   o.toBlob(function(b){
     if(!b) return; var f=new File([b],'figura-grafolisis.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[f]})){ navigator.share({files:[f],title:'Figura — Grafólisis'}).catch(function(){}); }
@@ -13240,14 +13302,15 @@ function init(){
   if(window.ResizeObserver){ ro=new ResizeObserver(resize); ro.observe($('fig-flatwrap')); ro.observe($('fig-3dwrap')); }
   window.addEventListener('resize',resize);
 }
+function refChip(){ var b=$('fig-chip'); if(b) b.style.display=(!UI.open&&ser())?'':'none'; }
 function abrir(){
-  var p=$('fig-pane'); if(!p) return; p.classList.add('open'); UI.open=true; UI.p=1; UI.play=false; UI.manual=false; UI.auto=false; UI.zoom=1;
+  var p=$('fig-pane'); if(!p) return; p.classList.add('open'); UI.open=true; refChip(); UI.p=1; UI.play=false; UI.manual=false; UI.auto=false; UI.zoom=1;
   syncUI(); setTimeout(function(){ resize(); draw(); },30);
   if(typeof showInd==='function' && !ST.A.L.length) showInd('Pon letras en el plano y mira cómo se enrollan en el toro');
 }
-function cerrar(){ var p=$('fig-pane'); if(p) p.classList.remove('open'); UI.open=false; UI.play=false; UI.qPlay=false; UI.auto=false; cambio(); }
+function cerrar(){ var p=$('fig-pane'); if(p) p.classList.remove('open'); UI.open=false; UI.play=false; UI.qPlay=false; UI.auto=false; cambio(); refChip(); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-window.GrafoFiguras={abrir:abrir,cerrar:cerrar,figura:figura,activo:activo,herr:herr,terminar:terminar,alternarCruzar:alternarCruzar,deshacer:deshacer,
+window.GrafoFiguras={abrir:abrir,cerrar:cerrar,figura:figura,activo:activo,herr:herr,terminar:terminar,modo:modo,nombres:nombres,diagonal:diagonal,alGrafo:alGrafo,alternarCruzar:alternarCruzar,deshacer:deshacer,
   traerDelGrafo:traerDelGrafo,armar:armar,recorrer:recorrer,paso:paso,autogiro:autogiro,vista:vista,imagen:imagen,ser:ser,cargar:cargar,
   vacio:function(){ return !ser(); },abierto:function(){return UI.open;},_st:ST,_ui:UI,_surf:surf,_prm:prm,_draw:draw};
 window.abrirFiguras=abrir;
