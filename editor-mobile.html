@@ -13683,6 +13683,14 @@ function drawFig(){
   ws.forEach(function(w){
     var g=grids[w], vv=g.map(V), al=(pr[w].alpha===undefined)?1:pr[w].alpha, tc=ST.tcol[w]||[212,42], hue=tc[0], sat=tc[1];
     var cd=coil?coilData(w):null, Pw=winP(w); GRIDV[w]=vv;
+    /* ¿el lado del plano donde se dibujó el trazo mira hacia la cámara? (las líneas viven en una cara de la lámina) */
+    function faceAt(U,Vv){
+      var fd=fold(U,Vv), i=Math.min(NU-1,Math.max(0,Math.floor(fd[0]*NU))), j=Math.min(NV-1,Math.max(0,Math.floor(fd[1]*NV)));
+      var a=vv[i*(NV+1)+j], b=vv[(i+1)*(NV+1)+j], e=vv[i*(NV+1)+j+1];
+      var o=(b[0]-a[0])*(e[1]-a[1])-(b[1]-a[1])*(e[0]-a[0]);
+      var fl=(ST.fig==='mobius'||ST.fig==='klein')?(fd[2]&1):(ST.fig==='crosscap'?((fd[2]&1)^(fd[3]&1)):0);
+      return o*(fl?-1:1)*((ST.fig==='toro'||ST.fig==='enlazados'||ST.fig==='borromeo')?-1:1)>0;
+    }
     function sup(u,v){ return V(surfAny(w,u,v,pr[w])); }
     function supF(U,Vv){ var fd=fold(U,Vv); return sup(fd[0],fd[1]); }
     for(i=0;i<NU;i++) for(j=0;j<NV;j++){
@@ -13717,13 +13725,13 @@ function drawFig(){
         for(var s=0;s<path.length-1;s++){
           var n=Math.max(3,Math.ceil(Math.hypot((path[s+1][0]-path[s][0])*LG,(path[s+1][1]-path[s][1])*SH)/.3));
           for(var m=(s?1:0);m<=n;m++){ var ff=m/n, P=supF(path[s][0]+(path[s+1][0]-path[s][0])*ff,path[s][1]+(path[s+1][1]-path[s][1])*ff);
-            if(prev) items.push({z:(P[2]+prev[2])/2+BIAS+TOP,t:1,a:prev,b:P,col:T.c,w:(T.virt?2.1:(sel?3.6:2.6))*G*(isF?1.2:1),dash:T.virt?[5,4]:null,al:al*dfac(P[2])});
+            if(prev) items.push({fc:faceAt(path[s][0]+(path[s+1][0]-path[s][0])*ff,path[s][1]+(path[s+1][1]-path[s][1])*ff),z:(P[2]+prev[2])/2+BIAS+TOP,t:1,a:prev,b:P,col:T.c,w:(T.virt?2.1:(sel?3.6:2.6))*G*(isF?1.2:1),dash:T.virt?[5,4]:null,al:al*dfac(P[2])});
             prev2=prev; prev=P; }
         }
-        if(isF&&prev&&prev2) items.push({z:prev[2]+BIAS*1.2+TOP,t:4,a:prev2,b:prev,col:T.c,al:al});
+        if(isF&&prev&&prev2) items.push({fc:faceAt(path[path.length-1][0],path[path.length-1][1]),z:prev[2]+BIAS*1.2+TOP,t:4,a:prev2,b:prev,col:T.c,al:al});
         var nm_=nomTray(T); if(nm_){ var pm=posAt(path,cumLen(path),.5); if(pm){ var Pm=supF(pm[0],pm[1]); items.push({z:Pm[2]+BIAS+TOP,t:3,p:Pm,l:nm_,col:T.c,al:al}); } }
       });
-      ST[w].L.forEach(function(l){ var P=sup(l.u,l.v); LPOS.push({id:l.id,w:w,x:P[0],y:P[1],z:P[2],l:l}); items.push({z:P[2]+BIAS+TOP,t:3,p:P,l:etiqL(l),col:l.c,al:al*(.75+.25*dfac(P[2]))}); });
+      ST[w].L.forEach(function(l){ var P=sup(l.u,l.v); LPOS.push({id:l.id,w:w,x:P[0],y:P[1],z:P[2],l:l}); items.push({fc:faceAt(l.u,l.v),z:P[2]+BIAS+TOP,t:3,p:P,l:etiqL(l),col:l.c,al:al*(.75+.25*dfac(P[2]))}); });
       if(w===ST.act){ var T=selT();
         if(T&&UI.q>0){ var pa=pathAbs(w,T), cum=cumLen(pa), pp=posAt(pa,cum,UI.q);
           if(pp){ var P=supF(pp[0],pp[1]); items.push({z:P[2]+BIAS*1.5+TOP,t:2,p:P,al:al}); } } }
@@ -13759,6 +13767,7 @@ function drawFig(){
   function vis(p){ return !Zb||zbVis(Zb,p[0],p[1],p[2]!==undefined?p[2]:1e9,EPS); }
   items.forEach(function(it){
     if(Zb){
+      if(it.fc===false) return;
       if(it.t===1){
         var dx_=it.b[0]-it.a[0], dy_=it.b[1]-it.a[1], dz_=it.b[2]-it.a[2], ln_=Math.hypot(dx_,dy_), np=Math.max(1,Math.ceil(ln_/3)), run=false, any=false;
         c.globalAlpha=Math.max(0,Math.min(1,it.al)); c.strokeStyle=it.col; c.lineWidth=it.w; c.setLineDash(it.dash||[]); c.beginPath();
