@@ -1,7 +1,7 @@
 // Service worker del Grafólisis.
 // IMPORTANTE: cada vez que publiques cambios en el HTML, sube el número de VERSION
 // para que los usuarios reciban la versión nueva.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'lacaniano-' + VERSION;
 const APP_SHELL = ['./', './editor-mobile.html', './privacidad.html', './manifest.webmanifest',
                    './icons/icon-192.png', './icons/icon-512.png', './icons/favicon.svg'];
