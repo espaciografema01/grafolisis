@@ -751,6 +751,14 @@ body.plan-free .my-pub-thumb::after{font-size:9vw}
 .s-grid2 .s-btn{width:100%;margin:0;box-sizing:border-box}
 .feed-offline p{display:block}
 .feed-offline .s-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:6px;width:auto}
+/* — editor de figuras: filas ordenadas, todo visible — */
+#fig-pane .fg-toolrow{flex-wrap:wrap;gap:5px}
+#fig-pane button.fg-ic{min-width:40px;padding:6px 0;font-size:16px;line-height:1;text-align:center}
+#fig-pane .fg-toolrow .fg-seg button{padding:6px 8px;font-size:12px}
+#fig-pane .fg-toolrow button.fg-ic{min-width:38px}
+#fg-more .fg-morebox button#fg-iman.on{border-color:#c9a84c88}
+#fg-more .fg-morebox button.on{background:#26231a;color:#bdb394;font-weight:400}
+@media (max-width:400px){#fig-pane .fg-toolrow .fg-seg button{padding:6px 6px;font-size:11.5px}#fig-pane .fg-toolrow button.fg-ic{min-width:36px;padding:6px 0}#fig-pane .fg-toolrow{gap:4px}#fig-hint{font-size:10px;line-height:1.2}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -886,7 +894,7 @@ const _db   = firebase.firestore();
     <button class="fg-x" onclick="GrafoFiguras.cerrar()" aria-label="Cerrar">✕</button>
   </div>
   <div id="fig-flatwrap"><canvas id="fig-flat"></canvas><div id="fig-hint"></div></div>
-  <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div><div id="fg-ver" aria-hidden="true">build 19-oct-b</div></div>
+  <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div><div id="fg-ver" aria-hidden="true">build 20-oct-a</div></div>
   <div class="fg-row fg-playbar">
     <button id="fg-play" class="on" onclick="GrafoFiguras.armar()">▶ Armar</button>
     <input type="range" id="fg-scrub" min="0" max="1000" value="1000" aria-label="Avance de la construcción">
@@ -894,14 +902,12 @@ const _db   = firebase.firestore();
   </div>
   <div class="fg-seg fg-pages" id="fg-pages"><button data-pg="plano" class="on" onclick="GrafoFiguras.pagina('plano')">Plano</button><button data-pg="anim" onclick="GrafoFiguras.pagina('anim')">Animación</button><button data-pg="estilo" onclick="GrafoFiguras.pagina('estilo')">Estilo</button></div>
   <div class="fg-page" id="fg-pg-plano">
-    <div class="fg-row" style="flex-wrap:wrap;overflow:visible">
-      <span class="fg-lbl">Dibujar</span>
+    <div class="fg-row fg-toolrow">
       <div class="fg-seg" id="fg-tool"><button data-t="letra" class="on" onclick="GrafoFiguras.herr('letra')">Letra</button><button data-t="trazo" onclick="GrafoFiguras.herr('trazo')">Trayecto</button><button data-t="flecha" onclick="GrafoFiguras.herr('flecha')">Flecha</button><button data-t="borrar" onclick="GrafoFiguras.herr('borrar')">Borrar</button></div>
+      <button id="fg-undo2" class="fg-ic" onclick="GrafoFiguras.deshacer()" title="Deshacer" aria-label="Deshacer">↶</button>
+      <button id="fg-ext" class="fg-ic" onclick="GrafoFiguras.extender()" title="Extender: muestra el plano repetido alrededor para trazar, o poner letras, más allá de los bordes" aria-label="Extender el plano">↔</button>
+      <button id="fg-morebtn" class="fg-ic" onclick="GrafoFiguras.mas()" title="Más opciones del plano" aria-label="Más opciones">⋯</button>
       <button id="fg-fin" onclick="GrafoFiguras.terminar()" style="display:none" class="fg-gold">✓ Terminar trayecto</button>
-      <button onclick="GrafoFiguras.deshacer()" title="Deshacer" aria-label="Deshacer">↶</button>
-      <button id="fg-iman" onclick="GrafoFiguras.iman()" title="Imán: ajusta a la cuadrícula, a los bordes y a las otras letras">🧲 Imán ✓</button>
-      <button id="fg-ext" onclick="GrafoFiguras.extender()" title="Muestra el plano repetido alrededor para hacer flechas y trayectos que cruzan los bordes">↔ Extender</button>
-      <button id="fg-morebtn" onclick="GrafoFiguras.mas()">⋯ Más</button>
     </div>
     <div class="fg-row" id="fg-letrow">
       <span class="fg-lbl">Letra</span>
@@ -919,24 +925,29 @@ const _db   = firebase.firestore();
     <div class="fg-row">
       <span class="fg-lbl">Recorrido</span>
       <span class="fg-seg"><button onclick="GrafoFiguras.paso(-1)" title="Letra anterior" aria-label="Letra anterior">⏮</button><button id="fg-rec" onclick="GrafoFiguras.recorrer()">Recorrer</button><button onclick="GrafoFiguras.paso(1)" title="Letra siguiente" aria-label="Letra siguiente">⏭</button></span>
-      <span class="fg-lbl" style="margin-left:6px">Cámara</span>
-      <button id="fg-auto" onclick="GrafoFiguras.autogiro()" title="Gira la figura sola">⟳ Giro auto</button>
+    </div>
+    <div class="fg-row">
+      <span class="fg-lbl">Cámara</span>
+      <button id="fg-auto" onclick="GrafoFiguras.autogiro()" title="Gira la figura sola">⟳ Giro</button>
       <button onclick="GrafoFiguras.vista()" title="Cambia el ángulo de vista">◐ Ángulo</button>
     </div>
   </div>
   <div class="fg-page" id="fg-pg-estilo" style="display:none">
     <div class="fg-row"><span class="fg-lbl">Color</span><span id="fg-tcols" style="display:inline-flex;gap:6px"></span><button id="fg-enc" onclick="GrafoFiguras.encima()" title="Mostrar letras y trayecto por encima de la superficie">Encima ✓</button></div>
-    <div class="fg-row"><span class="fg-lbl">Superficie</span><button id="fg-cuad" onclick="GrafoFiguras.estilo('cuad')">Cuadrícula ✓</button><button id="fg-trans" onclick="GrafoFiguras.estilo('trans')">Translúcido ✗</button><button id="fg-gro" onclick="GrafoFiguras.estilo('gro')">Grosor ×1</button><button onclick="GrafoFiguras.imagen()">Compartir imagen</button></div>
+    <div class="fg-row"><span class="fg-lbl">Superficie</span><button id="fg-cuad" onclick="GrafoFiguras.estilo('cuad')">Cuadrícula ✓</button><button id="fg-trans" onclick="GrafoFiguras.estilo('trans')">Translúcido ✗</button><button id="fg-gro" onclick="GrafoFiguras.estilo('gro')">Grosor ×1</button></div>
   </div>
   <div id="fg-more" onclick="if(event.target===this)GrafoFiguras.mas(false)">
     <div class="fg-morebox">
       <div class="fg-msec">Plano</div>
+      <button id="fg-iman" onclick="GrafoFiguras.iman()"><b>Imán ✓</b><small>Ajusta a la cuadrícula, a los bordes y a las otras letras</small></button>
       <button onclick="GrafoFiguras.importar()"><b>Importar plano de otra figura…</b><small>Copia aquí las letras y trayectos que hiciste en otra figura</small></button>
       <button onclick="GrafoFiguras.mas(false);GrafoFiguras.usarLetras()"><b>Letras → trayecto</b><small>Un recorrido con todas tus letras, en el orden en que las pusiste</small></button>
       <button onclick="GrafoFiguras.mas(false);GrafoFiguras.diagonal()"><b>Elipse / espiral…</b><small>La diagonal, en cualquiera de los dos sentidos, con n vueltas por eje</small></button>
       <button onclick="GrafoFiguras.mas(false);GrafoFiguras.traerDelGrafo()"><b>Traer nodos del grafo</b><small>Tus nodos pasan a ser letras en el plano</small></button>
       <button id="fg-unir" onclick="GrafoFiguras.alternarAuto()"><b>Unir letras en orden ✓</b><small>Traza solo un trayecto punteado entre tus letras si no dibujaste uno propio</small></button>
       <button id="fg-cruz" onclick="GrafoFiguras.alternarCruzar()"><b>Cruzar bordes ✓</b><small>El trayecto sale por un borde y entra por el opuesto</small></button>
+      <div class="fg-msec">Salida</div>
+      <button onclick="GrafoFiguras.mas(false);GrafoFiguras.imagen()"><b>Compartir imagen</b><small>Guarda o envía una imagen de la figura</small></button>
       <div class="fg-msec">Nombres y vértices</div>
       <button onclick="GrafoFiguras.mas(false);GrafoFiguras.nombres()"><b>Nombres de los ejes…</b><small>Directriz, generatriz y elipse: nombre técnico fijo + nombre aplicado</small></button>
       <button onclick="GrafoFiguras.mas(false);GrafoFiguras.nombrarTray()"><b>Nombrar trayecto…</b><small>Nombre aplicado para el trayecto, la elipse o la flecha seleccionados</small></button>
@@ -13311,7 +13322,7 @@ function syncUI(){
   [].forEach.call(wh.querySelectorAll('button'),function(b){ var w=b.dataset.w; b.style.display=ringIdx(w)<n?'':'none'; b.classList.toggle('on',w===ST.act);
     b.textContent=ST.fig==='borromeo'?'Anillo '+(ringIdx(w)+1):'Toro '+w; });
   [].forEach.call($('fg-tool').querySelectorAll('button'),function(b){ b.classList.toggle('on',b.dataset.t===UI.tool); });
-  var im=$('fg-iman'); if(im){ im.textContent='🧲 Imán '+(ST.iman===false?'✗':'✓'); im.classList.toggle('on',ST.iman!==false); }
+  var im=$('fg-iman'); if(im){ var ib=im.querySelector('b'); if(ib) ib.textContent='Imán '+(ST.iman===false?'✗ (apagado)':'✓ (activo)'); im.classList.toggle('on',ST.iman!==false); }
   var au=$('fg-unir'); if(au) au.firstChild.textContent='Unir letras en orden '+(ST.auto===false?'✗':'✓');
   var eb2=$('fg-ext'); if(eb2) eb2.classList.toggle('on',!!UI.ext);
   var lr=$('fg-letrow'); if(lr) lr.style.display=(UI.tool==='letra')?'':'none';
@@ -13323,7 +13334,8 @@ function syncUI(){
   $('fg-auto').classList.toggle('on',UI.auto);
   $('fg-scrub').value=Math.round(UI.p*1000);
   var coil=ST.modo==='coil', h=$('fig-hint');
-  h.textContent=UI.ext&&(UI.tool==='flecha'||UI.tool==='trazo')?'Plano extendido: pasa del borde y el trazo sigue por el lado opuesto'
+  h.textContent=UI.ext&&UI.tool==='letra'?'Plano extendido: una letra fuera del borde se coloca en su punto equivalente'
+    :UI.ext&&(UI.tool==='flecha'||UI.tool==='trazo')?'Plano extendido: pasa del borde y el trazo sigue por el lado opuesto'
     :UI.tool==='flecha'?(UI.fl?'Ahora toca dónde termina la flecha':'Toca dónde empieza la flecha y luego dónde termina')
     :UI.tool==='trazo'?'Toca letras en orden (puedes repetir) y pulsa «Terminar»'
     :UI.tool==='borrar'?'Toca una letra o un trayecto para borrarlo'
@@ -13963,7 +13975,7 @@ function onFlatDown(e){
   var xy=evXY(e,cvF), R_=rectF(), l=hitLetter(xy), a=act();
   var u=(xy[0]-R_.x)/R_.w, v=(xy[1]-R_.y)/R_.h, dentro=u>=-.02&&u<=1.02&&v>=-.04&&v<=1.04;
   /* plano extendido: para flechas y trayectos también vale tocar fuera del borde (se conserva la posición sin recortar) */
-  var BX=extBox(), enExt=UI.ext&&(UI.tool==='flecha'||UI.tool==='trazo')&&u>=-BX.l&&u<=1+BX.r&&v>=-BX.t&&v<=1+BX.b;
+  var BX=extBox(), enExt=UI.ext&&(UI.tool==='flecha'||UI.tool==='trazo'||UI.tool==='letra')&&u>=-BX.l&&u<=1+BX.r&&v>=-BX.t&&v<=1+BX.b;
   function pun(){ return enExt?{u:us,v:vs}:{u:clamp(us,0,1),v:clamp(vs,0,1)}; }
   if(enExt) dentro=true;
   var sn=snapPt(u,v), us=sn[0], vs=sn[1];
@@ -13998,6 +14010,7 @@ function onFlatDown(e){
   var T2=hitTray(xy);
   if(T2){ if(!T2.fl) UI.selT=T2.id; UI.sel={k:'T',id:T2.id}; UI.q=0; UI.dirty=true; loop(); clearTimeout(lp); lp=setTimeout(function(){ nombrarTray(T2); },600); return; }
   if(!dentro) return;
+  if(UI.ext&&(us<0||us>1||vs<0||vs>1)){ var fo=fold(us,vs); crearLetra(clamp(fo[0],0,1),clamp(fo[1],0,1)); return; }
   crearLetra(us,vs);
 }
 function onFlatMove(e){
@@ -14005,7 +14018,7 @@ function onFlatMove(e){
   var xy=evXY(e,cvF);
   if(!drag.moved&&Math.hypot(xy[0]-drag.x,xy[1]-drag.y)<6) return;
   if(!drag.moved){ drag.moved=true; clearTimeout(lp); pushUndo(); }
-  var R_=rectF(); var du_=clamp((xy[0]-R_.x)/R_.w,0,1), dv_=clamp((xy[1]-R_.y)/R_.h,0,1), sp_=snapPt(du_,dv_,drag.l); drag.l.u=clamp(sp_[0],0,1); drag.l.v=clamp(sp_[1],0,1);
+  var R_=rectF(); var du_=(xy[0]-R_.x)/R_.w, dv_=(xy[1]-R_.y)/R_.h; if(UI.ext&&(du_<0||du_>1||dv_<0||dv_>1)){ var fo_=fold(du_,dv_); du_=fo_[0]; dv_=fo_[1]; } du_=clamp(du_,0,1); dv_=clamp(dv_,0,1); var sp_=snapPt(du_,dv_,drag.l); drag.l.u=clamp(sp_[0],0,1); drag.l.v=clamp(sp_[1],0,1);
   UI.dirty=true; loop();
 }
 function onFlatUp(e){
