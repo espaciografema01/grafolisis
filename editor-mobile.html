@@ -894,7 +894,7 @@ const _db   = firebase.firestore();
     <button class="fg-x" onclick="GrafoFiguras.cerrar()" aria-label="Cerrar">✕</button>
   </div>
   <div id="fig-flatwrap"><canvas id="fig-flat"></canvas><div id="fig-hint"></div></div>
-  <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div><div id="fg-ver" aria-hidden="true">build 20-oct-a</div></div>
+  <div id="fig-3dwrap"><canvas id="fig-3d"></canvas><div id="fig-cap"></div><div id="fg-ver" aria-hidden="true">build 21-oct-a</div></div>
   <div class="fg-row fg-playbar">
     <button id="fg-play" class="on" onclick="GrafoFiguras.armar()">▶ Armar</button>
     <input type="range" id="fg-scrub" min="0" max="1000" value="1000" aria-label="Avance de la construcción">
@@ -975,8 +975,8 @@ const _db   = firebase.firestore();
               <button class="bar-btn solo-diseno" data-clin="both" onclick="abrirHerramientasClinicas('plantillas')"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span><span class="lbl">Biblioteca</span></button>
               <button class="bar-btn oculto-barra" data-clin="inferior" id="btn-area" onclick="ESP.alternarArea()" title="Seleccionar varios elementos arrastrando un recuadro"><span>▭</span><span class="lbl">Área</span></button>
               <!-- Desactivado por ahora (se conserva oculto, no eliminado) -->
-              <button class="bar-btn" id="btn-vecsup" data-clin="superior" onclick="toggleVectorAnaliticoMode()" style="display:none"><span>⤢</span><span class="lbl">V. Analítico</span></button>
-              <button class="bar-btn" data-clin="superior" onclick="crearNodoInterpretativo()" style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></span><span class="lbl">Nodo Teórico</span></button>
+              <button class="bar-btn" id="btn-vecsup" data-clin="superior" onclick="toggleVectorAnaliticoMode()" style="display:none"><span>⤢</span><span class="lbl">Analítico</span></button>
+              <button class="bar-btn" data-clin="superior" onclick="crearNodoInterpretativo()" style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></span><span class="lbl">Nodo teórico</span></button>
               <button class="bar-btn oculto-barra" data-clin="both" id="btn-lock" onclick="toggleLockCanvas()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></span><span class="lbl">Fijar</span></button>
               <button class="bar-btn sep danger" data-clin="both" onclick="eliminarSeleccionado()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span><span class="lbl">Borrar</span></button>
               <button class="bar-btn solo-diseno" data-clin="both" onclick="abrirPublicarCompartir()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></span><span class="lbl">Publicar</span></button>
@@ -1679,7 +1679,7 @@ const _db   = firebase.firestore();
     <textarea id="triples-ta" readonly></textarea>
     <div class="modal-row">
       <button class="modal-cancel" onclick="cerrarTriplesModal()">Cerrar</button>
-      <button class="modal-ok" onclick="descargarTriplesRDF()">⬇ Descargar JSON</button>
+      <button class="modal-ok" onclick="descargarTriplesRDF()">Descargar JSON</button>
     </div>
   </div>
 </div>
@@ -3166,8 +3166,8 @@ function herramientasClinicasDef(){
   items.push({icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1"></circle></svg>', label:'Imagen / Instagram', fn:'compartirLienzoImagen'});
   items.push({icon:'⟲', label:'Historial ★', fn:'abrirHistorial'});
   items.push({icon:LIST_ICON, label:'Triples RDF', fn:'abrirTriplesModal'});
-  items.push({icon:'○', label:'Nodo Vacío', fn:'crearNodoVacio'});
-  items.push({icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>', label:'Nodo Teórico', fn:'crearNodoInterpretativo'});
+  items.push({icon:'○', label:'Nodo vacío', fn:'crearNodoVacio'});
+  items.push({icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>', label:'Nodo teórico', fn:'crearNodoInterpretativo'});
   items.push({icon:'▭', label:'Seleccionar por área', fn:'esAlternarArea', activo:function(){ var b=document.getElementById('btn-area'); return !!(b&&b.classList.contains('active')); }});
   items.push({icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>', label:'Fijar vista', fn:'esFijarVista', activo:function(){ return !!_canvasLocked; }});
   // Desactivado por ahora: catálogo de tipos de relación (junto con vector
@@ -4760,10 +4760,10 @@ function _mobCompartir(row2,total){
     if(ESP.selAgrupada()) row2.appendChild(mkBtn('▢','Desagrupar',function(){ ESP.desagrupar(); },'active'));
   }
   row2.appendChild(mkBtn('⎘','Copiar',function(){ ESP.copiar(false); }));
-  row2.appendChild(mkBtn('✂','Cortar',function(){ ESP.copiar(true); }));
+  row2.appendChild(mkBtn('✄','Cortar',function(){ ESP.copiar(true); }));
   if(ESP.hayClip()) row2.appendChild(mkBtn('⎗','Pegar',function(){ ESP.pegar(); }));
-  row2.appendChild(mkBtn('🖌','Copiar estilo',function(){ ESP.copiarEstilo(); }));
-  if(ESP.hayEstilo()) row2.appendChild(mkBtn('🖌','Pegar estilo',function(){ ESP.pegarEstilo(); },'active'));
+  row2.appendChild(mkBtn('❖','Copiar estilo',function(){ ESP.copiarEstilo(); }));
+  if(ESP.hayEstilo()) row2.appendChild(mkBtn('❖','Pegar estilo',function(){ ESP.pegarEstilo(); },'active'));
 }
 function _mobMulti(){
   var row2=document.getElementById('bar-row2'); if(!row2) return false;
